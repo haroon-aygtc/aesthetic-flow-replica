@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { Sidebar } from "@/components/sidebar";
-import { Bell, MessageSquare, Search, Settings, User } from "lucide-react";
+import { Bell, BarChart2, Code, FileText, Layout, MessageSquare, Palette, Search, Settings, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
