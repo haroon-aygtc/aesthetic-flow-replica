@@ -11,10 +11,10 @@ export function ChatWidgetPreview() {
           <span className="text-white font-medium">AI Assistant</span>
         </div>
       </div>
-      <div className="p-4 h-64 overflow-y-auto flex flex-col gap-3 bg-gray-50 dark:bg-gray-900">
+      <div className="p-4 h-80 overflow-y-auto flex flex-col gap-3 bg-gray-50 dark:bg-gray-900">
         <div className="flex items-start gap-2">
-          <div className="bg-primary rounded-full p-1 mt-1">
-            <MessageSquare className="text-white h-3 w-3" />
+          <div className="bg-primary rounded-full p-0.5 mt-1">
+            <MessageSquare className="text-white h-2.5 w-2.5" />
           </div>
           <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded-lg max-w-[80%]">
             <p className="text-sm">Hello there! How may I help you today?</p>
@@ -28,8 +28,8 @@ export function ChatWidgetPreview() {
         </div>
         
         <div className="flex items-start gap-2">
-          <div className="bg-primary rounded-full p-1 mt-1">
-            <MessageSquare className="text-white h-3 w-3" />
+          <div className="bg-primary rounded-full p-0.5 mt-1">
+            <MessageSquare className="text-white h-2.5 w-2.5" />
           </div>
           <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded-lg max-w-[80%]">
             <p className="text-sm">I'd be happy to help you with any questions about our services. What would you like to know?</p>
@@ -40,7 +40,7 @@ export function ChatWidgetPreview() {
         <input 
           type="text" 
           placeholder="Type your message..." 
-          className="chat-input"
+          className="flex-1 px-3 py-2 bg-transparent border rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
         />
         <Button size="icon">
           <Send className="h-4 w-4" />
