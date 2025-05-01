@@ -5,30 +5,67 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, MessageSquare } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import axios from "axios";
+
+// Set up axios default configuration
+axios.defaults.baseURL = "http://localhost:8000";
+axios.defaults.headers.common["Content-Type"] = "application/json";
+axios.defaults.withCredentials = true; // Important for CORS with credentials
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // This is a mock login - in a real app, you'd authenticate with a backend
-    if (email && password) {
+    
+    if (!email || !password) {
+      toast({
+        title: "Error",
+        description: "Please enter both email and password",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      // Get CSRF cookie first (required for Sanctum)
+      await axios.get("/sanctum/csrf-cookie");
+      
+      // Attempt login
+      const response = await axios.post("/api/login", {
+        email,
+        password,
+      });
+
+      // Store token in localStorage
+      localStorage.setItem("token", response.data.token);
+      
+      // Set auth header for future requests
+      axios.defaults.headers.common["Authorization"] = `Bearer ${response.data.token}`;
+      
       toast({
         title: "Login successful!",
         description: "Redirecting to dashboard...",
       });
-      // Mock successful login
+      
+      // Navigate to dashboard after successful login
       setTimeout(() => navigate("/dashboard"), 1000);
-    } else {
+    } catch (error: any) {
+      console.error("Login error:", error);
       toast({
         title: "Login failed",
-        description: "Please enter both email and password",
+        description: error.response?.data?.message || "Invalid credentials or server error",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -118,6 +155,7 @@ const Login = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="email@example.com"
                   className="pr-8 bg-gray-50 border border-gray-200"
+                  disabled={isLoading}
                 />
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-400">
@@ -137,6 +175,7 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="pr-8 bg-gray-50 border border-gray-200"
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
@@ -148,7 +187,9 @@ const Login = () => {
               </div>
             </div>
             
-            <Button type="submit" className="w-full">Login</Button>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Logging in..." : "Login"}
+            </Button>
           </form>
           
           <p className="text-center mt-6 text-sm">

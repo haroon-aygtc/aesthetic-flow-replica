@@ -5,6 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Check, Eye, EyeOff, MessageSquare } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import axios from "axios";
+
+// Set up axios default configuration if not already set in Login
+axios.defaults.baseURL = "http://localhost:8000";
+axios.defaults.headers.common["Content-Type"] = "application/json";
+axios.defaults.withCredentials = true;
 
 const Register = () => {
   const [fullName, setFullName] = useState("");
@@ -13,10 +19,11 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic validation
@@ -47,12 +54,37 @@ const Register = () => {
       return;
     }
     
-    // Mock successful registration
-    toast({
-      title: "Registration successful!",
-      description: "Redirecting to dashboard...",
-    });
-    setTimeout(() => navigate("/dashboard"), 1000);
+    setIsLoading(true);
+    
+    try {
+      // Get CSRF cookie first (required for Sanctum)
+      await axios.get("/sanctum/csrf-cookie");
+      
+      // Attempt registration
+      const response = await axios.post("/api/register", {
+        name: fullName,
+        email: email,
+        password: password,
+        password_confirmation: confirmPassword,
+      });
+      
+      toast({
+        title: "Registration successful!",
+        description: "Please login with your credentials",
+      });
+      
+      // Navigate to login page after successful registration
+      setTimeout(() => navigate("/login"), 1500);
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      toast({
+        title: "Registration failed",
+        description: error.response?.data?.message || error.response?.data?.errors?.email?.[0] || "Server error",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const togglePasswordVisibility = () => {
@@ -140,6 +172,7 @@ const Register = () => {
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="John Doe"
                   className="pr-8 bg-gray-50 border border-gray-200"
+                  disabled={isLoading}
                 />
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-400">
@@ -159,6 +192,7 @@ const Register = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="email@example.com"
                   className="pr-8 bg-gray-50 border border-gray-200"
+                  disabled={isLoading}
                 />
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-400">
@@ -178,6 +212,7 @@ const Register = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="pr-8 bg-gray-50 border border-gray-200"
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
@@ -200,6 +235,7 @@ const Register = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   className="pr-8 bg-gray-50 border border-gray-200"
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
@@ -211,7 +247,9 @@ const Register = () => {
               </div>
             </div>
             
-            <Button type="submit" className="w-full">Register</Button>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Registering..." : "Register"}
+            </Button>
           </form>
           
           <p className="text-center mt-6 text-sm">
