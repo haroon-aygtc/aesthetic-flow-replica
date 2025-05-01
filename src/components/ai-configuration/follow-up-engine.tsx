@@ -1,513 +1,503 @@
 
 import { useState } from "react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle,
-  CardFooter
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/components/ui/use-toast";
-import { 
-  Bell, 
-  Plus, 
-  Trash2,
-  MoveUp,
-  MoveDown,
-  Play,
-  Save
-} from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Plus, Trash2, Check, MessageSquare } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
-interface FollowUpSuggestion {
+// Define the follow-up settings validation schema
+const followUpConfigSchema = z.object({
+  enableFollowUp: z.boolean().default(true),
+  suggestionsCount: z.string().min(1, {
+    message: "Please select the number of suggestions.",
+  }),
+  suggestionsStyle: z.string().min(1, {
+    message: "Please select a suggestion style.",
+  }),
+  buttonStyle: z.string().min(1, {
+    message: "Please select a button style.",
+  }),
+  customPrompt: z.string().optional(),
+  contexts: z.array(z.string()),
+});
+
+// Define the suggestion schema
+const suggestionSchema = z.object({
+  text: z.string().min(3, {
+    message: "Suggestion text must be at least 3 characters."
+  }),
+  category: z.string().min(1, {
+    message: "Please select a category."
+  }),
+  context: z.string().min(1, {
+    message: "Please select a context."
+  }),
+});
+
+interface Suggestion {
   id: string;
   text: string;
-  condition: string;
-  order: number;
+  category: string;
+  context: string;
   active: boolean;
 }
 
 export function FollowUpEngine() {
-  const { toast } = useToast();
-  
-  const [followUps, setFollowUps] = useState<FollowUpSuggestion[]>([
+  const [activeTab, setActiveTab] = useState("settings");
+  const [newSuggestion, setNewSuggestion] = useState({
+    text: "",
+    category: "general",
+    context: "all",
+  });
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([
     {
-      id: "follow-1",
-      text: "Would you like to know more about our pricing options?",
-      condition: "mentions-product",
-      order: 1,
-      active: true
+      id: "1",
+      text: "Tell me more about your pricing",
+      category: "pricing",
+      context: "product",
+      active: true,
     },
     {
-      id: "follow-2",
-      text: "Do you have any other questions about our service?",
-      condition: "end-of-explanation",
-      order: 2,
-      active: true
+      id: "2",
+      text: "How does your support work?",
+      category: "support",
+      context: "service",
+      active: true,
     },
     {
-      id: "follow-3",
-      text: "Would you like to schedule a demo with one of our specialists?",
-      condition: "mentions-features",
-      order: 3,
-      active: true
+      id: "3",
+      text: "Do you have a free trial?",
+      category: "pricing",
+      context: "product",
+      active: true,
     },
-    {
-      id: "follow-4",
-      text: "Can I help you with anything else today?",
-      condition: "always",
-      order: 4,
-      active: true
-    }
   ]);
   
-  const [currentFollowUp, setCurrentFollowUp] = useState<FollowUpSuggestion | null>(null);
-  const [followUpText, setFollowUpText] = useState("");
-  const [followUpCondition, setFollowUpCondition] = useState("always");
-  const [placementOption, setPlacementOption] = useState("end");
-  const [limitSuggestions, setLimitSuggestions] = useState<number[]>([2]);
-  const [testResponse, setTestResponse] = useState("");
-  
-  const conditions = [
-    { value: "always", label: "Always Show" },
-    { value: "mentions-product", label: "When User Mentions Product" },
-    { value: "mentions-price", label: "When User Mentions Price" },
-    { value: "mentions-features", label: "When User Mentions Features" },
-    { value: "new-conversation", label: "Start of Conversation" },
-    { value: "end-of-explanation", label: "After Explanation" },
-    { value: "question-answered", label: "After Question Answered" }
-  ];
+  // Define follow-up form
+  const configForm = useForm<z.infer<typeof followUpConfigSchema>>({
+    resolver: zodResolver(followUpConfigSchema),
+    defaultValues: {
+      enableFollowUp: true,
+      suggestionsCount: "3",
+      suggestionsStyle: "buttons",
+      buttonStyle: "rounded",
+      customPrompt: "",
+      contexts: ["product", "service", "pricing"],
+    },
+  });
 
-  const handleCreateFollowUp = () => {
-    if (followUpText.trim()) {
-      const newFollowUp: FollowUpSuggestion = {
-        id: `follow-${Date.now()}`,
-        text: followUpText,
-        condition: followUpCondition,
-        order: followUps.length + 1,
-        active: true
-      };
-      
-      setFollowUps([...followUps, newFollowUp]);
-      setFollowUpText("");
-      
-      toast({
-        title: "Follow-Up Created",
-        description: "Your new follow-up suggestion has been added."
-      });
-    }
-  };
+  // Define suggestion form
+  const suggestionForm = useForm<z.infer<typeof suggestionSchema>>({
+    resolver: zodResolver(suggestionSchema),
+    defaultValues: {
+      text: "",
+      category: "general",
+      context: "all",
+    },
+  });
 
-  const handleUpdateFollowUp = () => {
-    if (currentFollowUp && followUpText.trim()) {
-      const updatedFollowUps = followUps.map(item => 
-        item.id === currentFollowUp.id ? 
-          { ...item, text: followUpText, condition: followUpCondition } : 
-          item
-      );
-      
-      setFollowUps(updatedFollowUps);
-      setCurrentFollowUp(null);
-      setFollowUpText("");
-      setFollowUpCondition("always");
-      
-      toast({
-        title: "Follow-Up Updated",
-        description: "The follow-up suggestion has been updated."
-      });
-    }
-  };
-
-  const handleEditFollowUp = (followUp: FollowUpSuggestion) => {
-    setCurrentFollowUp(followUp);
-    setFollowUpText(followUp.text);
-    setFollowUpCondition(followUp.condition);
-  };
-
-  const handleDeleteFollowUp = (id: string) => {
-    setFollowUps(followUps.filter(item => item.id !== id));
-    if (currentFollowUp?.id === id) {
-      setCurrentFollowUp(null);
-      setFollowUpText("");
-      setFollowUpCondition("always");
-    }
+  const onConfigSubmit = (values: z.infer<typeof followUpConfigSchema>) => {
+    // In a real implementation, this would call an API to save the follow-up settings
+    console.log("Follow-up settings:", values);
     
     toast({
-      title: "Follow-Up Deleted",
-      description: "The follow-up suggestion has been removed."
+      title: "Follow-up settings saved",
+      description: "Your AI follow-up configuration has been updated.",
     });
   };
 
-  const handleMoveFollowUp = (id: string, direction: "up" | "down") => {
-    const index = followUps.findIndex(item => item.id === id);
-    if ((direction === "up" && index === 0) || 
-        (direction === "down" && index === followUps.length - 1)) {
-      return;
-    }
+  const onSuggestionSubmit = (values: z.infer<typeof suggestionSchema>) => {
+    // Add new suggestion
+    const newSuggestionItem: Suggestion = {
+      id: Date.now().toString(),
+      text: values.text,
+      category: values.category,
+      context: values.context,
+      active: true,
+    };
     
-    const newFollowUps = [...followUps];
-    const swapIndex = direction === "up" ? index - 1 : index + 1;
+    setSuggestions((prev) => [...prev, newSuggestionItem]);
+    suggestionForm.reset({
+      text: "",
+      category: "general",
+      context: "all",
+    });
     
-    // Swap items
-    [newFollowUps[index], newFollowUps[swapIndex]] = [newFollowUps[swapIndex], newFollowUps[index]];
-    
-    // Update order property
-    const updatedFollowUps = newFollowUps.map((item, idx) => ({
-      ...item,
-      order: idx + 1
-    }));
-    
-    setFollowUps(updatedFollowUps);
+    toast({
+      title: "Suggestion added",
+      description: "Your follow-up suggestion has been added to the list.",
+    });
   };
 
-  const handleToggleActive = (id: string, active: boolean) => {
-    const updatedFollowUps = followUps.map(item => 
-      item.id === id ? { ...item, active } : item
+  const toggleSuggestionStatus = (id: string) => {
+    setSuggestions((prev) => 
+      prev.map((suggestion) => 
+        suggestion.id === id 
+          ? { ...suggestion, active: !suggestion.active } 
+          : suggestion
+      )
     );
-    setFollowUps(updatedFollowUps);
   };
 
-  const handleTestFollowUps = () => {
-    // This would call the AI API in a real implementation
-    const activeFollowUps = followUps
-      .filter(item => item.active)
-      .sort((a, b) => a.order - b.order)
-      .slice(0, limitSuggestions[0]);
-      
-    const followUpTexts = activeFollowUps.map(item => `- ${item.text}`).join('\n');
-    
-    let simulatedResponse = 'This is a sample AI response that would include relevant information based on the user\'s query.';
-    
-    if (placementOption === 'inline') {
-      simulatedResponse += `\n\nHere are some follow-up questions you might consider:\n${followUpTexts}`;
-    } else if (placementOption === 'end') {
-      simulatedResponse += `\n\n${followUpTexts}`;
-    }
-    
-    setTestResponse(simulatedResponse);
-    
+  const deleteSuggestion = (id: string) => {
+    setSuggestions((prev) => prev.filter((suggestion) => suggestion.id !== id));
     toast({
-      title: "Test Generated",
-      description: "A sample response with follow-ups has been generated."
-    });
-  };
-
-  const handleSaveSettings = () => {
-    toast({
-      title: "Settings Saved",
-      description: "Your follow-up engine settings have been saved and will be applied to all AI responses."
+      title: "Suggestion deleted",
+      description: "The follow-up suggestion has been removed.",
     });
   };
 
   return (
-    <div className="grid gap-6 md:grid-cols-12">
-      <div className="md:col-span-7 space-y-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl flex items-center gap-2">
-                <Bell className="h-5 w-5" />
-                Follow-Up Suggestions
-              </CardTitle>
-            </div>
-            <CardDescription>
-              Create and manage follow-up questions for your AI assistant
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="border rounded-md">
-              <div className="grid grid-cols-8 p-3 border-b bg-muted/40 font-medium text-sm">
-                <div className="col-span-3">Suggestion</div>
-                <div className="col-span-2">Condition</div>
-                <div className="col-span-1 text-center">Active</div>
-                <div className="col-span-1 text-center">Order</div>
-                <div className="col-span-1 text-center">Actions</div>
-              </div>
-              
-              <div className="divide-y">
-                {followUps.length > 0 ? (
-                  followUps.map((followUp) => (
-                    <div key={followUp.id} className="grid grid-cols-8 p-3 items-center text-sm">
-                      <div className="col-span-3 text-sm">{followUp.text}</div>
-                      <div className="col-span-2 text-xs">
-                        {conditions.find(c => c.value === followUp.condition)?.label || followUp.condition}
-                      </div>
-                      <div className="col-span-1 text-center">
-                        <Checkbox 
-                          checked={followUp.active} 
-                          onCheckedChange={(checked) => 
-                            handleToggleActive(followUp.id, checked === true)
-                          }
-                        />
-                      </div>
-                      <div className="col-span-1 flex justify-center space-x-1">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          className="h-6 w-6 p-0"
-                          onClick={() => handleMoveFollowUp(followUp.id, "up")}
-                          disabled={followUp.order === 1}
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Follow-Up Engine</CardTitle>
+          <CardDescription>
+            Configure how your AI assistant suggests follow-up questions to users
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="settings" value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="settings">Configuration</TabsTrigger>
+              <TabsTrigger value="suggestions">Suggestions Library</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="settings" className="space-y-6 pt-6">
+              <Form {...configForm}>
+                <form onSubmit={configForm.handleSubmit(onConfigSubmit)} className="space-y-6">
+                  <FormField
+                    control={configForm.control}
+                    name="enableFollowUp"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">
+                            Enable Follow-Up Suggestions
+                          </FormLabel>
+                          <FormDescription>
+                            Show suggested follow-up questions after AI responses.
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={configForm.control}
+                    name="suggestionsCount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Number of Suggestions</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
                         >
-                          <MoveUp className="h-3 w-3" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          className="h-6 w-6 p-0"
-                          onClick={() => handleMoveFollowUp(followUp.id, "down")}
-                          disabled={followUp.order === followUps.length}
-                        >
-                          <MoveDown className="h-3 w-3" />
-                        </Button>
-                      </div>
-                      <div className="col-span-1 flex justify-center space-x-1">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          className="h-6 w-6 p-0"
-                          onClick={() => handleEditFollowUp(followUp)}
-                        >
-                          <Bell className="h-3 w-3" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          className="h-6 w-6 p-0"
-                          onClick={() => handleDeleteFollowUp(followUp.id)}
-                        >
-                          <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="p-8 text-center text-muted-foreground">
-                    No follow-up suggestions found. Create some to get started.
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select count" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">1 suggestion</SelectItem>
+                            <SelectItem value="2">2 suggestions</SelectItem>
+                            <SelectItem value="3">3 suggestions</SelectItem>
+                            <SelectItem value="4">4 suggestions</SelectItem>
+                            <SelectItem value="5">5 suggestions</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Maximum number of follow-up suggestions to show.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={configForm.control}
+                      name="suggestionsStyle"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Suggestions Style</FormLabel>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select style" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="buttons">Buttons</SelectItem>
+                              <SelectItem value="chips">Chips</SelectItem>
+                              <SelectItem value="links">Links</SelectItem>
+                              <SelectItem value="text">Plain Text</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={configForm.control}
+                      name="buttonStyle"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Button Style</FormLabel>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select style" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="rounded">Rounded</SelectItem>
+                              <SelectItem value="square">Square</SelectItem>
+                              <SelectItem value="outline">Outline</SelectItem>
+                              <SelectItem value="minimal">Minimal</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                )}
+                  
+                  <FormField
+                    control={configForm.control}
+                    name="customPrompt"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Custom Instructions</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Enter specific instructions for generating follow-up questions..."
+                            className="h-24"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Provide guidance to the AI on how to generate contextual follow-up questions.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => configForm.reset()}
+                    >
+                      Reset
+                    </Button>
+                    <Button type="submit">
+                      Save Configuration
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </TabsContent>
+            
+            <TabsContent value="suggestions" className="pt-6">
+              <div className="space-y-6">
+                <Form {...suggestionForm}>
+                  <form onSubmit={suggestionForm.handleSubmit(onSuggestionSubmit)} className="space-y-4 border rounded-md p-4">
+                    <h3 className="font-medium">Add New Suggestion</h3>
+                    
+                    <FormField
+                      control={suggestionForm.control}
+                      name="text"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Suggestion Text</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter suggestion text..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={suggestionForm.control}
+                        name="category"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Category</FormLabel>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select category" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="general">General</SelectItem>
+                                <SelectItem value="product">Product</SelectItem>
+                                <SelectItem value="pricing">Pricing</SelectItem>
+                                <SelectItem value="support">Support</SelectItem>
+                                <SelectItem value="feature">Feature</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={suggestionForm.control}
+                        name="context"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Display Context</FormLabel>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select context" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">All Contexts</SelectItem>
+                                <SelectItem value="product">Product Discussion</SelectItem>
+                                <SelectItem value="service">Service Discussion</SelectItem>
+                                <SelectItem value="pricing">Pricing Discussion</SelectItem>
+                                <SelectItem value="support">Support Discussion</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <div className="flex justify-end">
+                      <Button type="submit">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Suggestion
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+                
+                <div className="border rounded-md">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[50px]">Active</TableHead>
+                        <TableHead>Suggestion Text</TableHead>
+                        <TableHead className="w-[120px]">Category</TableHead>
+                        <TableHead className="w-[150px]">Context</TableHead>
+                        <TableHead className="w-[100px] text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {suggestions.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                            No suggestions added yet
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        suggestions.map((suggestion) => (
+                          <TableRow key={suggestion.id}>
+                            <TableCell>
+                              <Checkbox
+                                checked={suggestion.active}
+                                onCheckedChange={() => toggleSuggestionStatus(suggestion.id)}
+                              />
+                            </TableCell>
+                            <TableCell>{suggestion.text}</TableCell>
+                            <TableCell className="capitalize">{suggestion.category}</TableCell>
+                            <TableCell className="capitalize">{suggestion.context}</TableCell>
+                            <TableCell className="text-right">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => deleteSuggestion(suggestion.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">
-              {currentFollowUp ? "Edit Follow-Up Suggestion" : "Create New Follow-Up"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="follow-up-text">Suggestion Text</Label>
-                <Input
-                  id="follow-up-text"
-                  placeholder="Enter a follow-up question or suggestion"
-                  value={followUpText}
-                  onChange={(e) => setFollowUpText(e.target.value)}
-                />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Preview</CardTitle>
+          <CardDescription>
+            See how your follow-up suggestions will appear to users
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="border rounded-md p-4 bg-muted/50 space-y-3">
+            <div className="flex gap-2">
+              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
+                <MessageSquare className="h-4 w-4" />
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="condition">Display Condition</Label>
-                <Select 
-                  id="condition" 
-                  value={followUpCondition}
-                  onValueChange={setFollowUpCondition}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="When to show this suggestion" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {conditions.map((condition) => (
-                      <SelectItem key={condition.value} value={condition.value}>
-                        {condition.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Define when this follow-up suggestion should be presented to users
+              <div className="flex-1">
+                <p className="text-sm">
+                  Thank you for your question. Here's information about our product features. Is there anything else you'd like to know?
                 </p>
               </div>
             </div>
-          </CardContent>
-          <CardFooter>
-            <div className="flex space-x-2 w-full">
-              {currentFollowUp ? (
-                <>
-                  <Button 
-                    variant="outline" 
-                    className="flex-1"
-                    onClick={() => {
-                      setCurrentFollowUp(null);
-                      setFollowUpText("");
-                      setFollowUpCondition("always");
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    className="flex-1"
-                    onClick={handleUpdateFollowUp}
-                    disabled={!followUpText.trim()}
-                  >
-                    Update Follow-Up
-                  </Button>
-                </>
-              ) : (
-                <Button 
-                  className="w-full"
-                  onClick={handleCreateFollowUp}
-                  disabled={!followUpText.trim()}
-                >
-                  <Plus className="h-4 w-4 mr-2" /> Add Follow-Up
-                </Button>
-              )}
-            </div>
-          </CardFooter>
-        </Card>
-      </div>
-      
-      <div className="md:col-span-5 space-y-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-xl flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              Follow-Up Settings
-            </CardTitle>
-            <CardDescription>
-              Configure how follow-up suggestions work
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="placement">Placement Option</Label>
-                <RadioGroup 
-                  id="placement" 
-                  value={placementOption}
-                  onValueChange={setPlacementOption}
-                  className="grid gap-2"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="end" id="end" />
-                    <Label htmlFor="end" className="font-normal">End of response</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="inline" id="inline" />
-                    <Label htmlFor="inline" className="font-normal">Inline with clear header</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="dynamic" id="dynamic" />
-                    <Label htmlFor="dynamic" className="font-normal">Dynamic (context-dependent)</Label>
-                  </div>
-                </RadioGroup>
+            
+            {configForm.watch("enableFollowUp") && (
+              <div className="ml-10 flex flex-wrap gap-2 pt-1">
+                {suggestions
+                  .filter((s) => s.active)
+                  .slice(0, parseInt(configForm.watch("suggestionsCount")))
+                  .map((suggestion) => (
+                    <Button 
+                      key={suggestion.id} 
+                      variant={configForm.watch("suggestionsStyle") === "outline" ? "outline" : "secondary"} 
+                      size="sm"
+                      className={
+                        configForm.watch("buttonStyle") === "rounded" ? "rounded-full" :
+                        configForm.watch("buttonStyle") === "square" ? "rounded-none" :
+                        configForm.watch("buttonStyle") === "minimal" ? "bg-transparent hover:bg-secondary/80" :
+                        ""
+                      }
+                    >
+                      {suggestion.text}
+                    </Button>
+                  ))
+                }
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="limit-suggestions">
-                  Maximum suggestions shown: {limitSuggestions[0]}
-                </Label>
-                <Select 
-                  id="limit-suggestions"
-                  value={limitSuggestions[0].toString()}
-                  onValueChange={(value) => setLimitSuggestions([parseInt(value)])}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select maximum" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 suggestion</SelectItem>
-                    <SelectItem value="2">2 suggestions</SelectItem>
-                    <SelectItem value="3">3 suggestions</SelectItem>
-                    <SelectItem value="4">4 suggestions</SelectItem>
-                    <SelectItem value="5">5 suggestions</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="respect-branding" defaultChecked />
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="respect-branding" className="font-medium">
-                      Match brand voice
-                    </Label>
-                    <p className="text-muted-foreground text-xs">
-                      Apply brand voice settings to follow-up suggestions
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="clickable-suggestions" defaultChecked />
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="clickable-suggestions" className="font-medium">
-                      Make suggestions clickable
-                    </Label>
-                    <p className="text-muted-foreground text-xs">
-                      Allow users to click suggestions to submit them
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <Button className="w-full" onClick={handleSaveSettings}>
-                <Save className="h-4 w-4 mr-2" /> Save Settings
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Play className="h-4 w-4" />
-              Test Follow-Ups
-            </CardTitle>
-            <CardDescription>
-              Preview how follow-up suggestions will appear
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <Button 
-                className="w-full" 
-                onClick={handleTestFollowUps}
-              >
-                <Play className="h-4 w-4 mr-2" /> Generate Preview
-              </Button>
-              
-              {testResponse && (
-                <div className="border rounded-md p-4 bg-muted/30">
-                  <div className="whitespace-pre-wrap">
-                    {testResponse}
-                  </div>
-                </div>
-              )}
-              
-              <div className="space-y-2 text-muted-foreground text-sm">
-                <p>Active suggestions: {followUps.filter(f => f.active).length}</p>
-                <p>Maximum shown: {limitSuggestions[0]}</p>
-                <p>Placement: {placementOption === "end" ? "End of response" : placementOption === "inline" ? "Inline with header" : "Dynamic"}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
