@@ -15,10 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Checkbox,
-  CheckboxIndicator
-} from "@/components/ui/checkbox";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 import { userService, roleService } from "@/utils/api";
 
@@ -175,9 +172,7 @@ export function UserRoleAssignment() {
                           id={`role-${role.id}`}
                           checked={selectedRoles.includes(role.id)}
                           onCheckedChange={() => handleRoleToggle(role.id)}
-                        >
-                          <CheckboxIndicator />
-                        </Checkbox>
+                        />
                         <label 
                           htmlFor={`role-${role.id}`}
                           className="text-sm font-medium cursor-pointer"
