@@ -61,4 +61,81 @@ export const authService = {
   },
 };
 
+// User management services
+export const userService = {
+  getAllUsers: async () => {
+    return api.get("/api/users");
+  },
+  
+  getUser: async (id: number) => {
+    return api.get(`/api/users/${id}`);
+  },
+  
+  createUser: async (userData: { name: string; email: string; password: string; status: string }) => {
+    return api.post("/api/users", userData);
+  },
+  
+  updateUser: async (id: number, userData: { name?: string; email?: string; password?: string; status?: string }) => {
+    return api.put(`/api/users/${id}`, userData);
+  },
+  
+  deleteUser: async (id: number) => {
+    return api.delete(`/api/users/${id}`);
+  },
+  
+  assignRoles: async (userId: number, roles: number[]) => {
+    return api.post(`/api/users/${userId}/roles`, { roles });
+  }
+};
+
+// Role management services
+export const roleService = {
+  getAllRoles: async () => {
+    return api.get("/api/roles");
+  },
+  
+  getRole: async (id: number) => {
+    return api.get(`/api/roles/${id}`);
+  },
+  
+  createRole: async (roleData: { name: string; description?: string }) => {
+    return api.post("/api/roles", roleData);
+  },
+  
+  updateRole: async (id: number, roleData: { name?: string; description?: string }) => {
+    return api.put(`/api/roles/${id}`, roleData);
+  },
+  
+  deleteRole: async (id: number) => {
+    return api.delete(`/api/roles/${id}`);
+  },
+  
+  assignPermissions: async (roleId: number, permissions: number[]) => {
+    return api.post(`/api/roles/${roleId}/permissions`, { permissions });
+  }
+};
+
+// Permission management services
+export const permissionService = {
+  getAllPermissions: async () => {
+    return api.get("/api/permissions");
+  },
+  
+  getPermission: async (id: number) => {
+    return api.get(`/api/permissions/${id}`);
+  },
+  
+  createPermission: async (permissionData: { name: string; description?: string; category: string; type: string }) => {
+    return api.post("/api/permissions", permissionData);
+  },
+  
+  updatePermission: async (id: number, permissionData: { name?: string; description?: string; category?: string; type?: string }) => {
+    return api.put(`/api/permissions/${id}`, permissionData);
+  },
+  
+  deletePermission: async (id: number) => {
+    return api.delete(`/api/permissions/${id}`);
+  }
+};
+
 export default api;

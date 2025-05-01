@@ -1,231 +1,278 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
-  Table, TableHeader, TableRow, TableHead, 
-  TableBody, TableCell 
+  Table, 
+  TableHeader, 
+  TableRow, 
+  TableHead, 
+  TableBody, 
+  TableCell 
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { 
-  Dialog, DialogContent, DialogHeader, 
-  DialogTitle, DialogTrigger, DialogFooter
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { PlusCircle, Search, Edit, Trash2, ShieldCheck, Users } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { Pencil, Trash } from "lucide-react";
+import { roleService } from "@/utils/api";
 
-// Define interface for role object
 interface Role {
   id: number;
   name: string;
-  description: string;
-  userCount: number;
+  description: string | null;
+  users_count?: number;
+  created_at: string;
 }
 
-// Mock data for roles
-const mockRoles: Role[] = [
-  { id: 1, name: "Admin", description: "Full access to all features", userCount: 2 },
-  { id: 2, name: "Editor", description: "Can edit content but not system settings", userCount: 5 },
-  { id: 3, name: "Viewer", description: "Read-only access to content", userCount: 12 },
-  { id: 4, name: "Guest", description: "Limited access to public content", userCount: 30 },
-];
-
-const roleFormSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  description: z.string().optional().default(""),
-});
-
-type RoleFormValues = z.infer<typeof roleFormSchema>;
-
 export function RolesList() {
-  const [roles, setRoles] = useState<Role[]>(mockRoles);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isAddRoleOpen, setIsAddRoleOpen] = useState(false);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
-  
-  const form = useForm<RoleFormValues>({
-    resolver: zodResolver(roleFormSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-    },
+  const [newRole, setNewRole] = useState({
+    name: "",
+    description: "",
   });
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { toast } = useToast();
 
-  const filteredRoles = roles.filter(role => {
-    return role.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-           (role.description && role.description.toLowerCase().includes(searchQuery.toLowerCase()));
-  });
+  // Fetch roles on component mount
+  useEffect(() => {
+    fetchRoles();
+  }, []);
 
-  const openAddRoleDialog = () => {
-    form.reset({
-      name: "",
-      description: "",
-    });
-    setEditingRole(null);
-    setIsAddRoleOpen(true);
-  };
-
-  const openEditRoleDialog = (role: Role) => {
-    form.reset({
-      name: role.name,
-      description: role.description,
-    });
-    setEditingRole(role);
-    setIsAddRoleOpen(true);
-  };
-
-  const onSubmit = (data: RoleFormValues) => {
-    if (editingRole) {
-      // Update existing role
-      setRoles(roles.map(role => role.id === editingRole.id ? { 
-        ...role, 
-        name: data.name, 
-        description: data.description || "" 
-      } : role));
-    } else {
-      // Add new role
-      const newRole: Role = {
-        id: roles.length + 1,
-        name: data.name,
-        description: data.description || "",
-        userCount: 0
-      };
-      setRoles([...roles, newRole]);
+  const fetchRoles = async () => {
+    setIsLoading(true);
+    try {
+      const response = await roleService.getAllRoles();
+      setRoles(response.data);
+    } catch (error: any) {
+      console.error("Failed to fetch roles:", error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to load roles",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-    setIsAddRoleOpen(false);
   };
 
-  const deleteRole = (roleId: number) => {
-    setRoles(roles.filter(role => role.id !== roleId));
+  const handleAddRole = async () => {
+    try {
+      await roleService.createRole(newRole);
+      setIsAddDialogOpen(false);
+      setNewRole({ name: "", description: "" });
+      toast({
+        title: "Success",
+        description: "Role created successfully",
+      });
+      fetchRoles(); // Refresh the roles list
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to create role",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditRole = async () => {
+    if (!editingRole) return;
+    
+    const roleUpdate = {
+      name: editingRole.name,
+      description: editingRole.description,
+    };
+    
+    try {
+      await roleService.updateRole(editingRole.id, roleUpdate);
+      setIsEditDialogOpen(false);
+      toast({
+        title: "Success",
+        description: "Role updated successfully",
+      });
+      fetchRoles(); // Refresh the roles list
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to update role",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteRole = async () => {
+    if (!editingRole) return;
+    
+    try {
+      await roleService.deleteRole(editingRole.id);
+      setIsDeleteDialogOpen(false);
+      toast({
+        title: "Success",
+        description: "Role deleted successfully",
+      });
+      fetchRoles(); // Refresh the roles list
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to delete role",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
   };
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search roles..."
-            className="pl-8 w-[300px]"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        <Button onClick={openAddRoleDialog}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Role
-        </Button>
+        <h2 className="text-xl font-bold">Roles</h2>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>Add Role</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Role</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input 
+                  id="name" 
+                  value={newRole.name} 
+                  onChange={(e) => setNewRole({...newRole, name: e.target.value})} 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea 
+                  id="description" 
+                  value={newRole.description || ""} 
+                  onChange={(e) => setNewRole({...newRole, description: e.target.value})} 
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleAddRole}>Add Role</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <div className="rounded-md border">
+      {isLoading ? (
+        <div className="text-center py-4">Loading roles...</div>
+      ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Role Name</TableHead>
+              <TableHead>Name</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Users</TableHead>
+              <TableHead>Created</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredRoles.length === 0 ? (
+            {roles.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-4">
                   No roles found
                 </TableCell>
               </TableRow>
             ) : (
-              filteredRoles.map((role) => (
+              roles.map((role) => (
                 <TableRow key={role.id}>
-                  <TableCell className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
-                      <ShieldCheck className="h-4 w-4 text-purple-500" />
-                    </div>
-                    {role.name}
-                  </TableCell>
-                  <TableCell>{role.description}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                      {role.userCount}
-                    </div>
-                  </TableCell>
+                  <TableCell className="font-medium">{role.name}</TableCell>
+                  <TableCell>{role.description || "-"}</TableCell>
+                  <TableCell>{role.users_count || 0}</TableCell>
+                  <TableCell>{role.created_at ? formatDate(role.created_at) : "-"}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => openEditRoleDialog(role)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => deleteRole(role.id)}
-                      disabled={role.userCount > 0}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex justify-end gap-2">
+                      <Dialog open={isEditDialogOpen && editingRole?.id === role.id} onOpenChange={(open) => {
+                        setIsEditDialogOpen(open);
+                        if (open) setEditingRole(role);
+                      }}>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => setEditingRole(role)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Edit Role</DialogTitle>
+                          </DialogHeader>
+                          {editingRole && (
+                            <div className="space-y-4 py-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="edit-name">Name</Label>
+                                <Input 
+                                  id="edit-name" 
+                                  value={editingRole.name} 
+                                  onChange={(e) => setEditingRole({...editingRole, name: e.target.value})} 
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="edit-description">Description</Label>
+                                <Textarea 
+                                  id="edit-description" 
+                                  value={editingRole.description || ""} 
+                                  onChange={(e) => setEditingRole({...editingRole, description: e.target.value})} 
+                                />
+                              </div>
+                            </div>
+                          )}
+                          <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+                            <Button onClick={handleEditRole}>Update Role</Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                      
+                      <Dialog open={isDeleteDialogOpen && editingRole?.id === role.id} onOpenChange={(open) => {
+                        setIsDeleteDialogOpen(open);
+                        if (open) setEditingRole(role);
+                      }}>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => setEditingRole(role)}>
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Delete Role</DialogTitle>
+                          </DialogHeader>
+                          <div className="py-4">
+                            <p>Are you sure you want to delete role "{editingRole?.name}"?</p>
+                            <p className="text-sm text-muted-foreground mt-2">This action cannot be undone.</p>
+                          </div>
+                          <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+                            <Button variant="destructive" onClick={handleDeleteRole}>Delete</Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
-      </div>
-
-      <Dialog open={isAddRoleOpen} onOpenChange={setIsAddRoleOpen}>
-        <DialogContent className="sm:max-w-[525px]">
-          <DialogHeader>
-            <DialogTitle>{editingRole ? "Edit Role" : "Add New Role"}</DialogTitle>
-          </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Role Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter role name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Enter role description" 
-                        className="resize-none h-20" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <Button type="submit">{editingRole ? "Update Role" : "Add Role"}</Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+      )}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 
 import { Link, useLocation } from "react-router-dom";
-import { BarChart2, ChevronRight, Code, FileText, Layout, LogOut, MessageSquare, Settings, User, Users } from "lucide-react";
+import { BarChart2, ChevronRight, Code, FileText, Layout, MessageSquare, Settings, User, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LogoutButton } from "@/components/LogoutButton";
 
 type SidebarProps = {
   collapsed?: boolean;
@@ -117,13 +118,10 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
       </div>
 
       <div className="mt-auto p-4">
-        <Link
-          to="/logout"
-          className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors"
-        >
-          <LogOut className="h-4 w-4" />
-          {!collapsed && <span>Logout</span>}
-        </Link>
+        <LogoutButton
+          showText={!collapsed}
+          className="w-full justify-start"
+        />
       </div>
     </div>
   );

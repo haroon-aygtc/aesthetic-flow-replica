@@ -1,359 +1,351 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
-  Table, TableHeader, TableRow, TableHead, 
-  TableBody, TableCell 
+  Table, 
+  TableHeader, 
+  TableRow, 
+  TableHead, 
+  TableBody, 
+  TableCell 
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { 
-  Dialog, DialogContent, DialogHeader, 
-  DialogTitle, DialogFooter
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { PlusCircle, Search, Edit, Trash2, Key, FileText } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/components/ui/use-toast";
+import { Pencil, Trash } from "lucide-react";
+import { permissionService } from "@/utils/api";
 
-// Define interface for permission object
 interface Permission {
   id: number;
   name: string;
-  description: string;
+  description: string | null;
   category: string;
-  type: "read" | "write" | "delete";
+  type: string;
+  created_at: string;
 }
 
-// Mock data for permissions
-const mockPermissions: Permission[] = [
-  { id: 1, name: "view:users", description: "Can view user list", category: "Users", type: "read" },
-  { id: 2, name: "create:users", description: "Can create new users", category: "Users", type: "write" },
-  { id: 3, name: "edit:users", description: "Can edit user details", category: "Users", type: "write" },
-  { id: 4, name: "delete:users", description: "Can delete users", category: "Users", type: "delete" },
-  { id: 5, name: "view:content", description: "Can view content", category: "Content", type: "read" },
-  { id: 6, name: "edit:content", description: "Can edit content", category: "Content", type: "write" },
-  { id: 7, name: "view:settings", description: "Can view system settings", category: "Settings", type: "read" },
-  { id: 8, name: "edit:settings", description: "Can modify system settings", category: "Settings", type: "write" },
-];
-
-const permissionFormSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  description: z.string().optional().default(""),
-  category: z.string().min(1, { message: "Category is required" }),
-  type: z.enum(["read", "write", "delete"]),
-});
-
-type PermissionFormValues = z.infer<typeof permissionFormSchema>;
-
 export function PermissionsList() {
-  const [permissions, setPermissions] = useState<Permission[]>(mockPermissions);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isAddPermissionOpen, setIsAddPermissionOpen] = useState(false);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [editingPermission, setEditingPermission] = useState<Permission | null>(null);
-  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
-    "Users": true,
-    "Content": true,
-    "Settings": true
+  const [newPermission, setNewPermission] = useState({
+    name: "",
+    description: "",
+    category: "",
+    type: "read",
   });
-  
-  const form = useForm<PermissionFormValues>({
-    resolver: zodResolver(permissionFormSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      category: "",
-      type: "read",
-    },
-  });
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { toast } = useToast();
 
-  const filteredPermissions = permissions.filter(permission => {
-    return permission.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-           (permission.description && permission.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-           permission.category.toLowerCase().includes(searchQuery.toLowerCase());
-  });
+  // Fetch permissions on component mount
+  useEffect(() => {
+    fetchPermissions();
+  }, []);
 
-  // Group permissions by category
-  const permissionsByCategory = filteredPermissions.reduce((acc, permission) => {
-    if (!acc[permission.category]) {
-      acc[permission.category] = [];
+  const fetchPermissions = async () => {
+    setIsLoading(true);
+    try {
+      const response = await permissionService.getAllPermissions();
+      setPermissions(response.data);
+    } catch (error: any) {
+      console.error("Failed to fetch permissions:", error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to load permissions",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-    acc[permission.category].push(permission);
-    return acc;
-  }, {} as Record<string, Permission[]>);
-
-  const openAddPermissionDialog = () => {
-    form.reset({
-      name: "",
-      description: "",
-      category: "",
-      type: "read",
-    });
-    setEditingPermission(null);
-    setIsAddPermissionOpen(true);
   };
 
-  const openEditPermissionDialog = (permission: Permission) => {
-    form.reset({
-      name: permission.name,
-      description: permission.description,
-      category: permission.category,
-      type: permission.type,
-    });
-    setEditingPermission(permission);
-    setIsAddPermissionOpen(true);
-  };
-
-  const onSubmit = (data: PermissionFormValues) => {
-    if (editingPermission) {
-      // Update existing permission
-      setPermissions(permissions.map(permission => 
-        permission.id === editingPermission.id ? { 
-          ...permission, 
-          name: data.name,
-          description: data.description || "",
-          category: data.category,
-          type: data.type
-        } : permission
-      ));
-    } else {
-      // Add new permission
-      const newPermission: Permission = {
-        id: permissions.length + 1,
-        name: data.name,
-        description: data.description || "",
-        category: data.category,
-        type: data.type
-      };
-      setPermissions([...permissions, newPermission]);
+  const handleAddPermission = async () => {
+    try {
+      await permissionService.createPermission(newPermission);
+      setIsAddDialogOpen(false);
+      setNewPermission({ name: "", description: "", category: "", type: "read" });
+      toast({
+        title: "Success",
+        description: "Permission created successfully",
+      });
+      fetchPermissions(); // Refresh the permissions list
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to create permission",
+        variant: "destructive",
+      });
     }
-    setIsAddPermissionOpen(false);
   };
 
-  const deletePermission = (permissionId: number) => {
-    setPermissions(permissions.filter(permission => permission.id !== permissionId));
+  const handleEditPermission = async () => {
+    if (!editingPermission) return;
+    
+    const permissionUpdate = {
+      name: editingPermission.name,
+      description: editingPermission.description,
+      category: editingPermission.category,
+      type: editingPermission.type,
+    };
+    
+    try {
+      await permissionService.updatePermission(editingPermission.id, permissionUpdate);
+      setIsEditDialogOpen(false);
+      toast({
+        title: "Success",
+        description: "Permission updated successfully",
+      });
+      fetchPermissions(); // Refresh the permissions list
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to update permission",
+        variant: "destructive",
+      });
+    }
   };
 
-  const toggleCategory = (category: string) => {
-    setExpandedCategories({
-      ...expandedCategories,
-      [category]: !expandedCategories[category]
-    });
+  const handleDeletePermission = async () => {
+    if (!editingPermission) return;
+    
+    try {
+      await permissionService.deletePermission(editingPermission.id);
+      setIsDeleteDialogOpen(false);
+      toast({
+        title: "Success",
+        description: "Permission deleted successfully",
+      });
+      fetchPermissions(); // Refresh the permissions list
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to delete permission",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
   };
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search permissions..."
-            className="pl-8 w-[300px]"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        <Button onClick={openAddPermissionDialog}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Permission
-        </Button>
+        <h2 className="text-xl font-bold">Permissions</h2>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>Add Permission</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Permission</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input 
+                  id="name" 
+                  value={newPermission.name} 
+                  onChange={(e) => setNewPermission({...newPermission, name: e.target.value})} 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea 
+                  id="description" 
+                  value={newPermission.description || ""} 
+                  onChange={(e) => setNewPermission({...newPermission, description: e.target.value})} 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="category">Category</Label>
+                <Input 
+                  id="category" 
+                  value={newPermission.category} 
+                  onChange={(e) => setNewPermission({...newPermission, category: e.target.value})} 
+                  placeholder="e.g., users, posts, comments"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="type">Type</Label>
+                <Select 
+                  value={newPermission.type} 
+                  onValueChange={(value) => setNewPermission({...newPermission, type: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="read">Read</SelectItem>
+                    <SelectItem value="write">Write</SelectItem>
+                    <SelectItem value="delete">Delete</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleAddPermission}>Add Permission</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {Object.keys(permissionsByCategory).length === 0 ? (
-        <div className="rounded-md border py-8 text-center text-muted-foreground">
-          No permissions found
-        </div>
+      {isLoading ? (
+        <div className="text-center py-4">Loading permissions...</div>
       ) : (
-        Object.entries(permissionsByCategory).map(([category, categoryPermissions]) => (
-          <Collapsible 
-            key={category}
-            open={expandedCategories[category]} 
-            onOpenChange={() => toggleCategory(category)}
-            className="rounded-md border mb-4"
-          >
-            <CollapsibleTrigger className="flex justify-between items-center w-full px-4 py-3 hover:bg-muted/50">
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                <span className="font-medium">{category}</span>
-                <Badge variant="outline" className="ml-2">{categoryPermissions.length}</Badge>
-              </div>
-              <div>
-                {expandedCategories[category] ? "▼" : "►"}
-              </div>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <div className="border-t">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Permission Name</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {categoryPermissions.map((permission) => (
-                      <TableRow key={permission.id}>
-                        <TableCell className="flex items-center gap-2 font-mono text-sm">
-                          <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
-                            <Key className="h-4 w-4 text-amber-500" />
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {permissions.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-4">
+                  No permissions found
+                </TableCell>
+              </TableRow>
+            ) : (
+              permissions.map((permission) => (
+                <TableRow key={permission.id}>
+                  <TableCell className="font-medium">{permission.name}</TableCell>
+                  <TableCell>{permission.description || "-"}</TableCell>
+                  <TableCell>{permission.category}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      permission.type === 'read' 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : permission.type === 'write' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                    }`}>
+                      {permission.type}
+                    </span>
+                  </TableCell>
+                  <TableCell>{permission.created_at ? formatDate(permission.created_at) : "-"}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Dialog open={isEditDialogOpen && editingPermission?.id === permission.id} onOpenChange={(open) => {
+                        setIsEditDialogOpen(open);
+                        if (open) setEditingPermission(permission);
+                      }}>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => setEditingPermission(permission)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Edit Permission</DialogTitle>
+                          </DialogHeader>
+                          {editingPermission && (
+                            <div className="space-y-4 py-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="edit-name">Name</Label>
+                                <Input 
+                                  id="edit-name" 
+                                  value={editingPermission.name} 
+                                  onChange={(e) => setEditingPermission({...editingPermission, name: e.target.value})} 
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="edit-description">Description</Label>
+                                <Textarea 
+                                  id="edit-description" 
+                                  value={editingPermission.description || ""} 
+                                  onChange={(e) => setEditingPermission({...editingPermission, description: e.target.value})} 
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="edit-category">Category</Label>
+                                <Input 
+                                  id="edit-category" 
+                                  value={editingPermission.category} 
+                                  onChange={(e) => setEditingPermission({...editingPermission, category: e.target.value})} 
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="edit-type">Type</Label>
+                                <Select 
+                                  value={editingPermission.type} 
+                                  onValueChange={(value) => setEditingPermission({...editingPermission, type: value})}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="read">Read</SelectItem>
+                                    <SelectItem value="write">Write</SelectItem>
+                                    <SelectItem value="delete">Delete</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          )}
+                          <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+                            <Button onClick={handleEditPermission}>Update Permission</Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                      
+                      <Dialog open={isDeleteDialogOpen && editingPermission?.id === permission.id} onOpenChange={(open) => {
+                        setIsDeleteDialogOpen(open);
+                        if (open) setEditingPermission(permission);
+                      }}>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => setEditingPermission(permission)}>
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Delete Permission</DialogTitle>
+                          </DialogHeader>
+                          <div className="py-4">
+                            <p>Are you sure you want to delete permission "{editingPermission?.name}"?</p>
+                            <p className="text-sm text-muted-foreground mt-2">This action cannot be undone.</p>
                           </div>
-                          {permission.name}
-                        </TableCell>
-                        <TableCell>{permission.description}</TableCell>
-                        <TableCell>
-                          <Badge 
-                            variant={permission.type === "read" ? "secondary" : 
-                                   permission.type === "write" ? "default" : 
-                                   "destructive"}
-                            className="capitalize"
-                          >
-                            {permission.type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="icon" onClick={() => openEditPermissionDialog(permission)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => deletePermission(permission.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-        ))
+                          <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+                            <Button variant="destructive" onClick={handleDeletePermission}>Delete</Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       )}
-
-      <Dialog open={isAddPermissionOpen} onOpenChange={setIsAddPermissionOpen}>
-        <DialogContent className="sm:max-w-[525px]">
-          <DialogHeader>
-            <DialogTitle>
-              {editingPermission ? "Edit Permission" : "Add New Permission"}
-            </DialogTitle>
-          </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Permission Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="action:resource (e.g. view:users)" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Describe what this permission allows" 
-                        className="resize-none h-20" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Group this permission under a category" 
-                        {...field} 
-                        list="categories"
-                      />
-                    </FormControl>
-                    <datalist id="categories">
-                      {Array.from(new Set(permissions.map(p => p.category))).map(cat => (
-                        <option key={cat} value={cat} />
-                      ))}
-                    </datalist>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>Permission Type</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex flex-col space-y-1"
-                      >
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="read" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Read (view only access)
-                          </FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="write" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Write (create and update)
-                          </FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="delete" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Delete (permanently remove)
-                          </FormLabel>
-                        </FormItem>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <Button type="submit">
-                  {editingPermission ? "Update Permission" : "Add Permission"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
