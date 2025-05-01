@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import WidgetConfig from "./pages/WidgetConfig";
 import ContextRules from "./pages/ContextRules";
 import Templates from "./pages/Templates";
+import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,9 @@ const App = () => (
             <Route path="/dashboard/widget-config" element={<WidgetConfig />} />
             <Route path="/dashboard/context-rules" element={<ContextRules />} />
             <Route path="/dashboard/templates" element={<Templates />} />
+            <Route path="/dashboard/user-management" element={<UserManagement />} />
+            <Route path="/dashboard/embed-code" element={<NotFound />} /> {/* Placeholder */}
+            <Route path="/dashboard/analytics" element={<NotFound />} /> {/* Placeholder */}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
