@@ -25,8 +25,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { PlusCircle, Search, UserRound, Edit, Trash2, ShieldCheck } from "lucide-react";
 
+// Define interface for user object
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  status: string;
+  role: string;
+}
+
 // Mock data for users
-const mockUsers = [
+const mockUsers: User[] = [
   { id: 1, name: "John Doe", email: "john@example.com", status: "Active", role: "Admin" },
   { id: 2, name: "Jane Smith", email: "jane@example.com", status: "Active", role: "Editor" },
   { id: 3, name: "Robert Johnson", email: "robert@example.com", status: "Inactive", role: "Viewer" },
@@ -38,22 +47,25 @@ const userFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(8, { message: "Password must be at least 8 characters." }).optional(),
-  status: z.string(),
-  role: z.string().optional(),
+  status: z.string().default("Active"),
+  role: z.string().optional().default("Viewer"),
 });
 
+type UserFormValues = z.infer<typeof userFormSchema>;
+
 export function UsersList() {
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState<User[]>(mockUsers);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<any>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   
-  const form = useForm<z.infer<typeof userFormSchema>>({
+  const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
       name: "",
       email: "",
       status: "Active",
+      role: "Viewer",
     },
   });
 
@@ -68,12 +80,13 @@ export function UsersList() {
       email: "",
       password: "",
       status: "Active",
+      role: "Viewer",
     });
     setEditingUser(null);
     setIsAddUserOpen(true);
   };
 
-  const openEditUserDialog = (user: any) => {
+  const openEditUserDialog = (user: User) => {
     form.reset({
       name: user.name,
       email: user.email,
@@ -84,15 +97,23 @@ export function UsersList() {
     setIsAddUserOpen(true);
   };
 
-  const onSubmit = (data: z.infer<typeof userFormSchema>) => {
+  const onSubmit = (data: UserFormValues) => {
     if (editingUser) {
       // Update existing user
-      setUsers(users.map(user => user.id === editingUser.id ? { ...user, ...data } : user));
+      setUsers(users.map(user => user.id === editingUser.id ? {
+        ...user,
+        name: data.name,
+        email: data.email,
+        status: data.status,
+        role: data.role || user.role
+      } : user));
     } else {
       // Add new user
-      const newUser = {
+      const newUser: User = {
         id: users.length + 1,
-        ...data,
+        name: data.name,
+        email: data.email,
+        status: data.status,
         role: data.role || "Viewer"
       };
       setUsers([...users, newUser]);

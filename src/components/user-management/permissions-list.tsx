@@ -27,8 +27,17 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
+// Define interface for permission object
+interface Permission {
+  id: number;
+  name: string;
+  description: string;
+  category: string;
+  type: "read" | "write" | "delete";
+}
+
 // Mock data for permissions
-const mockPermissions = [
+const mockPermissions: Permission[] = [
   { id: 1, name: "view:users", description: "Can view user list", category: "Users", type: "read" },
   { id: 2, name: "create:users", description: "Can create new users", category: "Users", type: "write" },
   { id: 3, name: "edit:users", description: "Can edit user details", category: "Users", type: "write" },
@@ -41,23 +50,25 @@ const mockPermissions = [
 
 const permissionFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  description: z.string().optional(),
+  description: z.string().optional().default(""),
   category: z.string().min(1, { message: "Category is required" }),
   type: z.enum(["read", "write", "delete"]),
 });
 
+type PermissionFormValues = z.infer<typeof permissionFormSchema>;
+
 export function PermissionsList() {
-  const [permissions, setPermissions] = useState(mockPermissions);
+  const [permissions, setPermissions] = useState<Permission[]>(mockPermissions);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddPermissionOpen, setIsAddPermissionOpen] = useState(false);
-  const [editingPermission, setEditingPermission] = useState<any>(null);
+  const [editingPermission, setEditingPermission] = useState<Permission | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
     "Users": true,
     "Content": true,
     "Settings": true
   });
   
-  const form = useForm<z.infer<typeof permissionFormSchema>>({
+  const form = useForm<PermissionFormValues>({
     resolver: zodResolver(permissionFormSchema),
     defaultValues: {
       name: "",
@@ -80,7 +91,7 @@ export function PermissionsList() {
     }
     acc[permission.category].push(permission);
     return acc;
-  }, {} as Record<string, typeof mockPermissions>);
+  }, {} as Record<string, Permission[]>);
 
   const openAddPermissionDialog = () => {
     form.reset({
@@ -93,7 +104,7 @@ export function PermissionsList() {
     setIsAddPermissionOpen(true);
   };
 
-  const openEditPermissionDialog = (permission: any) => {
+  const openEditPermissionDialog = (permission: Permission) => {
     form.reset({
       name: permission.name,
       description: permission.description,
@@ -104,17 +115,26 @@ export function PermissionsList() {
     setIsAddPermissionOpen(true);
   };
 
-  const onSubmit = (data: z.infer<typeof permissionFormSchema>) => {
+  const onSubmit = (data: PermissionFormValues) => {
     if (editingPermission) {
       // Update existing permission
       setPermissions(permissions.map(permission => 
-        permission.id === editingPermission.id ? { ...permission, ...data } : permission
+        permission.id === editingPermission.id ? { 
+          ...permission, 
+          name: data.name,
+          description: data.description || "",
+          category: data.category,
+          type: data.type
+        } : permission
       ));
     } else {
       // Add new permission
-      const newPermission = {
+      const newPermission: Permission = {
         id: permissions.length + 1,
-        ...data,
+        name: data.name,
+        description: data.description || "",
+        category: data.category,
+        type: data.type
       };
       setPermissions([...permissions, newPermission]);
     }

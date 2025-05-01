@@ -25,8 +25,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { PlusCircle, Search, Edit, Trash2, ShieldCheck, Users } from "lucide-react";
 
+// Define interface for role object
+interface Role {
+  id: number;
+  name: string;
+  description: string;
+  userCount: number;
+}
+
 // Mock data for roles
-const mockRoles = [
+const mockRoles: Role[] = [
   { id: 1, name: "Admin", description: "Full access to all features", userCount: 2 },
   { id: 2, name: "Editor", description: "Can edit content but not system settings", userCount: 5 },
   { id: 3, name: "Viewer", description: "Read-only access to content", userCount: 12 },
@@ -35,16 +43,18 @@ const mockRoles = [
 
 const roleFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  description: z.string().optional(),
+  description: z.string().optional().default(""),
 });
 
+type RoleFormValues = z.infer<typeof roleFormSchema>;
+
 export function RolesList() {
-  const [roles, setRoles] = useState(mockRoles);
+  const [roles, setRoles] = useState<Role[]>(mockRoles);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddRoleOpen, setIsAddRoleOpen] = useState(false);
-  const [editingRole, setEditingRole] = useState<any>(null);
+  const [editingRole, setEditingRole] = useState<Role | null>(null);
   
-  const form = useForm<z.infer<typeof roleFormSchema>>({
+  const form = useForm<RoleFormValues>({
     resolver: zodResolver(roleFormSchema),
     defaultValues: {
       name: "",
@@ -66,7 +76,7 @@ export function RolesList() {
     setIsAddRoleOpen(true);
   };
 
-  const openEditRoleDialog = (role: any) => {
+  const openEditRoleDialog = (role: Role) => {
     form.reset({
       name: role.name,
       description: role.description,
@@ -75,15 +85,20 @@ export function RolesList() {
     setIsAddRoleOpen(true);
   };
 
-  const onSubmit = (data: z.infer<typeof roleFormSchema>) => {
+  const onSubmit = (data: RoleFormValues) => {
     if (editingRole) {
       // Update existing role
-      setRoles(roles.map(role => role.id === editingRole.id ? { ...role, ...data } : role));
+      setRoles(roles.map(role => role.id === editingRole.id ? { 
+        ...role, 
+        name: data.name, 
+        description: data.description || "" 
+      } : role));
     } else {
       // Add new role
-      const newRole = {
+      const newRole: Role = {
         id: roles.length + 1,
-        ...data,
+        name: data.name,
+        description: data.description || "",
         userCount: 0
       };
       setRoles([...roles, newRole]);
