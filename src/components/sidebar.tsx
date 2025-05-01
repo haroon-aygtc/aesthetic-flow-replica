@@ -41,7 +41,7 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
   };
 
   return (
-    <div className={cn("chat-sidebar", collapsed && "w-16")}>
+    <div className={cn("chat-sidebar min-w-[16rem] w-64 bg-slate-800 text-white border-r border-gray-700", collapsed && "w-16")}>
       <div className="flex h-16 items-center border-b border-sidebar-border px-4">
         <Link to="/dashboard" className="flex items-center gap-2">
           <MessageSquare className="h-6 w-6 text-white" />

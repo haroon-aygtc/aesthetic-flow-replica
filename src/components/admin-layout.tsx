@@ -20,7 +20,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar />
       
-      <div className="flex-1">
+      <div className="flex-1 max-w-full">
         {/* Top navigation */}
         <header className="border-b bg-background sticky top-0 z-30">
           <div className="flex h-16 items-center justify-between px-4 md:px-6">
@@ -174,7 +174,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </div>
         
         {/* Main content */}
-        <main className="px-4 md:px-6 py-8">
+        <main className="px-4 md:px-6 py-8 w-full">
           {children}
         </main>
       </div>
