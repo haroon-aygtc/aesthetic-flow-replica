@@ -1,7 +1,7 @@
-import { Sidebar } from "@/components/sidebar";
-import { Bell, Copy, File, FileEdit, Plus, Search, Settings, Trash2, User } from "lucide-react";
+
+import { AdminLayout } from "@/components/admin-layout";
+import { File, FileEdit, Copy, Trash2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -40,320 +40,275 @@ const Templates = () => {
   ];
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar />
-      
-      <div className="flex-1 chat-content">
-        {/* Top navigation */}
-        <header className="border-b bg-background sticky top-0 z-30">
-          <div className="flex h-16 items-center justify-between px-4 md:px-6">
-            <div className="flex items-center">
-              <h1 className="text-lg md:text-xl font-semibold">Admin Dashboard</h1>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="search"
-                  placeholder="Search..."
-                  className="rounded-md border border-input pl-8 pr-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
-              </div>
-              
-              <Button size="icon" variant="ghost" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-primary" />
-              </Button>
-              
-              <Button size="icon" variant="ghost">
-                <Settings className="h-5 w-5" />
-              </Button>
-              
-              <ThemeToggle />
-              
-              <Button variant="ghost" className="gap-2">
-                <User className="h-5 w-5" />
-                <span className="hidden md:inline">Admin User</span>
-              </Button>
-            </div>
+    <AdminLayout>
+      <div className="flex flex-col">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">Prompt Templates</h1>
+            <p className="text-muted-foreground">
+              Manage and customize AI prompt templates for your chat system
+            </p>
           </div>
-        </header>
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />
+            Create Template
+          </Button>
+        </div>
         
-        {/* Main content */}
-        <main className="px-4 md:px-6 py-8">
-          <div className="flex flex-col">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="text-2xl font-bold">Prompt Templates</h1>
-                <p className="text-muted-foreground">
-                  Manage and customize AI prompt templates for your chat system
-                </p>
-              </div>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Create Template
-              </Button>
+        <Tabs defaultValue="all-templates" className="w-full">
+          <TabsList className="mb-8">
+            <TabsTrigger value="all-templates">All Templates</TabsTrigger>
+            <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="uae-gov">Uae-Gov</TabsTrigger>
+            <TabsTrigger value="support">Support</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="all-templates" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {templates.map(template => (
+                <Card key={template.id} className="overflow-hidden">
+                  <div className="border-b p-4 flex items-center justify-between">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-primary/10 p-2 rounded-md">
+                        <File className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium">{template.title}</h3>
+                        <div className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-sm inline-block mt-1">
+                          Category: {template.category}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button size="icon" variant="ghost" className="h-8 w-8">
+                        <FileEdit className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-8 w-8">
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <CardContent className="p-4">
+                    <p className="text-sm mb-4">{template.description}</p>
+                    
+                    <div className="bg-secondary/50 rounded-md p-3 mb-4">
+                      <pre className="text-xs overflow-auto whitespace-pre-wrap">
+                        {template.prompt}
+                      </pre>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <p className="text-sm font-medium mb-2">Variables:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {template.variables.map((variable, i) => (
+                          <span key={i} className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-md">
+                            {variable}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Created: {template.createdAt}</span>
+                      <span>Updated: {template.updatedAt}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-            
-            <Tabs defaultValue="all-templates" className="w-full">
-              <TabsList className="mb-8">
-                <TabsTrigger value="all-templates">All Templates</TabsTrigger>
-                <TabsTrigger value="general">General</TabsTrigger>
-                <TabsTrigger value="uae-gov">Uae-Gov</TabsTrigger>
-                <TabsTrigger value="support">Support</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="all-templates" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {templates.map(template => (
-                    <Card key={template.id} className="overflow-hidden">
-                      <div className="border-b p-4 flex items-center justify-between">
-                        <div className="flex items-start gap-3">
-                          <div className="bg-primary/10 p-2 rounded-md">
-                            <File className="h-5 w-5 text-primary" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium">{template.title}</h3>
-                            <div className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-sm inline-block mt-1">
-                              Category: {template.category}
-                            </div>
+          </TabsContent>
+          
+          <TabsContent value="general" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {templates
+                .filter(t => t.category === "General")
+                .map(template => (
+                  <Card key={template.id} className="overflow-hidden">
+                    <div className="border-b p-4 flex items-center justify-between">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-primary/10 p-2 rounded-md">
+                          <File className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium">{template.title}</h3>
+                          <div className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-sm inline-block mt-1">
+                            Category: {template.category}
                           </div>
                         </div>
-                        <div className="flex gap-1">
-                          <Button size="icon" variant="ghost" className="h-8 w-8">
-                            <FileEdit className="h-4 w-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8">
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" className="h-8 w-8">
+                          <FileEdit className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8">
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <CardContent className="p-4">
+                      <p className="text-sm mb-4">{template.description}</p>
+                      
+                      <div className="bg-secondary/50 rounded-md p-3 mb-4">
+                        <pre className="text-xs overflow-auto whitespace-pre-wrap">
+                          {template.prompt}
+                        </pre>
+                      </div>
+                      
+                      <div className="mb-4">
+                        <p className="text-sm font-medium mb-2">Variables:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {template.variables.map((variable, i) => (
+                            <span key={i} className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-md">
+                              {variable}
+                            </span>
+                          ))}
                         </div>
                       </div>
                       
-                      <CardContent className="p-4">
-                        <p className="text-sm mb-4">{template.description}</p>
-                        
-                        <div className="bg-secondary/50 rounded-md p-3 mb-4">
-                          <pre className="text-xs overflow-auto whitespace-pre-wrap">
-                            {template.prompt}
-                          </pre>
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Created: {template.createdAt}</span>
+                        <span>Updated: {template.updatedAt}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="uae-gov" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {templates
+                .filter(t => t.category === "Uae-Gov")
+                .map(template => (
+                  <Card key={template.id} className="overflow-hidden">
+                    {/* Same content structure as above */}
+                    <div className="border-b p-4 flex items-center justify-between">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-primary/10 p-2 rounded-md">
+                          <File className="h-5 w-5 text-primary" />
                         </div>
-                        
-                        <div className="mb-4">
-                          <p className="text-sm font-medium mb-2">Variables:</p>
-                          <div className="flex flex-wrap gap-2">
-                            {template.variables.map((variable, i) => (
-                              <span key={i} className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-md">
-                                {variable}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>Created: {template.createdAt}</span>
-                          <span>Updated: {template.updatedAt}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="general" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {templates
-                    .filter(t => t.category === "General")
-                    .map(template => (
-                      <Card key={template.id} className="overflow-hidden">
-                        <div className="border-b p-4 flex items-center justify-between">
-                          <div className="flex items-start gap-3">
-                            <div className="bg-primary/10 p-2 rounded-md">
-                              <File className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                              <h3 className="font-medium">{template.title}</h3>
-                              <div className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-sm inline-block mt-1">
-                                Category: {template.category}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex gap-1">
-                            <Button size="icon" variant="ghost" className="h-8 w-8">
-                              <FileEdit className="h-4 w-4" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="h-8 w-8">
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                        <div>
+                          <h3 className="font-medium">{template.title}</h3>
+                          <div className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-sm inline-block mt-1">
+                            Category: {template.category}
                           </div>
                         </div>
-                        
-                        <CardContent className="p-4">
-                          <p className="text-sm mb-4">{template.description}</p>
-                          
-                          <div className="bg-secondary/50 rounded-md p-3 mb-4">
-                            <pre className="text-xs overflow-auto whitespace-pre-wrap">
-                              {template.prompt}
-                            </pre>
-                          </div>
-                          
-                          <div className="mb-4">
-                            <p className="text-sm font-medium mb-2">Variables:</p>
-                            <div className="flex flex-wrap gap-2">
-                              {template.variables.map((variable, i) => (
-                                <span key={i} className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-md">
-                                  {variable}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                          
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>Created: {template.createdAt}</span>
-                            <span>Updated: {template.updatedAt}</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                  ))}
-                </div>
-              </TabsContent>
-              
-              {/* Other category tabs would follow the same pattern - omitted for brevity */}
-              
-              <TabsContent value="uae-gov" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {templates
-                    .filter(t => t.category === "Uae-Gov")
-                    .map(template => (
-                      <Card key={template.id} className="overflow-hidden">
-                        {/* Same content structure as above */}
-                        <div className="border-b p-4 flex items-center justify-between">
-                          <div className="flex items-start gap-3">
-                            <div className="bg-primary/10 p-2 rounded-md">
-                              <File className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                              <h3 className="font-medium">{template.title}</h3>
-                              <div className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-sm inline-block mt-1">
-                                Category: {template.category}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex gap-1">
-                            <Button size="icon" variant="ghost" className="h-8 w-8">
-                              <FileEdit className="h-4 w-4" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="h-8 w-8">
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" className="h-8 w-8">
+                          <FileEdit className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8">
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <CardContent className="p-4">
+                      <p className="text-sm mb-4">{template.description}</p>
+                      
+                      <div className="bg-secondary/50 rounded-md p-3 mb-4">
+                        <pre className="text-xs overflow-auto whitespace-pre-wrap">
+                          {template.prompt}
+                        </pre>
+                      </div>
+                      
+                      <div className="mb-4">
+                        <p className="text-sm font-medium mb-2">Variables:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {template.variables.map((variable, i) => (
+                            <span key={i} className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-md">
+                              {variable}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Created: {template.createdAt}</span>
+                        <span>Updated: {template.updatedAt}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="support" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {templates
+                .filter(t => t.category === "Support")
+                .map(template => (
+                  <Card key={template.id} className="overflow-hidden">
+                    {/* Same content structure as above */}
+                    <div className="border-b p-4 flex items-center justify-between">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-primary/10 p-2 rounded-md">
+                          <File className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium">{template.title}</h3>
+                          <div className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-sm inline-block mt-1">
+                            Category: {template.category}
                           </div>
                         </div>
-                        
-                        <CardContent className="p-4">
-                          <p className="text-sm mb-4">{template.description}</p>
-                          
-                          <div className="bg-secondary/50 rounded-md p-3 mb-4">
-                            <pre className="text-xs overflow-auto whitespace-pre-wrap">
-                              {template.prompt}
-                            </pre>
-                          </div>
-                          
-                          <div className="mb-4">
-                            <p className="text-sm font-medium mb-2">Variables:</p>
-                            <div className="flex flex-wrap gap-2">
-                              {template.variables.map((variable, i) => (
-                                <span key={i} className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-md">
-                                  {variable}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                          
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>Created: {template.createdAt}</span>
-                            <span>Updated: {template.updatedAt}</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                  ))}
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="support" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {templates
-                    .filter(t => t.category === "Support")
-                    .map(template => (
-                      <Card key={template.id} className="overflow-hidden">
-                        {/* Same content structure as above */}
-                        <div className="border-b p-4 flex items-center justify-between">
-                          <div className="flex items-start gap-3">
-                            <div className="bg-primary/10 p-2 rounded-md">
-                              <File className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                              <h3 className="font-medium">{template.title}</h3>
-                              <div className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-sm inline-block mt-1">
-                                Category: {template.category}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex gap-1">
-                            <Button size="icon" variant="ghost" className="h-8 w-8">
-                              <FileEdit className="h-4 w-4" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="h-8 w-8">
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" className="h-8 w-8">
+                          <FileEdit className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8">
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <CardContent className="p-4">
+                      <p className="text-sm mb-4">{template.description}</p>
+                      
+                      <div className="bg-secondary/50 rounded-md p-3 mb-4">
+                        <pre className="text-xs overflow-auto whitespace-pre-wrap">
+                          {template.prompt}
+                        </pre>
+                      </div>
+                      
+                      <div className="mb-4">
+                        <p className="text-sm font-medium mb-2">Variables:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {template.variables.map((variable, i) => (
+                            <span key={i} className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-md">
+                              {variable}
+                            </span>
+                          ))}
                         </div>
-                        
-                        <CardContent className="p-4">
-                          <p className="text-sm mb-4">{template.description}</p>
-                          
-                          <div className="bg-secondary/50 rounded-md p-3 mb-4">
-                            <pre className="text-xs overflow-auto whitespace-pre-wrap">
-                              {template.prompt}
-                            </pre>
-                          </div>
-                          
-                          <div className="mb-4">
-                            <p className="text-sm font-medium mb-2">Variables:</p>
-                            <div className="flex flex-wrap gap-2">
-                              {template.variables.map((variable, i) => (
-                                <span key={i} className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-md">
-                                  {variable}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                          
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>Created: {template.createdAt}</span>
-                            <span>Updated: {template.updatedAt}</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                  ))}
-                </div>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </main>
+                      </div>
+                      
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Created: {template.createdAt}</span>
+                        <span>Updated: {template.updatedAt}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 
