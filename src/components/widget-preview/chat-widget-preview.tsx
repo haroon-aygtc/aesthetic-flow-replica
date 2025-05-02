@@ -36,6 +36,7 @@ export function ChatWidgetPreview({ settings = {}, widgetId = "preview_widget" }
     inputPlaceholder,
     sendButtonText,
     buttonPosition,
+    position,
     deviceSizes,
     toggleChat,
     toggleFullScreen,
