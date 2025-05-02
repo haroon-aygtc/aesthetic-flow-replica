@@ -17,7 +17,7 @@ return [
     
     'allowed_methods' => ['*'],
     
-    'allowed_origins' => ['http://localhost:5173'], // Update with your frontend URL
+    'allowed_origins' => ['http://localhost:8080', env('FRONTEND_URL', 'http://localhost:8080')],
     
     'allowed_origins_patterns' => [],
     
