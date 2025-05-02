@@ -1,7 +1,18 @@
 
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Menu } from "lucide-react";
+import { 
+  BarChart2, 
+  Code, 
+  FileText, 
+  Home, 
+  Layout, 
+  MessageSquare, 
+  Palette, 
+  Settings, 
+  User, 
+  Users 
+} from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -55,6 +66,7 @@ export function Sidebar() {
                   isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                 }`
               }>
+                <Home className="mr-2 h-4 w-4" />
                 Dashboard
               </NavLink>
             </li>
@@ -69,6 +81,7 @@ export function Sidebar() {
                       isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`
                   }>
+                    <Palette className="mr-2 h-4 w-4" />
                     Widget Configuration
                   </NavLink>
                 </li>
@@ -78,6 +91,7 @@ export function Sidebar() {
                       isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`
                   }>
+                    <Code className="mr-2 h-4 w-4" />
                     Embed Code
                   </NavLink>
                 </li>
@@ -94,6 +108,7 @@ export function Sidebar() {
                       isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`
                   }>
+                    <Settings className="mr-2 h-4 w-4" />
                     AI Configuration
                   </NavLink>
                 </li>
@@ -103,6 +118,7 @@ export function Sidebar() {
                       isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`
                   }>
+                    <FileText className="mr-2 h-4 w-4" />
                     Response Templates
                   </NavLink>
                 </li>
@@ -112,6 +128,7 @@ export function Sidebar() {
                       isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`
                   }>
+                    <MessageSquare className="mr-2 h-4 w-4" />
                     Context Rules
                   </NavLink>
                 </li>
@@ -128,6 +145,7 @@ export function Sidebar() {
                       isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`
                   }>
+                    <Users className="mr-2 h-4 w-4" />
                     User Management
                   </NavLink>
                 </li>

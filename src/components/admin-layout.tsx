@@ -139,44 +139,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             </div>
           </div>
           
-          {/* Secondary navigation */}
-          <div className="bg-background border-b">
-            <div className="flex items-center overflow-x-auto px-4 md:px-6 py-2 gap-4 text-sm">
-              <Button variant="ghost" size="sm" className="gap-1 rounded-md">
-                <User className="h-4 w-4" />
-                Overview
-              </Button>
-              <Button variant="ghost" size="sm" className="gap-1 rounded-md">
-                <Settings className="h-4 w-4" />
-                Widget Config
-              </Button>
-              <Button variant="ghost" size="sm" className="gap-1 rounded-md">
-                <FileText className="h-4 w-4" />
-                Knowledge Base
-              </Button>
-              <Button variant="ghost" size="sm" className="gap-1 rounded-md">
-                <Code className="h-4 w-4" />
-                Embed Code
-              </Button>
-              <Button variant="ghost" size="sm" className="gap-1 rounded-md">
-                <MessageSquare className="h-4 w-4" />
-                AI Logs
-              </Button>
-              <Button variant="ghost" size="sm" className="gap-1 rounded-md">
-                <Settings className="h-4 w-4" />
-                Settings
-              </Button>
-              <Button variant="ghost" size="sm" className="gap-1 rounded-md">
-                <User className="h-4 w-4" />
-                Users
-              </Button>
-              <Button variant="ghost" size="sm" className="gap-1 rounded-md">
-                <Settings className="h-4 w-4" />
-                AI Configuration
-              </Button>
-            </div>
-          </div>
-          
           {/* Main content */}
           <main className="px-4 md:px-6 py-8 w-full">
             {children}
