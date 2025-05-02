@@ -1,9 +1,11 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AuthProvider } from "@/hooks/use-auth";
 
 // Pages
 import Index from "./pages/Index";
@@ -23,26 +25,30 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <BrowserRouter>
-      <ThemeProvider defaultTheme="light">
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/dashboard/user-management" element={<UserManagement />} />
-            <Route path="/dashboard/ai-configuration" element={<AIConfiguration />} />
-            <Route path="/dashboard/embed-code" element={<EmbedCode />} />
-            <Route path="/dashboard/templates" element={<Templates />} />
-            <Route path="/dashboard/context-rules" element={<ContextRules />} />
-            <Route path="/dashboard/widget-config" element={<WidgetConfig />} />
-            <Route path="/dashboard/widget-config/:id" element={<WidgetConfig />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </TooltipProvider>
-      </ThemeProvider>
+      <AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider defaultTheme="light">
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard/user-management" element={<UserManagement />} />
+                <Route path="/dashboard/ai-configuration" element={<AIConfiguration />} />
+                <Route path="/dashboard/embed-code" element={<EmbedCode />} />
+                <Route path="/dashboard/templates" element={<Templates />} />
+                <Route path="/dashboard/context-rules" element={<ContextRules />} />
+                <Route path="/dashboard/widget-config" element={<WidgetConfig />} />
+                <Route path="/dashboard/widget-config/:id" element={<WidgetConfig />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </TooltipProvider>
+          </ThemeProvider>
+        </QueryClientProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

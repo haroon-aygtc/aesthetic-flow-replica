@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -49,7 +50,7 @@ export function Sidebar() {
               <p className="text-sm text-muted-foreground">{user?.email}</p>
             </div>
           </div>
-          <Button variant="outline" size="xs" className="mt-2 w-full" onClick={handleLogout}>
+          <Button variant="outline" size="sm" className="mt-2 w-full" onClick={handleLogout}>
             Logout
           </Button>
         </div>
