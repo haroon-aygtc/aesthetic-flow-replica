@@ -20,6 +20,13 @@ export function useWidgetPreview(settings: WidgetSettings = {}, widgetId: string
   const initialMessage = settings?.initialMessage || "Hello! How can I help you today?";
   const inputPlaceholder = settings?.inputPlaceholder || "Type your message...";
   const sendButtonText = settings?.sendButtonText || "Send";
+  
+  // Avatar settings
+  const avatar = settings?.avatar || {
+    enabled: false,
+    imageUrl: "",
+    fallbackInitial: "A"
+  };
 
   // Update preview when settings change
   useEffect(() => {
@@ -34,7 +41,8 @@ export function useWidgetPreview(settings: WidgetSettings = {}, widgetId: string
     headerTitle,
     initialMessage,
     inputPlaceholder,
-    sendButtonText
+    sendButtonText,
+    avatar
   ]);
 
   // Position styles
@@ -80,7 +88,10 @@ export function useWidgetPreview(settings: WidgetSettings = {}, widgetId: string
       initial_message: encodeURIComponent(initialMessage),
       input_placeholder: encodeURIComponent(inputPlaceholder),
       send_button_text: encodeURIComponent(sendButtonText),
-      preview_mode: "true" // Flag to indicate this is a preview
+      preview_mode: "true", // Flag to indicate this is a preview
+      avatar_enabled: String(!!avatar?.enabled),
+      avatar_image_url: avatar?.imageUrl || "",
+      avatar_fallback: avatar?.fallbackInitial || "A"
     });
     
     return `/widget/v1/iframe.html?${params}&_=${refreshKey}`;
@@ -105,6 +116,7 @@ export function useWidgetPreview(settings: WidgetSettings = {}, widgetId: string
     inputPlaceholder,
     sendButtonText,
     buttonPosition,
+    avatar,
     deviceSizes,
     toggleChat,
     toggleFullScreen,

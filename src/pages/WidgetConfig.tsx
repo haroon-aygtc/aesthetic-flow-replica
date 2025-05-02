@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -40,6 +39,11 @@ const widgetSchema = z.object({
     sendButtonText: z.string().default("Send"),
     offlineMessage: z.string().default("Sorry, our chat assistant is currently offline."),
     systemPrompt: z.string().optional(),
+    avatar: z.object({
+      enabled: z.boolean().default(false),
+      imageUrl: z.string().optional(),
+      fallbackInitial: z.string().max(1).optional(),
+    }).optional(),
   }),
 });
 
@@ -72,6 +76,11 @@ const WidgetConfig = () => {
       sendButtonText: "Send",
       offlineMessage: "Sorry, our chat assistant is currently offline.",
       systemPrompt: "",
+      avatar: {
+        enabled: false,
+        imageUrl: "",
+        fallbackInitial: "A",
+      },
     },
   };
 
@@ -411,6 +420,79 @@ const WidgetConfig = () => {
                               </FormItem>
                             )}
                           />
+                          
+                          <div className="border-t pt-6 mt-6">
+                            <h3 className="text-lg font-semibold mb-4">Branding & Avatar</h3>
+                            
+                            <FormField
+                              control={form.control}
+                              name="settings.avatar.enabled"
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                                  <div className="space-y-0.5">
+                                    <FormLabel>Show Avatar</FormLabel>
+                                    <p className="text-sm text-muted-foreground">
+                                      Display an avatar image in the chat header
+                                    </p>
+                                  </div>
+                                  <FormControl>
+                                    <Switch
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+
+                            {form.watch("settings.avatar.enabled") && (
+                              <>
+                                <FormField
+                                  control={form.control}
+                                  name="settings.avatar.imageUrl"
+                                  render={({ field }) => (
+                                    <FormItem className="mt-4 space-y-2">
+                                      <FormLabel>Avatar Image URL</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          placeholder="https://example.com/avatar.png"
+                                          className="max-w-md"
+                                          {...field}
+                                        />
+                                      </FormControl>
+                                      <p className="text-xs text-muted-foreground mt-2">Enter a URL for your brand avatar (leave empty to use a text avatar)</p>
+                                    </FormItem>
+                                  )}
+                                />
+
+                                <FormField
+                                  control={form.control}
+                                  name="settings.avatar.fallbackInitial"
+                                  render={({ field }) => (
+                                    <FormItem className="mt-4 space-y-2">
+                                      <FormLabel>Fallback Initial</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          placeholder="A"
+                                          className="max-w-[80px]"
+                                          maxLength={1}
+                                          {...field}
+                                          onChange={(e) => {
+                                            // Only allow one character
+                                            const value = e.target.value;
+                                            if (value.length <= 1) {
+                                              field.onChange(value);
+                                            }
+                                          }}
+                                        />
+                                      </FormControl>
+                                      <p className="text-xs text-muted-foreground mt-2">Single character to display when no image is provided</p>
+                                    </FormItem>
+                                  )}
+                                />
+                              </>
+                            )}
+                          </div>
                         </div>
                       </CardContent>
                     </Card>

@@ -37,9 +37,11 @@ export function ChatWidgetPreview({ settings = {}, widgetId = "preview_widget" }
     sendButtonText,
     buttonPosition,
     position,
+    avatar,
     deviceSizes,
     toggleChat,
     toggleFullScreen,
+    createIframeParams,
   } = useWidgetPreview(settings, widgetId);
 
   // Create a simplified version of the widget for preview
@@ -82,6 +84,8 @@ export function ChatWidgetPreview({ settings = {}, widgetId = "preview_widget" }
             sendButtonText={sendButtonText}
             secondaryColor={secondaryColor}
             buttonPosition={buttonPosition}
+            avatar={avatar}
+            createIframeParams={createIframeParams}
           />
         ) : (
           <ChatButton 

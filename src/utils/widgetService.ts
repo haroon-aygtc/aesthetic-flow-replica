@@ -1,4 +1,3 @@
-
 import api from './api';
 
 // Types for widget configurations
@@ -17,6 +16,11 @@ export interface WidgetSettings {
   sendButtonText?: string;
   offlineMessage?: string;
   systemPrompt?: string;
+  avatar?: {
+    enabled?: boolean;
+    imageUrl?: string;
+    fallbackInitial?: string;
+  };
 }
 
 export interface Widget {
