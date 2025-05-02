@@ -1,16 +1,18 @@
 
 import { AdminLayout } from "@/components/admin-layout";
-import { AIModelManager } from "@/components/ai-configuration/ai-model-manager";
-import { KnowledgeBaseIntegration } from "@/components/ai-configuration/knowledge-base-integration";
-import { PromptTemplateSystem } from "@/components/ai-configuration/prompt-template-system";
-import { ResponseFormatter } from "@/components/ai-configuration/response-formatter";
-import { BrandingEngine } from "@/components/ai-configuration/branding-engine";
-import { FollowUpEngine } from "@/components/ai-configuration/follow-up-engine";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Settings, Database, FileText, Code, Star, Bell
 } from "lucide-react";
 import { useState } from "react";
+
+// Import the standalone modules
+import { AIModelsModule } from "@/modules/ai-models";
+import { KnowledgeBaseModule } from "@/modules/knowledge-base";
+import { PromptTemplatesModule } from "@/modules/prompt-templates";
+import { ResponseFormatterModule } from "@/modules/response-formatter";
+import { BrandingEngineModule } from "@/modules/branding-engine";
+import { FollowUpEngineModule } from "@/modules/follow-up-engine";
 
 const AIConfiguration = () => {
   const [activeTab, setActiveTab] = useState("models");
@@ -59,27 +61,27 @@ const AIConfiguration = () => {
           </TabsList>
           
           <TabsContent value="models">
-            <AIModelManager />
+            <AIModelsModule />
           </TabsContent>
           
           <TabsContent value="knowledge">
-            <KnowledgeBaseIntegration />
+            <KnowledgeBaseModule />
           </TabsContent>
           
           <TabsContent value="templates">
-            <PromptTemplateSystem />
+            <PromptTemplatesModule />
           </TabsContent>
           
           <TabsContent value="formatter">
-            <ResponseFormatter />
+            <ResponseFormatterModule />
           </TabsContent>
           
           <TabsContent value="branding">
-            <BrandingEngine />
+            <BrandingEngineModule />
           </TabsContent>
           
           <TabsContent value="followup">
-            <FollowUpEngine />
+            <FollowUpEngineModule />
           </TabsContent>
         </Tabs>
       </div>
