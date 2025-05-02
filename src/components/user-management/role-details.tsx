@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   Card, 
@@ -81,17 +80,14 @@ export function RoleDetails() {
         setSelectedRole(response.data);
         
         // Group permissions by category
-        const grouped = (response.data.permissions || []).reduce<Record<string, Permission[]>>(
-          (acc, permission) => {
-            const category = permission.category;
-            if (!acc[category]) {
-              acc[category] = [];
-            }
-            acc[category].push(permission);
-            return acc;
-          },
-          {}
-        );
+        const grouped = response.data.permissions.reduce((acc: Record<string, Permission[]>, permission: Permission) => {
+          const category = permission.category;
+          if (!acc[category]) {
+            acc[category] = [];
+          }
+          acc[category].push(permission);
+          return acc;
+        }, {});
         
         setPermissionsByCategory(grouped);
       } catch (error: any) {
