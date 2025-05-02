@@ -155,7 +155,7 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
-        App\Providers\AIServiceProvider::class, // Add our new service provider
+        App\Providers\AIServiceProvider::class,
     ])->toArray(),
 
     /*
