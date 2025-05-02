@@ -2,15 +2,15 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Link, MessageSquare, Circle, HelpCircle, Square } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { Suggestion, suggestionSchema, SuggestionValues } from "./follow-up-schema";
+import { Suggestion, suggestionSchema, SuggestionValues, suggestionFormatOptions } from "./follow-up-schema";
 
 interface FollowUpSuggestionsTabProps {
   suggestions: Suggestion[];
@@ -24,8 +24,13 @@ export function FollowUpSuggestionsTab({ suggestions, setSuggestions }: FollowUp
       text: "",
       category: "general",
       context: "all",
+      format: "button",
+      url: "",
+      tooltipText: "",
     },
   });
+
+  const watchFormat = suggestionForm.watch("format");
 
   const onSuggestionSubmit = (values: SuggestionValues) => {
     // Add new suggestion
@@ -35,6 +40,9 @@ export function FollowUpSuggestionsTab({ suggestions, setSuggestions }: FollowUp
       category: values.category,
       context: values.context,
       active: true,
+      format: values.format,
+      url: values.url,
+      tooltipText: values.tooltipText,
     };
     
     setSuggestions((prev) => [...prev, newSuggestionItem]);
@@ -42,6 +50,9 @@ export function FollowUpSuggestionsTab({ suggestions, setSuggestions }: FollowUp
       text: "",
       category: "general",
       context: "all",
+      format: "button",
+      url: "",
+      tooltipText: "",
     });
     
     toast({
@@ -66,6 +77,16 @@ export function FollowUpSuggestionsTab({ suggestions, setSuggestions }: FollowUp
       title: "Suggestion deleted",
       description: "The follow-up suggestion has been removed.",
     });
+  };
+
+  const getFormatIcon = (format: string | undefined) => {
+    switch(format) {
+      case "link": return <Link className="h-4 w-4" />;
+      case "bubble": return <Circle className="h-4 w-4" />;
+      case "tooltip": return <HelpCircle className="h-4 w-4" />;
+      case "card": return <Square className="h-4 w-4" />;
+      default: return <MessageSquare className="h-4 w-4" />;
+    }
   };
 
   return (
@@ -142,6 +163,68 @@ export function FollowUpSuggestionsTab({ suggestions, setSuggestions }: FollowUp
             />
           </div>
           
+          <FormField
+            control={suggestionForm.control}
+            name="format"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Display Format</FormLabel>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {suggestionFormatOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  How this follow-up suggestion should be displayed to users
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {(watchFormat === "link" || watchFormat === "card") && (
+            <FormField
+              control={suggestionForm.control}
+              name="url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>URL</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://example.com" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    The link destination for this follow-up
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+          
+          {watchFormat === "tooltip" && (
+            <FormField
+              control={suggestionForm.control}
+              name="tooltipText"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tooltip Text</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Additional information to show on hover" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+          
           <div className="flex justify-end">
             <Button type="submit">
               <Plus className="mr-2 h-4 w-4" />
@@ -157,6 +240,7 @@ export function FollowUpSuggestionsTab({ suggestions, setSuggestions }: FollowUp
             <TableRow>
               <TableHead className="w-[50px]">Active</TableHead>
               <TableHead>Suggestion Text</TableHead>
+              <TableHead className="w-[90px]">Format</TableHead>
               <TableHead className="w-[120px]">Category</TableHead>
               <TableHead className="w-[150px]">Context</TableHead>
               <TableHead className="w-[100px] text-right">Actions</TableHead>
@@ -165,7 +249,7 @@ export function FollowUpSuggestionsTab({ suggestions, setSuggestions }: FollowUp
           <TableBody>
             {suggestions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-4 text-muted-foreground">
                   No suggestions added yet
                 </TableCell>
               </TableRow>
@@ -179,6 +263,12 @@ export function FollowUpSuggestionsTab({ suggestions, setSuggestions }: FollowUp
                     />
                   </TableCell>
                   <TableCell>{suggestion.text}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      {getFormatIcon(suggestion.format)}
+                      <span className="capitalize text-xs">{suggestion.format || "button"}</span>
+                    </div>
+                  </TableCell>
                   <TableCell className="capitalize">{suggestion.category}</TableCell>
                   <TableCell className="capitalize">{suggestion.context}</TableCell>
                   <TableCell className="text-right">

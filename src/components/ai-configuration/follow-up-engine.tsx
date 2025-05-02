@@ -17,6 +17,7 @@ export function FollowUpEngine() {
       category: "pricing",
       context: "product",
       active: true,
+      format: "button"
     },
     {
       id: "2",
@@ -24,13 +25,24 @@ export function FollowUpEngine() {
       category: "support",
       context: "service",
       active: true,
+      format: "button"
     },
     {
       id: "3",
-      text: "Do you have a free trial?",
+      text: "Visit our pricing page",
       category: "pricing",
       context: "product",
       active: true,
+      format: "link",
+      url: "https://example.com/pricing"
+    },
+    {
+      id: "4",
+      text: "Need help with something else?",
+      category: "general",
+      context: "all",
+      active: true,
+      format: "bubble"
     },
   ]);
   
@@ -38,10 +50,11 @@ export function FollowUpEngine() {
   const defaultConfigValues: FollowUpConfigValues = {
     enableFollowUp: true,
     suggestionsCount: "3",
-    suggestionsStyle: "buttons",
+    suggestionsStyle: "mixed",
     buttonStyle: "rounded",
     customPrompt: "",
     contexts: ["product", "service", "pricing"],
+    position: "end"
   };
 
   return (

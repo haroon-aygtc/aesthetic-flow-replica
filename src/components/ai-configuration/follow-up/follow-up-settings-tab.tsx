@@ -6,9 +6,11 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, For
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
-import { followUpConfigSchema, FollowUpConfigValues } from "./follow-up-schema";
+import { followUpConfigSchema, FollowUpConfigValues, suggestionPositionOptions } from "./follow-up-schema";
 import { toast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
 
 interface FollowUpSettingsTabProps {
   defaultValues: FollowUpConfigValues;
@@ -52,6 +54,34 @@ export function FollowUpSettingsTab({ defaultValues }: FollowUpSettingsTabProps)
                   onCheckedChange={field.onChange}
                 />
               </FormControl>
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={configForm.control}
+          name="position"
+          render={({ field }) => (
+            <FormItem className="space-y-3">
+              <FormLabel>Follow-up Position</FormLabel>
+              <FormDescription>
+                Where should follow-up questions appear in relation to the AI response?
+              </FormDescription>
+              <FormControl>
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  className="flex flex-col space-y-1"
+                >
+                  {suggestionPositionOptions.map((option) => (
+                    <div key={option.value} className="flex items-center space-x-2">
+                      <RadioGroupItem value={option.value} id={`position-${option.value}`} />
+                      <Label htmlFor={`position-${option.value}`}>{option.label}</Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -104,6 +134,7 @@ export function FollowUpSettingsTab({ defaultValues }: FollowUpSettingsTabProps)
                     <SelectItem value="chips">Chips</SelectItem>
                     <SelectItem value="links">Links</SelectItem>
                     <SelectItem value="text">Plain Text</SelectItem>
+                    <SelectItem value="mixed">Mixed Formats</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

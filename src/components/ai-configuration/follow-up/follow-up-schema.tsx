@@ -15,6 +15,7 @@ export const followUpConfigSchema = z.object({
   }),
   customPrompt: z.string().optional(),
   contexts: z.array(z.string()),
+  position: z.string().default("end"),
 });
 
 export type FollowUpConfigValues = z.infer<typeof followUpConfigSchema>;
@@ -30,6 +31,9 @@ export const suggestionSchema = z.object({
   context: z.string().min(1, {
     message: "Please select a context."
   }),
+  format: z.string().default("button"),
+  url: z.string().optional(),
+  tooltipText: z.string().optional(),
 });
 
 export type SuggestionValues = z.infer<typeof suggestionSchema>;
@@ -40,4 +44,23 @@ export interface Suggestion {
   category: string;
   context: string;
   active: boolean;
+  format?: string;
+  url?: string;
+  tooltipText?: string;
 }
+
+// Format options for follow-up answers
+export const suggestionFormatOptions = [
+  { value: "button", label: "Button" },
+  { value: "link", label: "Link" },
+  { value: "bubble", label: "Bubble" },
+  { value: "tooltip", label: "Tooltip" },
+  { value: "card", label: "Card" },
+];
+
+// Position options for follow-up answers
+export const suggestionPositionOptions = [
+  { value: "start", label: "Start (Before Response)" },
+  { value: "inline", label: "Inline (Within Response)" },
+  { value: "end", label: "End (After Response)" },
+];
