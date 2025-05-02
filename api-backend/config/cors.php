@@ -1,3 +1,4 @@
+
 <?php
 
 return [
@@ -16,7 +17,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:8080', 'http://localhost:5173', env('FRONTEND_URL', 'http://localhost:8080')],
+    'allowed_origins' => ['http://localhost:8080', 'http://localhost:5173', 'http://localhost:3000', env('FRONTEND_URL', 'http://localhost:8080')],
 
     'allowed_origins_patterns' => [],
 
