@@ -14,8 +14,15 @@ class AIModelController extends Controller
      */
     public function index()
     {
-        $aiModels = AIModel::all();
-        return response()->json($aiModels);
+        try {
+            $aiModels = AIModel::all();
+            return response()->json($aiModels);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to fetch AI models',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -39,13 +46,20 @@ class AIModelController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // If this model is set as default, unset other defaults
-        if ($request->input('is_default')) {
-            AIModel::where('is_default', true)->update(['is_default' => false]);
-        }
+        try {
+            // If this model is set as default, unset other defaults
+            if ($request->input('is_default')) {
+                AIModel::where('is_default', true)->update(['is_default' => false]);
+            }
 
-        $aiModel = AIModel::create($request->all());
-        return response()->json($aiModel, 201);
+            $aiModel = AIModel::create($request->all());
+            return response()->json($aiModel, 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to create AI model',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -82,15 +96,22 @@ class AIModelController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $aiModel = AIModel::findOrFail($id);
+        try {
+            $aiModel = AIModel::findOrFail($id);
 
-        // If this model is being set as default, unset other defaults
-        if ($request->has('is_default') && $request->input('is_default') && !$aiModel->is_default) {
-            AIModel::where('is_default', true)->update(['is_default' => false]);
+            // If this model is being set as default, unset other defaults
+            if ($request->has('is_default') && $request->input('is_default') && !$aiModel->is_default) {
+                AIModel::where('is_default', true)->update(['is_default' => false]);
+            }
+
+            $aiModel->update($request->all());
+            return response()->json($aiModel);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to update AI model',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $aiModel->update($request->all());
-        return response()->json($aiModel);
     }
 
     /**
@@ -101,17 +122,24 @@ class AIModelController extends Controller
      */
     public function destroy($id)
     {
-        $aiModel = AIModel::findOrFail($id);
+        try {
+            $aiModel = AIModel::findOrFail($id);
 
-        // Check if model is in use by any widgets
-        if ($aiModel->widgets()->count() > 0) {
+            // Check if model is in use by any widgets
+            if ($aiModel->widgets()->count() > 0) {
+                return response()->json([
+                    'message' => 'Cannot delete this AI model because it is being used by one or more widgets.'
+                ], 422);
+            }
+
+            $aiModel->delete();
+            return response()->json(null, 204);
+        } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Cannot delete this AI model because it is being used by one or more widgets.'
-            ], 422);
+                'message' => 'Failed to delete AI model',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $aiModel->delete();
-        return response()->json(null, 204);
     }
 
     /**
@@ -123,15 +151,23 @@ class AIModelController extends Controller
      */
     public function testConnection(Request $request, $id)
     {
-        $aiModel = AIModel::findOrFail($id);
+        try {
+            $aiModel = AIModel::findOrFail($id);
 
-        // TODO: Implement actual connection testing logic
-        // This would typically involve making a test call to the AI provider API
-        // and checking if it returns a valid response
+            // TODO: Implement actual connection testing logic
+            // This would typically involve making a test call to the AI provider API
+            // and checking if it returns a valid response
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Connection test successful'
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Connection test successful'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Connection test failed',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
