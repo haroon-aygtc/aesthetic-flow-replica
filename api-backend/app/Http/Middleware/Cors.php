@@ -18,7 +18,18 @@ class Cors
     {
         $response = $next($request);
         
-        $response->headers->set('Access-Control-Allow-Origin', '*');
+        // Get the allowed origins from env or use a default value
+        $allowedOrigins = env('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:5173');
+        $origins = explode(',', $allowedOrigins);
+        
+        $origin = $request->header('Origin');
+        if (in_array($origin, $origins)) {
+            $response->headers->set('Access-Control-Allow-Origin', $origin);
+        } else {
+            // For development, you might want to allow any origin
+            $response->headers->set('Access-Control-Allow-Origin', '*');
+        }
+        
         $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With, Accept');
         $response->headers->set('Access-Control-Allow-Credentials', 'true');

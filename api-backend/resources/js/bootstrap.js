@@ -9,11 +9,14 @@ window.axios.defaults.headers.common['Accept'] = 'application/json';
 const baseUrl = process.env.APP_URL || 'http://localhost:8000';
 window.axios.defaults.baseURL = baseUrl;
 
+// Get frontend URL from env or use default
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
 // Enable credentials for cross-origin requests
 window.axios.defaults.withCredentials = true;
 
-// Set CORS headers
-window.axios.defaults.headers.common['Access-Control-Allow-Origin'] = '*';
+// Set CORS headers for development
+window.axios.defaults.headers.common['Access-Control-Allow-Origin'] = frontendUrl;
 window.axios.defaults.headers.common['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
 window.axios.defaults.headers.common['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With';
 
