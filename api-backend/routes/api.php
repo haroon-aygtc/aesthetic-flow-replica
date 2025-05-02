@@ -9,6 +9,7 @@ use App\Http\Controllers\WidgetController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\EmbedCodeController;
 use App\Http\Controllers\WidgetAnalyticsController;
+use App\Http\Controllers\ApiTestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -55,4 +56,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Analytics routes
     Route::get('/widgets/{widget_id}/analytics', [WidgetAnalyticsController::class, 'getAnalytics']);
     Route::get('/widgets/{widget_id}/analytics/summary', [WidgetAnalyticsController::class, 'getSummary']);
+    
+    // API Testing routes
+    Route::prefix('test')->group(function () {
+        Route::get('/routes', [ApiTestController::class, 'listRoutes']);
+        Route::get('/ai-models', [ApiTestController::class, 'testAIModelEndpoints']);
+        Route::get('/widgets', [ApiTestController::class, 'testWidgetEndpoints']);
+        Route::get('/all', [ApiTestController::class, 'testAllEndpoints']);
+    });
 });

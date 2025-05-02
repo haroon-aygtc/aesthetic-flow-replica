@@ -4,7 +4,7 @@ import { toast } from "@/hooks/use-toast";
 
 // Create axios instance
 const api = axios.create({
-  baseURL: "http://localhost:8000",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
   headers: {
     "Content-Type": "application/json",
   },
@@ -21,6 +21,7 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error("API Request Error:", error);
     return Promise.reject(error);
   }
 );
@@ -28,9 +29,12 @@ api.interceptors.request.use(
 // Response interceptor
 api.interceptors.response.use(
   (response) => {
+    // Only return data property from response
     return response;
   },
   (error) => {
+    console.error("API Response Error:", error);
+    
     // Create a more user-friendly error message
     const errorMessage = error.response?.data?.message || 
                          error.response?.data?.error || 

@@ -1,9 +1,11 @@
+
 <?php
 namespace App\Http\Controllers;
 
 use App\Models\AIModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class AIModelController extends Controller
 {
@@ -16,11 +18,13 @@ class AIModelController extends Controller
     {
         try {
             $aiModels = AIModel::all();
-            return response()->json($aiModels);
+            return response()->json(['data' => $aiModels, 'success' => true]);
         } catch (\Exception $e) {
+            Log::error('Failed to fetch AI models: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Failed to fetch AI models',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'success' => false
             ], 500);
         }
     }
@@ -43,7 +47,7 @@ class AIModelController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json(['errors' => $validator->errors(), 'success' => false], 422);
         }
 
         try {
@@ -53,11 +57,13 @@ class AIModelController extends Controller
             }
 
             $aiModel = AIModel::create($request->all());
-            return response()->json($aiModel, 201);
+            return response()->json(['data' => $aiModel, 'success' => true], 201);
         } catch (\Exception $e) {
+            Log::error('Failed to create AI model: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Failed to create AI model',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'success' => false
             ], 500);
         }
     }
@@ -70,8 +76,17 @@ class AIModelController extends Controller
      */
     public function show($id)
     {
-        $aiModel = AIModel::findOrFail($id);
-        return response()->json($aiModel);
+        try {
+            $aiModel = AIModel::findOrFail($id);
+            return response()->json(['data' => $aiModel, 'success' => true]);
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch AI model: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to fetch AI model',
+                'error' => $e->getMessage(),
+                'success' => false
+            ], 404);
+        }
     }
 
     /**
@@ -93,7 +108,7 @@ class AIModelController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json(['errors' => $validator->errors(), 'success' => false], 422);
         }
 
         try {
@@ -105,11 +120,13 @@ class AIModelController extends Controller
             }
 
             $aiModel->update($request->all());
-            return response()->json($aiModel);
+            return response()->json(['data' => $aiModel, 'success' => true]);
         } catch (\Exception $e) {
+            Log::error('Failed to update AI model: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Failed to update AI model',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'success' => false
             ], 500);
         }
     }
@@ -128,16 +145,19 @@ class AIModelController extends Controller
             // Check if model is in use by any widgets
             if ($aiModel->widgets()->count() > 0) {
                 return response()->json([
-                    'message' => 'Cannot delete this AI model because it is being used by one or more widgets.'
+                    'message' => 'Cannot delete this AI model because it is being used by one or more widgets.',
+                    'success' => false
                 ], 422);
             }
 
             $aiModel->delete();
-            return response()->json(null, 204);
+            return response()->json(['message' => 'Model deleted successfully', 'success' => true], 200);
         } catch (\Exception $e) {
+            Log::error('Failed to delete AI model: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Failed to delete AI model',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'success' => false
             ], 500);
         }
     }
@@ -163,6 +183,7 @@ class AIModelController extends Controller
                 'message' => 'Connection test successful'
             ]);
         } catch (\Exception $e) {
+            Log::error('Connection test failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Connection test failed',
