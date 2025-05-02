@@ -1,15 +1,19 @@
 
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { 
+  Sidebar as SidebarComponent, 
+  SidebarHeader, 
+  SidebarContent,
+  SidebarFooter
+} from "@/components/ui/sidebar";
 
 export function Sidebar() {
-  const [isOpen, setIsOpen] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -19,27 +23,13 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="w-64 h-screen bg-background border-r fixed left-0 top-0 z-30 transition-transform duration-300 ease-in-out"
-      style={{ transform: isOpen ? 'translateX(0)' : 'translateX(-100%)' }}>
-      <div className="h-full flex flex-col overflow-y-auto">
-        
-        {/* Header Section */}
+    <SidebarComponent>
+      <SidebarHeader className="border-b">
         <div className="px-6 py-4 flex items-center justify-between">
           <span className="font-bold text-lg">AI Chat System</span>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="sm" className="md:hidden">
-                <Menu className="h-4 w-4" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-64">
-              <Sidebar />
-            </SheetContent>
-          </Sheet>
         </div>
-        
-        {/* User Info Section */}
-        <div className="px-4 py-2 border-b">
+
+        <div className="px-4 pb-2">
           <div className="flex items-center space-x-2">
             <Avatar>
               <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
@@ -54,8 +44,10 @@ export function Sidebar() {
             Logout
           </Button>
         </div>
-        
-        <nav className="flex-1 p-4">
+      </SidebarHeader>
+      
+      <SidebarContent>
+        <nav className="p-4">
           <ul className="space-y-1">
             <li>
               <NavLink to="/dashboard" className={({isActive}) => 
@@ -143,14 +135,13 @@ export function Sidebar() {
             </li>
           </ul>
         </nav>
-        
-        {/* Footer Section */}
-        <div className="p-4 text-center text-muted-foreground border-t">
-          <p className="text-xs">
-            &copy; {new Date().getFullYear()} AI Chat System. All rights reserved.
-          </p>
-        </div>
-      </div>
-    </aside>
+      </SidebarContent>
+      
+      <SidebarFooter className="p-4 text-center text-muted-foreground border-t">
+        <p className="text-xs">
+          &copy; {new Date().getFullYear()} AI Chat System. All rights reserved.
+        </p>
+      </SidebarFooter>
+    </SidebarComponent>
   );
 }

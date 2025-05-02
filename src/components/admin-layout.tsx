@@ -1,10 +1,10 @@
 
 import { Link, useLocation } from "react-router-dom";
 import { Bell, BarChart2, Code, FileText, Layout, MessageSquare, Palette, Search, Settings, User } from "lucide-react";
-import { Sidebar } from "@/components/sidebar";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { Sidebar } from "@/components/sidebar";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -20,6 +20,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 w-full">
+        {/* Include the sidebar component */}
         <Sidebar />
         
         <SidebarInset className="flex-1 max-w-full">
@@ -27,6 +28,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <header className="border-b bg-background sticky top-0 z-30">
             <div className="flex h-16 items-center justify-between px-4 md:px-6">
               <div className="flex items-center">
+                <SidebarTrigger className="mr-2" />
                 <h1 className="text-lg md:text-xl font-semibold">Admin Dashboard</h1>
               </div>
               
