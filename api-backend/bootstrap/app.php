@@ -37,7 +37,6 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-            \App\Http\Middleware\Cors::class, // Ensure CORS is applied to API routes
         ]);
 
         // Register named middleware aliases
@@ -53,7 +52,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
             'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
             'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-            'cors' => \App\Http\Middleware\Cors::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

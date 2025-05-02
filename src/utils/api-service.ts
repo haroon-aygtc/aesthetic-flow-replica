@@ -20,7 +20,6 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    // Log outgoing requests for debugging
     console.log(`API Request to ${config.url}:`, config);
     return config;
   },
@@ -39,7 +38,7 @@ api.interceptors.response.use(
   (error) => {
     console.error("API Response Error:", error);
     
-    // If the response contains HTML instead of JSON
+    // Handle HTML response instead of JSON
     if (error.response?.data && typeof error.response.data === 'string' && error.response.data.includes('<!DOCTYPE')) {
       console.error("Server returned HTML instead of JSON:", error.response.data.substring(0, 200));
       toast({
@@ -50,7 +49,7 @@ api.interceptors.response.use(
       return Promise.reject(new Error("Invalid server response (HTML returned instead of JSON)"));
     }
     
-    // Create a more user-friendly error message
+    // User-friendly error message
     const errorMessage = error.response?.data?.message || 
                          error.response?.data?.error || 
                          "An unexpected error occurred";
@@ -64,7 +63,7 @@ api.interceptors.response.use(
       });
     }
     
-    // Handle 401 error (unauthorized)
+    // Handle unauthorized
     if (error.response && error.response.status === 401) {
       localStorage.removeItem("token");
       window.location.href = "/login";
@@ -74,5 +73,4 @@ api.interceptors.response.use(
   }
 );
 
-// Export the API instance
 export default api;
