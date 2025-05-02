@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -94,8 +95,11 @@ const WidgetConfig = () => {
   useEffect(() => {
     const fetchAIModels = async () => {
       try {
+        // Add a console.log to debug the response
+        console.log("Fetching AI models...");
         const response = await fetch('/api/ai-models');
         const data = await response.json();
+        console.log("Fetched AI models:", data);
         setAiModels(data);
       } catch (error) {
         console.error("Failed to fetch AI models:", error);
@@ -227,7 +231,7 @@ const WidgetConfig = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Default AI Model</SelectItem>
+                          <SelectItem value="null">Default AI Model</SelectItem>
                           {aiModels.map((model) => (
                             <SelectItem key={model.id} value={model.id.toString()}>
                               {model.name}
