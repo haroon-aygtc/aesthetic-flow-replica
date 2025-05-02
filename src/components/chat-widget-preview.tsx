@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { WidgetSettings } from "@/utils/widgetService";
+import { Spinner } from "@/components/ui/spinner";
 
 interface ChatWidgetPreviewProps {
   settings?: WidgetSettings;
@@ -11,6 +12,7 @@ interface ChatWidgetPreviewProps {
 export function ChatWidgetPreview({ settings = {}, widgetId = "preview_widget" }: ChatWidgetPreviewProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0); // Add a refresh key to force reload
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -26,43 +28,52 @@ export function ChatWidgetPreview({ settings = {}, widgetId = "preview_widget" }
   const inputPlaceholder = settings?.inputPlaceholder || "Type your message...";
   const sendButtonText = settings?.sendButtonText || "Send";
 
+  // Update preview when settings change
+  useEffect(() => {
+    // Force refresh of the preview when important settings change
+    setRefreshKey(prev => prev + 1);
+  }, [
+    primaryColor,
+    secondaryColor,
+    borderRadius,
+    chatIconSize,
+    position,
+    headerTitle,
+    initialMessage,
+    inputPlaceholder,
+    sendButtonText
+  ]);
+
   // Update or create iframe when settings change
   useEffect(() => {
     if (isOpen && iframeRef.current) {
-      // If iframe is already open, update its attributes
-      const iframe = iframeRef.current;
+      setIframeLoaded(false);
       
-      // Reset the iframe by removing and re-adding it
-      if (iframe.parentNode) {
-        const parent = iframe.parentNode;
-        const newIframe = document.createElement('iframe');
-        newIframe.style.width = '100%';
-        newIframe.style.height = '100%';
-        newIframe.style.border = 'none';
-        newIframe.style.borderRadius = `${borderRadius}px`;
-        
-        // Set source with parameters
-        const params = new URLSearchParams({
-          widget_id: widgetId,
-          primary_color: primaryColor,
-          header_title: headerTitle,
-          initial_message: initialMessage,
-          input_placeholder: inputPlaceholder,
-          send_button_text: sendButtonText
-        });
-        
-        newIframe.src = `/widget/v1/iframe.html?${params}`;
-        newIframe.onload = () => setIframeLoaded(true);
-        
-        parent.replaceChild(newIframe, iframe);
-        iframeRef.current = newIframe;
-      }
+      // Create params for iframe
+      const params = new URLSearchParams({
+        widget_id: widgetId,
+        primary_color: encodeURIComponent(primaryColor),
+        secondary_color: encodeURIComponent(secondaryColor),
+        border_radius: String(borderRadius),
+        font_family: encodeURIComponent(fontFamily),
+        header_title: encodeURIComponent(headerTitle),
+        initial_message: encodeURIComponent(initialMessage),
+        input_placeholder: encodeURIComponent(inputPlaceholder),
+        send_button_text: encodeURIComponent(sendButtonText),
+        preview_mode: "true" // Flag to indicate this is a preview
+      });
+      
+      // Update iframe source with new parameters
+      iframeRef.current.src = `/widget/v1/iframe.html?${params}&_=${refreshKey}`;
     }
   }, [
-    isOpen, 
+    isOpen,
+    refreshKey,
     widgetId, 
-    primaryColor, 
-    borderRadius, 
+    primaryColor,
+    secondaryColor,
+    borderRadius,
+    fontFamily,
     headerTitle, 
     initialMessage, 
     inputPlaceholder, 
@@ -81,6 +92,10 @@ export function ChatWidgetPreview({ settings = {}, widgetId = "preview_widget" }
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
+    // Reset iframe loaded state when toggling
+    if (!isOpen) {
+      setIframeLoaded(false);
+    }
   };
 
   // Create a simplified version of the widget for preview
@@ -88,36 +103,55 @@ export function ChatWidgetPreview({ settings = {}, widgetId = "preview_widget" }
     <div className="h-[500px] w-full max-w-[360px] relative bg-transparent" ref={containerRef}>
       {isOpen ? (
         <Card 
-          className="absolute w-full h-full overflow-hidden shadow-lg"
+          className="absolute w-full h-full overflow-hidden shadow-lg transition-all duration-300 animate-scale-in"
           style={{
             borderRadius: `${borderRadius}px`,
             fontFamily,
             ...buttonPosition
           }}
         >
-          <iframe 
-            ref={iframeRef}
-            src={`/widget/v1/iframe.html?widget_id=${widgetId}&primary_color=${encodeURIComponent(primaryColor)}&header_title=${encodeURIComponent(headerTitle)}&initial_message=${encodeURIComponent(initialMessage)}&input_placeholder=${encodeURIComponent(inputPlaceholder)}&send_button_text=${encodeURIComponent(sendButtonText)}`}
+          <div className="w-full h-[60px] flex items-center justify-between px-4"
             style={{
-              width: '100%',
-              height: '100%',
+              backgroundColor: primaryColor,
+              color: "#fff",
+              borderTopLeftRadius: `${borderRadius}px`,
+              borderTopRightRadius: `${borderRadius}px`
+            }}
+          >
+            <h3 className="font-medium text-[16px]">{headerTitle}</h3>
+            <button 
+              className="w-8 h-8 flex items-center justify-center rounded-full transition-colors hover:bg-white/20"
+              onClick={toggleChat}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          
+          <iframe 
+            key={`iframe-${refreshKey}`}
+            ref={iframeRef}
+            className="w-full h-[calc(100%-60px)]"
+            style={{
               border: 'none',
-              borderRadius: `${borderRadius}px`
+              backgroundColor: '#f9fafb'
             }}
             onLoad={() => setIframeLoaded(true)}
           />
           
           {/* Show loading indicator while iframe loads */}
           {!iframeLoaded && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="absolute inset-0 top-[60px] flex items-center justify-center bg-background/80">
+              <Spinner className="h-8 w-8 text-primary" />
             </div>
           )}
         </Card>
       ) : (
         <button
           onClick={toggleChat}
-          className="absolute shadow-lg flex items-center justify-center rounded-full text-white transition-all hover:scale-105"
+          className="absolute shadow-lg flex items-center justify-center rounded-full text-white transition-all hover:scale-105 animate-fade-in"
           style={{
             backgroundColor: primaryColor,
             width: `${chatIconSize}px`,
