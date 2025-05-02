@@ -19,6 +19,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
+import api from "@/utils/api-service";
 
 const widgetSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -104,12 +105,16 @@ const WidgetConfig = () => {
   useEffect(() => {
     const fetchAIModels = async () => {
       try {
-        // Add a console.log to debug the response
         console.log("Fetching AI models...");
-        const response = await fetch('/api/ai-models');
-        const data = await response.json();
-        console.log("Fetched AI models:", data);
-        setAiModels(data);
+        // Use the API instance instead of fetch to ensure proper headers
+        const response = await api.get('/api/ai-models');
+        console.log("AI models API response:", response);
+        if (response.data && response.data.data) {
+          setAiModels(response.data.data);
+        } else {
+          console.error("Unexpected API response format:", response.data);
+          setAiModels([]);
+        }
       } catch (error) {
         console.error("Failed to fetch AI models:", error);
         toast({

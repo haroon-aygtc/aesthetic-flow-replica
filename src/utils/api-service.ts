@@ -20,6 +20,8 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Log outgoing requests for debugging
+    console.log(`API Request to ${config.url}:`, config);
     return config;
   },
   (error) => {
@@ -31,10 +33,22 @@ api.interceptors.request.use(
 // Response interceptor
 api.interceptors.response.use(
   (response) => {
+    console.log(`API Response from ${response.config.url}:`, response.data);
     return response;
   },
   (error) => {
     console.error("API Response Error:", error);
+    
+    // If the response contains HTML instead of JSON
+    if (error.response?.data && typeof error.response.data === 'string' && error.response.data.includes('<!DOCTYPE')) {
+      console.error("Server returned HTML instead of JSON:", error.response.data.substring(0, 200));
+      toast({
+        title: "Server Error",
+        description: "The server returned an invalid response. Please contact support.",
+        variant: "destructive",
+      });
+      return Promise.reject(new Error("Invalid server response (HTML returned instead of JSON)"));
+    }
     
     // Create a more user-friendly error message
     const errorMessage = error.response?.data?.message || 
