@@ -3,6 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { WidgetSettings } from "@/utils/widgetService";
 import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
+import { Fullscreen, Smartphone, Tablet, Monitor } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ChatWidgetPreviewProps {
   settings?: WidgetSettings;
@@ -13,8 +16,12 @@ export function ChatWidgetPreview({ settings = {}, widgetId = "preview_widget" }
   const [isOpen, setIsOpen] = useState(false);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0); // Add a refresh key to force reload
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [devicePreview, setDevicePreview] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   // Calculate styles from settings
   const primaryColor = settings?.primaryColor || "#4f46e5";
@@ -98,72 +105,146 @@ export function ChatWidgetPreview({ settings = {}, widgetId = "preview_widget" }
     }
   };
 
+  const toggleFullScreen = () => {
+    setIsFullScreen(!isFullScreen);
+  };
+
+  // Device preview width settings
+  const deviceSizes = {
+    desktop: "100%",
+    tablet: "768px",
+    mobile: "375px"
+  };
+
   // Create a simplified version of the widget for preview
   return (
-    <div className="h-[500px] w-full max-w-[360px] relative bg-transparent" ref={containerRef}>
-      {isOpen ? (
-        <Card 
-          className="absolute w-full h-full overflow-hidden shadow-lg transition-all duration-300 animate-scale-in"
-          style={{
-            borderRadius: `${borderRadius}px`,
-            fontFamily,
-            ...buttonPosition
-          }}
+    <div className={`relative bg-transparent transition-all duration-300 ${isFullScreen ? 'fixed inset-0 z-50 bg-background/80 p-8' : 'h-[500px] w-full max-w-[360px]'}`}>
+      {/* Device preview controls */}
+      <div className={`mb-4 flex justify-center gap-2 ${isFullScreen ? '' : 'absolute -top-14 right-0'}`}>
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={() => setDevicePreview("mobile")}
+          className={devicePreview === "mobile" ? "bg-primary text-primary-foreground" : ""}
         >
-          <div className="w-full h-[60px] flex items-center justify-between px-4"
+          <Smartphone className="h-4 w-4" />
+          <span className="sr-only">Mobile view</span>
+        </Button>
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={() => setDevicePreview("tablet")}
+          className={devicePreview === "tablet" ? "bg-primary text-primary-foreground" : ""}
+        >
+          <Tablet className="h-4 w-4" />
+          <span className="sr-only">Tablet view</span>
+        </Button>
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={() => setDevicePreview("desktop")}
+          className={devicePreview === "desktop" ? "bg-primary text-primary-foreground" : ""}
+        >
+          <Monitor className="h-4 w-4" />
+          <span className="sr-only">Desktop view</span>
+        </Button>
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={toggleFullScreen}
+          className="ml-2"
+        >
+          <Fullscreen className="h-4 w-4" />
+          <span className="sr-only">Full screen</span>
+        </Button>
+      </div>
+
+      <div 
+        ref={containerRef}
+        className={`
+          mx-auto transition-all duration-300 
+          ${isFullScreen ? 'h-full max-h-[800px]' : 'h-full'}
+        `}
+        style={{
+          width: devicePreview === "desktop" ? (isFullScreen ? "100%" : deviceSizes.desktop) : deviceSizes[devicePreview],
+          maxWidth: isFullScreen ? "1200px" : "360px",
+        }}
+      >
+        {isOpen ? (
+          <Card 
+            className="h-full w-full overflow-hidden shadow-lg transition-all duration-300 animate-scale-in"
             style={{
-              backgroundColor: primaryColor,
-              color: "#fff",
-              borderTopLeftRadius: `${borderRadius}px`,
-              borderTopRightRadius: `${borderRadius}px`
+              borderRadius: `${borderRadius}px`,
+              fontFamily,
+              ...(isFullScreen ? {} : buttonPosition)
             }}
           >
-            <h3 className="font-medium text-[16px]">{headerTitle}</h3>
-            <button 
-              className="w-8 h-8 flex items-center justify-center rounded-full transition-colors hover:bg-white/20"
-              onClick={toggleChat}
+            <div className="w-full h-[60px] flex items-center justify-between px-4"
+              style={{
+                backgroundColor: primaryColor,
+                color: "#fff",
+                borderTopLeftRadius: `${borderRadius}px`,
+                borderTopRightRadius: `${borderRadius}px`
+              }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </div>
-          
-          <iframe 
-            key={`iframe-${refreshKey}`}
-            ref={iframeRef}
-            className="w-full h-[calc(100%-60px)]"
-            style={{
-              border: 'none',
-              backgroundColor: '#f9fafb'
-            }}
-            onLoad={() => setIframeLoaded(true)}
-          />
-          
-          {/* Show loading indicator while iframe loads */}
-          {!iframeLoaded && (
-            <div className="absolute inset-0 top-[60px] flex items-center justify-center bg-background/80">
-              <Spinner className="h-8 w-8 text-primary" />
+              <h3 className="font-medium text-[16px]">{headerTitle}</h3>
+              <button 
+                className="w-8 h-8 flex items-center justify-center rounded-full transition-colors hover:bg-white/20"
+                onClick={toggleChat}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
             </div>
-          )}
-        </Card>
-      ) : (
-        <button
-          onClick={toggleChat}
-          className="absolute shadow-lg flex items-center justify-center rounded-full text-white transition-all hover:scale-105 animate-fade-in"
-          style={{
-            backgroundColor: primaryColor,
-            width: `${chatIconSize}px`,
-            height: `${chatIconSize}px`,
-            ...buttonPosition
-          }}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
-        </button>
-      )}
+            
+            <iframe 
+              key={`iframe-${refreshKey}`}
+              ref={iframeRef}
+              className="w-full h-[calc(100%-60px)]"
+              style={{
+                border: 'none',
+                backgroundColor: '#f9fafb'
+              }}
+              onLoad={() => setIframeLoaded(true)}
+            />
+            
+            {/* Show loading indicator while iframe loads */}
+            {!iframeLoaded && (
+              <div className="absolute inset-0 top-[60px] flex items-center justify-center bg-background/80">
+                <Spinner className="h-8 w-8 text-primary" />
+              </div>
+            )}
+          </Card>
+        ) : (
+          <button
+            onClick={toggleChat}
+            className="absolute shadow-lg flex items-center justify-center rounded-full text-white transition-all hover:scale-105 animate-fade-in"
+            style={{
+              backgroundColor: primaryColor,
+              width: `${chatIconSize}px`,
+              height: `${chatIconSize}px`,
+              ...buttonPosition
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </button>
+        )}
+
+        {/* Exit fullscreen button when in fullscreen mode */}
+        {isFullScreen && (
+          <Button 
+            variant="outline" 
+            className="absolute top-4 right-4"
+            onClick={toggleFullScreen}
+          >
+            Exit Fullscreen
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
