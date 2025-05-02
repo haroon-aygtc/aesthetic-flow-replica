@@ -1,2 +1,2 @@
 
-export { ChatWidgetPreview } from './chat-widget-preview';
+export { ChatWidgetPreview, type ChatWidgetPreviewProps } from './chat-widget-preview';

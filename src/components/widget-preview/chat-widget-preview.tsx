@@ -8,7 +8,7 @@ import { ExitFullscreenButton } from "./exit-fullscreen-button";
 import { WidgetSettings } from "@/utils/widgetService";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-interface ChatWidgetPreviewProps {
+export interface ChatWidgetPreviewProps {
   settings?: WidgetSettings;
   widgetId?: string;
 }
