@@ -4,6 +4,10 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AIModelController;
+use App\Http\Controllers\WidgetController;
+use App\Http\Controllers\ChatController;
+use App\Http\Controllers\EmbedCodeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +18,12 @@ use App\Http\Controllers\AuthController;
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+// Widget public routes (for embeddable widget)
+Route::get('/widgets/public/{widgetId}', [WidgetController::class, 'getByWidgetId']);
+Route::post('/chat/session/init', [ChatController::class, 'initSession']);
+Route::post('/chat/message', [ChatController::class, 'sendMessage']);
+Route::get('/chat/history', [ChatController::class, 'getHistory']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -26,4 +36,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('permissions', App\Http\Controllers\PermissionController::class);
     Route::post('/users/{user}/roles', [App\Http\Controllers\UserController::class, 'assignRoles']);
     Route::post('/roles/{role}/permissions', [App\Http\Controllers\RoleController::class, 'assignPermissions']);
+    
+    // AI Model routes
+    Route::apiResource('ai-models', AIModelController::class);
+    Route::post('/ai-models/{id}/test', [AIModelController::class, 'testConnection']);
+    
+    // Widget routes
+    Route::apiResource('widgets', WidgetController::class);
+    
+    // Chat management routes (admin)
+    Route::get('/chat/sessions', [ChatController::class, 'listSessions']);
+    
+    // Embed code generator
+    Route::post('/embed-code/generate', [EmbedCodeController::class, 'generate']);
 });
