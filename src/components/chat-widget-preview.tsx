@@ -118,14 +118,14 @@ export function ChatWidgetPreview({ settings = {}, widgetId = "preview_widget" }
 
   // Create a simplified version of the widget for preview
   return (
-    <div className={`relative bg-transparent transition-all duration-300 ${isFullScreen ? 'fixed inset-0 z-50 bg-background/80 p-8' : 'h-[500px] w-full max-w-[360px]'}`}>
+    <div className={`relative bg-transparent transition-all duration-300 ease-in-out ${isFullScreen ? 'fixed inset-0 z-50 bg-background/80 p-8' : 'h-[500px] w-full max-w-[360px]'}`}>
       {/* Device preview controls */}
       <div className={`mb-4 flex justify-center gap-2 ${isFullScreen ? '' : 'absolute -top-14 right-0'}`}>
         <Button 
           variant="outline" 
           size="icon" 
           onClick={() => setDevicePreview("mobile")}
-          className={devicePreview === "mobile" ? "bg-primary text-primary-foreground" : ""}
+          className={`transition-all duration-200 ${devicePreview === "mobile" ? "bg-primary text-primary-foreground" : ""}`}
         >
           <Smartphone className="h-4 w-4" />
           <span className="sr-only">Mobile view</span>
@@ -134,7 +134,7 @@ export function ChatWidgetPreview({ settings = {}, widgetId = "preview_widget" }
           variant="outline" 
           size="icon" 
           onClick={() => setDevicePreview("tablet")}
-          className={devicePreview === "tablet" ? "bg-primary text-primary-foreground" : ""}
+          className={`transition-all duration-200 ${devicePreview === "tablet" ? "bg-primary text-primary-foreground" : ""}`}
         >
           <Tablet className="h-4 w-4" />
           <span className="sr-only">Tablet view</span>
@@ -143,7 +143,7 @@ export function ChatWidgetPreview({ settings = {}, widgetId = "preview_widget" }
           variant="outline" 
           size="icon" 
           onClick={() => setDevicePreview("desktop")}
-          className={devicePreview === "desktop" ? "bg-primary text-primary-foreground" : ""}
+          className={`transition-all duration-200 ${devicePreview === "desktop" ? "bg-primary text-primary-foreground" : ""}`}
         >
           <Monitor className="h-4 w-4" />
           <span className="sr-only">Desktop view</span>
@@ -152,7 +152,7 @@ export function ChatWidgetPreview({ settings = {}, widgetId = "preview_widget" }
           variant="outline" 
           size="icon" 
           onClick={toggleFullScreen}
-          className="ml-2"
+          className="ml-2 transition-all duration-200"
         >
           <Fullscreen className="h-4 w-4" />
           <span className="sr-only">Full screen</span>
@@ -162,7 +162,7 @@ export function ChatWidgetPreview({ settings = {}, widgetId = "preview_widget" }
       <div 
         ref={containerRef}
         className={`
-          mx-auto transition-all duration-300 
+          mx-auto transition-all duration-300 ease-in-out
           ${isFullScreen ? 'h-full max-h-[800px]' : 'h-full'}
         `}
         style={{
@@ -172,7 +172,7 @@ export function ChatWidgetPreview({ settings = {}, widgetId = "preview_widget" }
       >
         {isOpen ? (
           <Card 
-            className="h-full w-full overflow-hidden shadow-lg transition-all duration-300 animate-scale-in"
+            className="h-full w-full overflow-hidden shadow-lg transition-all duration-300 ease-in-out animate-scale-in"
             style={{
               borderRadius: `${borderRadius}px`,
               fontFamily,
@@ -220,7 +220,7 @@ export function ChatWidgetPreview({ settings = {}, widgetId = "preview_widget" }
         ) : (
           <button
             onClick={toggleChat}
-            className="absolute shadow-lg flex items-center justify-center rounded-full text-white transition-all hover:scale-105 animate-fade-in"
+            className="absolute shadow-lg flex items-center justify-center rounded-full text-white transition-all duration-300 ease-in-out hover:scale-105 animate-fade-in"
             style={{
               backgroundColor: primaryColor,
               width: `${chatIconSize}px`,
@@ -238,7 +238,7 @@ export function ChatWidgetPreview({ settings = {}, widgetId = "preview_widget" }
         {isFullScreen && (
           <Button 
             variant="outline" 
-            className="absolute top-4 right-4"
+            className="absolute top-4 right-4 transition-all duration-200"
             onClick={toggleFullScreen}
           >
             Exit Fullscreen

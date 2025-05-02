@@ -7,12 +7,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { Clipboard, ClipboardCheck, Code } from "lucide-react";
+import { ChatWidgetPreview } from "@/components/chat-widget-preview";
+import { widgetService, WidgetSettings } from "@/utils/widgetService";
 
 export default function EmbedCode() {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   const [selectedWidget, setSelectedWidget] = useState("default");
   const [embedType, setEmbedType] = useState("standard");
+  const [widgetSettings, setWidgetSettings] = useState<WidgetSettings>({
+    primaryColor: "#4f46e5",
+    borderRadius: 8,
+    position: "bottom-right",
+    initialMessage: "Hello! How can I help you today?",
+    headerTitle: "AI Assistant"
+  });
   
   // This would come from the backend in a real implementation
   const widgets = [
@@ -24,10 +33,10 @@ export default function EmbedCode() {
   // Example widget configuration
   const widgetConfig = {
     id: "widget_" + selectedWidget,
-    primaryColor: "#4f46e5",
-    borderRadius: "8",
-    position: "bottom-right",
-    initialMessage: "Hello! How can I help you today?"
+    primaryColor: widgetSettings.primaryColor || "#4f46e5",
+    borderRadius: widgetSettings.borderRadius?.toString() || "8",
+    position: widgetSettings.position || "bottom-right",
+    initialMessage: widgetSettings.initialMessage || "Hello! How can I help you today?"
   };
   
   const generateEmbedCode = (type: string) => {
@@ -66,6 +75,48 @@ export default function EmbedCode() {
     
     setTimeout(() => setCopied(false), 2000);
   };
+
+  // Update widget settings when selecting a different widget
+  const handleWidgetChange = async (widgetId: string) => {
+    setSelectedWidget(widgetId);
+    
+    try {
+      // In a real implementation, this would fetch the widget settings from the API
+      // For now, we'll just simulate different settings for different widgets
+      if (widgetId === "support") {
+        setWidgetSettings({
+          primaryColor: "#22c55e",
+          borderRadius: 12,
+          position: "bottom-right",
+          initialMessage: "Hello! How can I assist with your support needs today?",
+          headerTitle: "Support Chat"
+        });
+      } else if (widgetId === "sales") {
+        setWidgetSettings({
+          primaryColor: "#ef4444",
+          borderRadius: 4,
+          position: "bottom-left",
+          initialMessage: "Hi there! Interested in learning more about our products?",
+          headerTitle: "Sales Inquiry"
+        });
+      } else {
+        setWidgetSettings({
+          primaryColor: "#4f46e5",
+          borderRadius: 8,
+          position: "bottom-right",
+          initialMessage: "Hello! How can I help you today?",
+          headerTitle: "AI Assistant"
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching widget settings:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load widget settings",
+        variant: "destructive"
+      });
+    }
+  };
   
   return (
     <AdminLayout>
@@ -79,7 +130,7 @@ export default function EmbedCode() {
         
         <div className="grid gap-8 md:grid-cols-3">
           <div className="md:col-span-2 space-y-8">
-            <Card>
+            <Card className="transition-all duration-200">
               <CardHeader>
                 <CardTitle>Widget Selection</CardTitle>
                 <CardDescription>Select the widget you want to embed</CardDescription>
@@ -87,7 +138,7 @@ export default function EmbedCode() {
               <CardContent>
                 <div className="grid gap-4">
                   <div className="grid gap-2">
-                    <Select defaultValue={selectedWidget} onValueChange={setSelectedWidget}>
+                    <Select value={selectedWidget} onValueChange={handleWidgetChange}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a widget" />
                       </SelectTrigger>
@@ -104,7 +155,7 @@ export default function EmbedCode() {
               </CardContent>
             </Card>
             
-            <Card>
+            <Card className="transition-all duration-200">
               <CardHeader>
                 <CardTitle>Integration Type</CardTitle>
                 <CardDescription>Choose how to embed the widget on your website</CardDescription>
@@ -117,7 +168,7 @@ export default function EmbedCode() {
                     <TabsTrigger value="webcomponent">Web Component</TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="standard">
+                  <TabsContent value="standard" className="animate-fade-in transition-all duration-300">
                     <div className="space-y-4">
                       <p className="text-sm">
                         The standard integration adds a small script to your website that will load the widget when needed.
@@ -130,7 +181,7 @@ export default function EmbedCode() {
                         </pre>
                       </div>
                       
-                      <Button className="gap-2" onClick={handleCopyCode}>
+                      <Button className="gap-2 transition-all duration-200" onClick={handleCopyCode}>
                         {copied ? (
                           <>
                             <ClipboardCheck className="h-4 w-4" />
@@ -146,7 +197,7 @@ export default function EmbedCode() {
                     </div>
                   </TabsContent>
                   
-                  <TabsContent value="iframe">
+                  <TabsContent value="iframe" className="animate-fade-in transition-all duration-300">
                     <div className="space-y-4">
                       <p className="text-sm">
                         Use iFrame integration to embed the widget in a specific location on your page,
@@ -159,7 +210,7 @@ export default function EmbedCode() {
                         </pre>
                       </div>
                       
-                      <Button className="gap-2" onClick={handleCopyCode}>
+                      <Button className="gap-2 transition-all duration-200" onClick={handleCopyCode}>
                         {copied ? (
                           <>
                             <ClipboardCheck className="h-4 w-4" />
@@ -175,7 +226,7 @@ export default function EmbedCode() {
                     </div>
                   </TabsContent>
                   
-                  <TabsContent value="webcomponent">
+                  <TabsContent value="webcomponent" className="animate-fade-in transition-all duration-300">
                     <div className="space-y-4">
                       <p className="text-sm">
                         Use Web Component integration for more control over the widget's position and styling.
@@ -188,7 +239,7 @@ export default function EmbedCode() {
                         </pre>
                       </div>
                       
-                      <Button className="gap-2" onClick={handleCopyCode}>
+                      <Button className="gap-2 transition-all duration-200" onClick={handleCopyCode}>
                         {copied ? (
                           <>
                             <ClipboardCheck className="h-4 w-4" />
@@ -210,22 +261,17 @@ export default function EmbedCode() {
           
           <div>
             <div className="space-y-8">
-              <Card>
+              <Card className="transition-all duration-200">
                 <CardHeader>
                   <CardTitle>Widget Preview</CardTitle>
                   <CardDescription>Preview your selected widget</CardDescription>
                 </CardHeader>
-                <CardContent className="flex justify-center">
-                  {/* This would be replaced with an actual preview */}
-                  <div className="border rounded-lg w-64 h-96 flex items-center justify-center">
-                    <p className="text-muted-foreground text-center p-4">
-                      Widget Preview<br/>(ID: {widgetConfig.id})
-                    </p>
-                  </div>
+                <CardContent className="flex justify-center pt-6">
+                  <ChatWidgetPreview settings={widgetSettings} widgetId={widgetConfig.id} />
                 </CardContent>
               </Card>
               
-              <Card>
+              <Card className="transition-all duration-200">
                 <CardHeader>
                   <CardTitle>Configuration</CardTitle>
                   <CardDescription>Current widget settings</CardDescription>
@@ -258,7 +304,7 @@ export default function EmbedCode() {
                 </CardContent>
               </Card>
               
-              <Card>
+              <Card className="transition-all duration-200">
                 <CardHeader>
                   <CardTitle>Integration Help</CardTitle>
                 </CardHeader>
