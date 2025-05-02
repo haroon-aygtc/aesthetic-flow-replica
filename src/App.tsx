@@ -16,6 +16,7 @@ import ContextRules from "./pages/ContextRules";
 import Templates from "./pages/Templates";
 import UserManagement from "./pages/UserManagement";
 import AIConfiguration from "./pages/AIConfiguration";
+import EmbedCode from "./pages/EmbedCode";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,7 +38,7 @@ const App = () => (
             <Route path="/dashboard/templates" element={<Templates />} />
             <Route path="/dashboard/user-management" element={<UserManagement />} />
             <Route path="/dashboard/ai-configuration" element={<AIConfiguration />} />
-            <Route path="/dashboard/embed-code" element={<NotFound />} /> {/* Placeholder */}
+            <Route path="/dashboard/embed-code" element={<EmbedCode />} />
             <Route path="/dashboard/analytics" element={<NotFound />} /> {/* Placeholder */}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
