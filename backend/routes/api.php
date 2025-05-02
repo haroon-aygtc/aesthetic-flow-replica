@@ -8,6 +8,7 @@ use App\Http\Controllers\AIModelController;
 use App\Http\Controllers\WidgetController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\EmbedCodeController;
+use App\Http\Controllers\WidgetAnalyticsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +25,7 @@ Route::get('/widgets/public/{widgetId}', [WidgetController::class, 'getByWidgetI
 Route::post('/chat/session/init', [ChatController::class, 'initSession']);
 Route::post('/chat/message', [ChatController::class, 'sendMessage']);
 Route::get('/chat/history', [ChatController::class, 'getHistory']);
+Route::post('/widget/analytics/view', [WidgetAnalyticsController::class, 'trackEvent']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -49,4 +51,8 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Embed code generator
     Route::post('/embed-code/generate', [EmbedCodeController::class, 'generate']);
+    
+    // Analytics routes
+    Route::get('/widgets/{widget_id}/analytics', [WidgetAnalyticsController::class, 'getAnalytics']);
+    Route::get('/widgets/{widget_id}/analytics/summary', [WidgetAnalyticsController::class, 'getSummary']);
 });

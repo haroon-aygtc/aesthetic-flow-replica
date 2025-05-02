@@ -30,6 +30,15 @@ export interface Widget {
   updated_at?: string;
 }
 
+export interface AnalyticsSummary {
+  total_views: number;
+  total_conversations: number;
+  total_messages: number;
+  engagement_rate: number;
+  avg_messages_per_conversation: number;
+  period: string;
+}
+
 // Widget services
 export const widgetService = {
   getAllWidgets: async () => {
@@ -65,5 +74,32 @@ export const widgetService = {
       embed_type: options.embedType,
       customizations: options.customizations
     });
+  },
+  
+  // Analytics methods
+  getAnalyticsSummary: async (widgetId: number, period: 'day' | 'week' | 'month' | 'all' = 'month') => {
+    return api.get<AnalyticsSummary>(`/api/widgets/${widgetId}/analytics/summary?period=${period}`);
+  },
+  
+  getAnalytics: async (widgetId: number, options: {
+    fromDate?: string;
+    toDate?: string;
+    groupBy?: 'day' | 'week' | 'month' | 'event_type' | 'url';
+  } = {}) => {
+    const params = new URLSearchParams();
+    
+    if (options.fromDate) {
+      params.append('from_date', options.fromDate);
+    }
+    
+    if (options.toDate) {
+      params.append('to_date', options.toDate);
+    }
+    
+    if (options.groupBy) {
+      params.append('group_by', options.groupBy);
+    }
+    
+    return api.get(`/api/widgets/${widgetId}/analytics?${params.toString()}`);
   }
 };
