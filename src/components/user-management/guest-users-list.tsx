@@ -2,20 +2,14 @@
 import { useState, useEffect } from "react";
 import { guestUserAdminService } from "@/utils/guest-user-service";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, Trash2 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { format } from "date-fns";
+import { Loader2 } from "lucide-react";
+import { Dialog } from "@/components/ui/dialog";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
+import { GuestUsersTable } from "./guest-users/guest-users-table";
+import { GuestUserDetailsDialog } from "./guest-users/guest-user-details-dialog";
+import { GuestUserDeleteDialog } from "./guest-users/guest-user-delete-dialog";
 
 interface GuestUser {
   id: number;
@@ -116,14 +110,6 @@ export default function GuestUsersList() {
     }
   };
 
-  const formatDateTime = (dateString: string) => {
-    try {
-      return format(new Date(dateString), "MMM d, yyyy h:mm a");
-    } catch (e) {
-      return "Invalid date";
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -146,145 +132,34 @@ export default function GuestUsersList() {
             No guest users found
           </div>
         ) : (
-          <div className="border rounded-md">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Widget</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {guestUsers.map((guest) => (
-                  <TableRow key={guest.id}>
-                    <TableCell className="font-medium">{guest.fullname}</TableCell>
-                    <TableCell>{guest.email || "—"}</TableCell>
-                    <TableCell>{guest.phone}</TableCell>
-                    <TableCell>{guest.widget_name}</TableCell>
-                    <TableCell>
-                      {formatDateTime(guest.created_at)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleViewDetails(guest)}
-                        >
-                          View Details
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => handleDeleteClick(guest)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <GuestUsersTable 
+            guestUsers={guestUsers} 
+            onViewDetails={handleViewDetails}
+            onDeleteClick={handleDeleteClick}
+          />
         )}
 
         {/* Guest User Details Dialog */}
         <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Guest User Details</DialogTitle>
-            </DialogHeader>
-            
-            {selectedGuest && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="font-medium">Name:</div>
-                  <div>{selectedGuest.fullname}</div>
-                  
-                  <div className="font-medium">Email:</div>
-                  <div>{selectedGuest.email || "—"}</div>
-                  
-                  <div className="font-medium">Phone:</div>
-                  <div>{selectedGuest.phone}</div>
-                  
-                  <div className="font-medium">Session ID:</div>
-                  <div className="truncate text-xs">{selectedGuest.session_id}</div>
-                  
-                  <div className="font-medium">Widget:</div>
-                  <div>{selectedGuest.widget_name}</div>
-                  
-                  <div className="font-medium">Created:</div>
-                  <div>{formatDateTime(selectedGuest.created_at)}</div>
-                </div>
-                
-                <div className="border-t pt-4">
-                  <h4 className="font-medium mb-2">Chat History</h4>
-                  
-                  {loadingChat ? (
-                    <div className="flex justify-center py-4">
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                    </div>
-                  ) : chatHistory.length > 0 ? (
-                    <div className="space-y-2 max-h-[300px] overflow-y-auto border rounded-md p-2">
-                      {chatHistory.map((message, index) => (
-                        <div 
-                          key={index} 
-                          className={`p-2 rounded-md text-sm ${
-                            message.role === 'user' 
-                              ? 'bg-muted ml-8' 
-                              : 'bg-primary/10 mr-8'
-                          }`}
-                        >
-                          <div className="font-medium text-xs mb-1 flex justify-between">
-                            <span>{message.role === 'user' ? 'Guest' : 'AI Assistant'}</span>
-                            <span className="text-muted-foreground">{formatDateTime(message.created_at)}</span>
-                          </div>
-                          {message.content}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-4 text-muted-foreground">
-                      No chat history found
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </DialogContent>
+          {selectedGuest && (
+            <GuestUserDetailsDialog
+              guestUser={selectedGuest}
+              chatHistory={chatHistory}
+              isLoadingChat={loadingChat}
+            />
+          )}
         </Dialog>
 
         {/* Delete Confirmation Dialog */}
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Delete Guest User</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete this guest user? This action cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
-            
-            {selectedGuest && (
-              <div className="py-4">
-                <p>You are about to delete: <span className="font-medium">{selectedGuest.fullname}</span></p>
-              </div>
-            )}
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={deletingUser}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deletingUser}>
-                {deletingUser && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Delete
-              </Button>
-            </DialogFooter>
-          </DialogContent>
+          {selectedGuest && (
+            <GuestUserDeleteDialog
+              guestUser={selectedGuest}
+              onDelete={handleDeleteConfirm}
+              onCancel={() => setDeleteDialogOpen(false)}
+              isDeleting={deletingUser}
+            />
+          )}
         </Dialog>
       </CardContent>
     </Card>

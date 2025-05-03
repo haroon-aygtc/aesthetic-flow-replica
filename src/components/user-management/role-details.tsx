@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { 
   Card, 
@@ -6,19 +7,14 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Loader2, Users, ShieldCheck, Edit } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
 import { roleService } from "@/utils/api";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
+import { RoleSelector } from "./roles/role-selector";
+import { RoleInfoCard } from "./roles/role-info-card";
+import { PermissionSummaryCard } from "./roles/permission-summary-card";
+import { PermissionListByCategory } from "./roles/permission-list-by-category";
 
 interface Role {
   id: number;
@@ -120,27 +116,12 @@ export function RoleDetails() {
         </CardHeader>
         <CardContent>
           <div className="space-y-8">
-            <div className="space-y-2">
-              <label htmlFor="role-select" className="text-sm font-medium">
-                Select Role
-              </label>
-              <Select 
-                value={selectedRoleId?.toString() || ""} 
-                onValueChange={handleRoleChange}
-                disabled={isLoading || roles.length === 0}
-              >
-                <SelectTrigger id="role-select" className="w-full sm:w-[300px]">
-                  <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
-                <SelectContent>
-                  {roles.map((role) => (
-                    <SelectItem key={role.id} value={role.id.toString()}>
-                      {role.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <RoleSelector
+              roles={roles}
+              selectedRoleId={selectedRoleId}
+              onRoleChange={handleRoleChange}
+              isLoading={isLoading}
+            />
 
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
@@ -150,106 +131,11 @@ export function RoleDetails() {
             ) : selectedRole ? (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card className="bg-muted/50">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-medium">{selectedRole.name}</h3>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Edit Role</DialogTitle>
-                            </DialogHeader>
-                            {/* This would contain the edit form, but we're using the existing edit functionality in roles-list.tsx */}
-                            <p className="py-4">Use the Roles tab to edit this role's details.</p>
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                      {selectedRole.description && (
-                        <p className="text-sm text-muted-foreground mb-4">
-                          {selectedRole.description}
-                        </p>
-                      )}
-                      <div className="flex items-center space-x-1 text-muted-foreground">
-                        <Users className="h-4 w-4" />
-                        <span className="text-sm">{selectedRole.users_count} users</span>
-                      </div>
-                      <div className="flex items-center space-x-1 text-muted-foreground mt-1">
-                        <ShieldCheck className="h-4 w-4" />
-                        <span className="text-sm">
-                          {selectedRole.permissions?.length || 0} permissions
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="bg-muted/50">
-                    <CardContent className="p-4">
-                      <h3 className="font-medium mb-2">Permission Summary</h3>
-                      <div className="space-y-2">
-                        {Object.entries(permissionsByCategory).map(([category, _]) => (
-                          <div key={category} className="flex justify-between items-center">
-                            <span className="text-sm">{category}</span>
-                            <Badge variant="outline">
-                              {permissionsByCategory[category].length} permissions
-                            </Badge>
-                          </div>
-                        ))}
-                        {Object.keys(permissionsByCategory).length === 0 && (
-                          <p className="text-sm text-muted-foreground">No permissions assigned</p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <RoleInfoCard role={selectedRole} />
+                  <PermissionSummaryCard permissionsByCategory={permissionsByCategory} />
                 </div>
 
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Assigned Permissions</h3>
-                  
-                  {Object.entries(permissionsByCategory).length > 0 ? (
-                    <div className="space-y-6">
-                      {Object.entries(permissionsByCategory).map(([category, permissions]) => (
-                        <div key={category} className="space-y-2">
-                          <h4 className="text-sm font-medium text-muted-foreground">{category}</h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                            {permissions.map((permission) => (
-                              <div key={permission.id} className="bg-muted/50 p-2 rounded-md">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-medium">{permission.name}</span>
-                                  <span className={`px-2 py-1 rounded-full text-xs ${
-                                    permission.type === 'read' 
-                                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' 
-                                      : permission.type === 'write' 
-                                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
-                                        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                                  }`}>
-                                    {permission.type}
-                                  </span>
-                                </div>
-                                {permission.description && (
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    {permission.description}
-                                  </p>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 bg-muted/50 rounded-md">
-                      <p className="text-muted-foreground">No permissions assigned to this role</p>
-                      <Button className="mt-4" variant="outline" asChild>
-                        <a href="#role-permissions">Assign Permissions</a>
-                      </Button>
-                    </div>
-                  )}
-                </div>
+                <PermissionListByCategory permissionsByCategory={permissionsByCategory} />
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
