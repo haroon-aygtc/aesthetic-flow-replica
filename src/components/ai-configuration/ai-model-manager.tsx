@@ -1,19 +1,11 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { Spinner } from "@/components/ui/spinner";
-import { AIModelDialog } from "./model-management/ai-model-dialog";
 import { AIModelData, aiModelService } from "@/utils/ai-model-service";
-
-import { Settings, Key, AlertCircle, Info, Plus, RefreshCw } from "lucide-react";
+import { AIModelDialog } from "./model-management/ai-model-dialog";
+import { ModelSelectionCard } from "./model-management/model-selection-card";
+import { ApiKeyCard } from "./model-management/api-key-card";
+import { ConfigParametersCard } from "./model-management/config-parameters-card";
 
 export function AIModelManager() {
   const { toast } = useToast();
@@ -271,237 +263,38 @@ export function AIModelManager() {
   return (
     <div className="space-y-6">
       {/* Model Selection Card */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <div>
-            <CardTitle className="text-xl flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              AI Model Selection
-            </CardTitle>
-            <CardDescription>
-              Choose which AI model powers your application
-            </CardDescription>
-          </div>
-          <Button onClick={handleAddNewModel}>
-            <Plus className="mr-2 h-4 w-4" /> Add Model
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Spinner size="lg" />
-            </div>
-          ) : models.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground mb-4">No AI models configured yet</p>
-              <Button onClick={handleAddNewModel}>
-                <Plus className="mr-2 h-4 w-4" /> Add Your First Model
-              </Button>
-            </div>
-          ) : (
-            <RadioGroup 
-              value={selectedModelId ? String(selectedModelId) : ""}
-              onValueChange={handleModelSelect}
-              className="grid gap-4 md:grid-cols-2"
-            >
-              {models.map((model) => (
-                <div key={model.id} className="relative">
-                  <RadioGroupItem
-                    value={String(model.id)}
-                    id={`model-${model.id}`}
-                    className="peer sr-only"
-                  />
-                  <Label
-                    htmlFor={`model-${model.id}`}
-                    className="flex flex-col h-full p-4 border rounded-md cursor-pointer hover:bg-accent peer-data-[state=checked]:border-primary peer-data-[state=checked]:ring-1 peer-data-[state=checked]:ring-primary"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-semibold">{model.name}</span>
-                      <span className="text-xs bg-secondary px-2 py-1 rounded-full">{model.provider}</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{model.description}</p>
-                    <div className="flex justify-between items-center mt-3 text-xs text-muted-foreground">
-                      <span>Max Tokens: {model.settings?.max_tokens || "Default"}</span>
-                      {model.is_default && (
-                        <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full">Default</span>
-                      )}
-                    </div>
-                    {selectedModelId === model.id && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="absolute top-2 right-2"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleEditModel(model);
-                        }}
-                      >
-                        Edit
-                      </Button>
-                    )}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
-          )}
-        </CardContent>
-      </Card>
+      <ModelSelectionCard 
+        models={models}
+        selectedModelId={selectedModelId}
+        onModelSelect={handleModelSelect}
+        onAddNewModel={handleAddNewModel}
+        onEditModel={handleEditModel}
+        isLoading={isLoading}
+      />
       
       {/* Only show configuration cards if a model is selected */}
       {selectedModel && (
         <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-xl flex items-center gap-2">
-                <Key className="h-5 w-5" />
-                API Key Management
-              </CardTitle>
-              <CardDescription>
-                Configure your API keys for {selectedModel.provider}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="api-key">API Key</Label>
-                  <div className="mt-1 flex">
-                    <Input
-                      id="api-key"
-                      type="password"
-                      placeholder="Enter your API key"
-                      value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
-                      className={isAPIKeyValid === false ? "border-red-500" : ""}
-                      disabled={isSaving}
-                    />
-                    <Button 
-                      onClick={handleAPIKeySave} 
-                      className="ml-2"
-                      disabled={isSaving}
-                    >
-                      {isSaving ? <Spinner size="sm" /> : "Save Key"}
-                    </Button>
-                  </div>
-                  {isAPIKeyValid === false && (
-                    <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" /> Invalid API key format
-                    </p>
-                  )}
-                </div>
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={handleTestConnection}
-                  disabled={isTesting || !isAPIKeyValid}
-                >
-                  {isTesting ? <Spinner size="sm" className="mr-2" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                  Test Connection
-                </Button>
-                
-                <Alert className="bg-muted/50">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Your API key is stored securely and is never shared with third parties.
-                    See our <a href="#" className="underline">documentation</a> for more details.
-                  </AlertDescription>
-                </Alert>
-              </div>
-            </CardContent>
-          </Card>
+          <ApiKeyCard 
+            selectedModel={selectedModel}
+            apiKey={apiKey}
+            isAPIKeyValid={isAPIKeyValid}
+            isSaving={isSaving}
+            isTesting={isTesting}
+            onApiKeyChange={setApiKey}
+            onApiKeySave={handleAPIKeySave}
+            onTestConnection={handleTestConnection}
+          />
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-xl flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Configuration Parameters
-              </CardTitle>
-              <CardDescription>
-                Adjust parameters to control AI behavior and output
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="temperature">
-                      Temperature: {temperature[0].toFixed(1)}
-                    </Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 rounded-full">
-                          <Info className="h-4 w-4" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-80">
-                        <p className="text-sm">
-                          Controls randomness: lower values produce more predictable responses,
-                          higher values more creative ones. Range from 0 to 1.
-                        </p>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  <Slider
-                    id="temperature"
-                    min={0}
-                    max={1}
-                    step={0.1}
-                    value={temperature}
-                    onValueChange={setTemperature}
-                    disabled={isSaving}
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Precise</span>
-                    <span>Balanced</span>
-                    <span>Creative</span>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="max-tokens">
-                      Max Output Tokens: {maxTokens[0]}
-                    </Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 rounded-full">
-                          <Info className="h-4 w-4" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-80">
-                        <p className="text-sm">
-                          Limits the number of tokens in the model's response. One token is roughly 4 characters.
-                        </p>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  <Slider
-                    id="max-tokens"
-                    min={100}
-                    max={4096}
-                    step={100}
-                    value={maxTokens}
-                    onValueChange={setMaxTokens}
-                    disabled={isSaving}
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Brief</span>
-                    <span>Moderate</span>
-                    <span>Detailed</span>
-                  </div>
-                </div>
-                
-                <Button 
-                  className="w-full" 
-                  onClick={handleSaveConfiguration}
-                  disabled={isSaving}
-                >
-                  {isSaving ? <Spinner size="sm" className="mr-2" /> : "Save Configuration"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <ConfigParametersCard 
+            selectedModel={selectedModel}
+            temperature={temperature}
+            maxTokens={maxTokens}
+            isSaving={isSaving}
+            onTemperatureChange={setTemperature}
+            onMaxTokensChange={setMaxTokens}
+            onSaveConfiguration={handleSaveConfiguration}
+          />
         </div>
       )}
       
