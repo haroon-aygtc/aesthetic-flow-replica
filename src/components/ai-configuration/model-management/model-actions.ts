@@ -1,4 +1,3 @@
-
 import { AIModelData, aiModelService } from "@/utils/ai-model-service";
 import { useToast } from "@/hooks/use-toast";
 
@@ -178,6 +177,63 @@ export const useModelActions = () => {
     }
   };
 
+  // Handle template selection
+  const handleTemplateSelect = async (
+    selectedModelId: number | null,
+    templateId: string | null,
+    setModels: (models: AIModelData[]) => void,
+    models: AIModelData[]
+  ) => {
+    if (!selectedModelId) {
+      toast({
+        title: "Error",
+        description: "Please select a model first",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      // In a real implementation, this would call an API to associate the template with the model
+      console.log(`Associating template ${templateId} with model ${selectedModelId}`);
+      
+      // For now, we'll just update the local state to simulate the change
+      const updatedModels = models.map(model => {
+        if (model.id === selectedModelId) {
+          return {
+            ...model,
+            settings: {
+              ...model.settings,
+              template_id: templateId
+            }
+          };
+        }
+        return model;
+      });
+      
+      setModels(updatedModels);
+      
+      toast({
+        title: templateId ? "Template Associated" : "Template Removed",
+        description: templateId 
+          ? "The prompt template has been associated with this model." 
+          : "The prompt template has been removed from this model."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Template Association Failed",
+        description: error.message || "An error occurred",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // Handle creating a new template
+  const handleCreateTemplate = () => {
+    // This would typically open a dialog or navigate to a template creation page
+    window.location.href = "/templates";
+  };
+
   // Handle dialog operations
   const handleModelDialogSubmit = async (
     formData: AIModelData,
@@ -223,6 +279,8 @@ export const useModelActions = () => {
     handleAPIKeySave,
     handleSaveConfiguration,
     handleTestConnection,
-    handleModelDialogSubmit
+    handleModelDialogSubmit,
+    handleTemplateSelect,
+    handleCreateTemplate
   };
 };
