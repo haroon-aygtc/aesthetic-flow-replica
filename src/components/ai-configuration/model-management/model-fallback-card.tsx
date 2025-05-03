@@ -155,7 +155,7 @@ export function ModelFallbackCard({
           </div>
 
           {selectedModel.is_default && (
-            <Alert variant="warning">
+            <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
                 This is the default model and cannot be deactivated.
