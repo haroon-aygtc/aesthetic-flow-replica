@@ -7,6 +7,7 @@ import { BookTemplate, PlusCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 interface Template {
   id: string;
@@ -31,38 +32,39 @@ export function TemplateSelector({
   const [templates, setTemplates] = useState<Template[]>([]);
   const [useTemplate, setUseTemplate] = useState(!!selectedTemplateId);
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  // Simulate fetching templates
+  // Fetch templates when the selected model changes
   useEffect(() => {
     if (!selectedModelId) return;
     
+    fetchTemplates(selectedModelId);
+  }, [selectedModelId]);
+
+  const fetchTemplates = async (modelId: number) => {
     setIsLoading(true);
     
-    // In a real app, this would be an API call
-    setTimeout(() => {
-      setTemplates([
-        {
-          id: "template1",
-          name: "Customer Support",
-          description: "Template for handling customer inquiries and support requests",
-          category: "Support"
-        },
-        {
-          id: "template2",
-          name: "Sales Assistant",
-          description: "Template for product recommendations and sales support",
-          category: "Sales"
-        },
-        {
-          id: "template3",
-          name: "Technical Support",
-          description: "Template for technical troubleshooting and guidance",
-          category: "Support"
-        }
-      ]);
+    try {
+      const response = await fetch(`/api/models/${modelId}/templates`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch templates');
+      }
+      
+      const data = await response.json();
+      setTemplates(data);
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load prompt templates",
+        variant: "destructive"
+      });
+      setTemplates([]);
+    } finally {
       setIsLoading(false);
-    }, 500);
-  }, [selectedModelId]);
+    }
+  };
 
   const handleToggleTemplate = (checked: boolean) => {
     setUseTemplate(checked);
@@ -111,17 +113,21 @@ export function TemplateSelector({
                   onValueChange={handleTemplateChange}
                 >
                   <SelectTrigger id="template-select">
-                    <SelectValue placeholder="Select a template" />
+                    <SelectValue placeholder={isLoading ? "Loading templates..." : "Select a template"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {templates.map(template => (
-                      <SelectItem key={template.id} value={template.id}>
-                        <div className="flex justify-between items-center">
-                          <span>{template.name}</span>
-                          <Badge variant="outline" className="ml-2">{template.category}</Badge>
-                        </div>
-                      </SelectItem>
-                    ))}
+                    {templates.length === 0 && !isLoading ? (
+                      <SelectItem value="no-templates" disabled>No templates available</SelectItem>
+                    ) : (
+                      templates.map(template => (
+                        <SelectItem key={template.id} value={template.id}>
+                          <div className="flex justify-between items-center">
+                            <span>{template.name}</span>
+                            <Badge variant="outline" className="ml-2">{template.category}</Badge>
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>

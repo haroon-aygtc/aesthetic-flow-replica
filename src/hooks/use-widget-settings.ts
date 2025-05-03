@@ -1,11 +1,12 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { WidgetSettings } from "@/utils/widgetService";
+import { WidgetSettings, widgetService } from "@/utils/widgetService";
 
 export function useWidgetSettings() {
   const { toast } = useToast();
-  const [selectedWidget, setSelectedWidget] = useState("default");
+  const [widgets, setWidgets] = useState<{ id: string; name: string }[]>([]);
+  const [selectedWidget, setSelectedWidget] = useState("");
   const [widgetSettings, setWidgetSettings] = useState<WidgetSettings>({
     primaryColor: "#4f46e5",
     borderRadius: 8,
@@ -13,38 +14,54 @@ export function useWidgetSettings() {
     initialMessage: "Hello! How can I help you today?",
     headerTitle: "AI Assistant"
   });
+  const [isLoading, setIsLoading] = useState(true);
   
-  // This would come from the backend in a real implementation
-  const widgets = [
-    { id: "default", name: "Default Widget" },
-    { id: "support", name: "Support Widget" },
-    { id: "sales", name: "Sales Widget" },
-  ];
+  // Fetch widgets on mount
+  useEffect(() => {
+    fetchWidgets();
+  }, []);
+  
+  // Fetch widgets from API
+  const fetchWidgets = async () => {
+    setIsLoading(true);
+    try {
+      const response = await widgetService.getAllWidgets();
+      const widgetData = response.data.map((widget: any) => ({
+        id: widget.widget_id || widget.id.toString(),
+        name: widget.name
+      }));
+      
+      setWidgets(widgetData);
+      
+      // Select first widget if available
+      if (widgetData.length > 0 && !selectedWidget) {
+        handleWidgetChange(widgetData[0].id);
+      }
+    } catch (error) {
+      console.error("Error fetching widgets:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load widgets",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Update widget settings when selecting a different widget
   const handleWidgetChange = async (widgetId: string) => {
     setSelectedWidget(widgetId);
+    setIsLoading(true);
     
     try {
-      // In a real implementation, this would fetch the widget settings from the API
-      // For now, we'll just simulate different settings for different widgets
-      if (widgetId === "support") {
-        setWidgetSettings({
-          primaryColor: "#22c55e",
-          borderRadius: 12,
-          position: "bottom-right",
-          initialMessage: "Hello! How can I assist with your support needs today?",
-          headerTitle: "Support Chat"
-        });
-      } else if (widgetId === "sales") {
-        setWidgetSettings({
-          primaryColor: "#ef4444",
-          borderRadius: 4,
-          position: "bottom-left",
-          initialMessage: "Hi there! Interested in learning more about our products?",
-          headerTitle: "Sales Inquiry"
-        });
+      const response = await widgetService.getWidgetByPublicId(widgetId);
+      const data = response.data;
+      
+      if (data && data.settings) {
+        setWidgetSettings(data.settings);
       } else {
+        // Fall back to default settings if none available
         setWidgetSettings({
           primaryColor: "#4f46e5",
           borderRadius: 8,
@@ -60,12 +77,14 @@ export function useWidgetSettings() {
         description: "Failed to load widget settings",
         variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const getWidgetConfig = () => {
     return {
-      id: "widget_" + selectedWidget,
+      id: selectedWidget,
       primaryColor: widgetSettings.primaryColor || "#4f46e5",
       borderRadius: widgetSettings.borderRadius?.toString() || "8",
       position: widgetSettings.position || "bottom-right",
@@ -77,7 +96,9 @@ export function useWidgetSettings() {
     widgets,
     selectedWidget,
     widgetSettings,
+    isLoading,
     setSelectedWidget: handleWidgetChange,
-    getWidgetConfig
+    getWidgetConfig,
+    refreshWidgets: fetchWidgets
   };
 }

@@ -1,107 +1,77 @@
 
-import api from "./api";
-import { toast } from "@/hooks/use-toast";
+import api from './api';
+
+export interface AIModelSettings {
+  model_name?: string;
+  temperature?: number;
+  max_tokens?: number;
+  stop?: string[];
+  top_p?: number;
+  frequency_penalty?: number;
+  presence_penalty?: number;
+  template_id?: string;
+}
 
 export interface AIModelData {
   id?: number;
   name: string;
   provider: string;
-  description?: string;
   api_key?: string;
-  settings?: any;
+  settings?: AIModelSettings;
   is_default?: boolean;
   created_at?: string;
   updated_at?: string;
 }
 
+export interface ConnectionTestResult {
+  success: boolean;
+  message: string;
+  data?: any;
+  latency?: number;
+}
+
 export const aiModelService = {
-  /**
-   * Get all AI models
-   */
   getAllModels: async (): Promise<AIModelData[]> => {
-    try {
-      const response = await api.get("/api/ai-models");
-      return response.data.data;
-    } catch (error: any) {
-      console.error("Failed to fetch AI models:", error);
-      throw error;
-    }
+    const response = await api.get<AIModelData[]>('/api/ai-models');
+    return response.data;
   },
-
-  /**
-   * Get a specific AI model by ID
-   */
+  
   getModel: async (id: number): Promise<AIModelData> => {
-    try {
-      const response = await api.get(`/api/ai-models/${id}`);
-      return response.data.data;
-    } catch (error: any) {
-      console.error(`Failed to fetch AI model ${id}:`, error);
-      throw error;
-    }
+    const response = await api.get<AIModelData>(`/api/ai-models/${id}`);
+    return response.data;
   },
-
-  /**
-   * Create a new AI model
-   */
+  
   createModel: async (modelData: AIModelData): Promise<AIModelData> => {
-    try {
-      const response = await api.post("/api/ai-models", modelData);
-      return response.data.data;
-    } catch (error: any) {
-      console.error("Failed to create AI model:", error);
-      throw error;
-    }
+    const response = await api.post<AIModelData>('/api/ai-models', modelData);
+    return response.data;
   },
-
-  /**
-   * Update an existing AI model
-   */
+  
   updateModel: async (id: number, modelData: Partial<AIModelData>): Promise<AIModelData> => {
-    try {
-      const response = await api.put(`/api/ai-models/${id}`, modelData);
-      return response.data.data;
-    } catch (error: any) {
-      console.error(`Failed to update AI model ${id}:`, error);
-      throw error;
-    }
+    const response = await api.put<AIModelData>(`/api/ai-models/${id}`, modelData);
+    return response.data;
   },
-
-  /**
-   * Delete an AI model
-   */
+  
   deleteModel: async (id: number): Promise<void> => {
-    try {
-      await api.delete(`/api/ai-models/${id}`);
-    } catch (error: any) {
-      console.error(`Failed to delete AI model ${id}:`, error);
-      throw error;
-    }
+    await api.delete(`/api/ai-models/${id}`);
   },
-
-  /**
-   * Test connection to an AI provider
-   */
-  testConnection: async (id: number): Promise<{ success: boolean; message: string }> => {
-    try {
-      const response = await api.post(`/api/ai-models/${id}/test`);
-      return response.data;
-    } catch (error: any) {
-      console.error(`Failed to test connection for AI model ${id}:`, error);
-      throw error;
-    }
+  
+  setDefaultModel: async (id: number): Promise<void> => {
+    await api.post(`/api/ai-models/${id}/set-default`);
   },
-
-  /**
-   * Set an AI model as default
-   */
-  setAsDefault: async (id: number): Promise<AIModelData> => {
-    try {
-      const response = await api.put(`/api/ai-models/${id}`, { is_default: true });
-      return response.data.data;
-    } catch (error: any) {
-      console.error(`Failed to set AI model ${id} as default:`, error);
-      throw error;
-    }
+  
+  testConnection: async (id: number): Promise<ConnectionTestResult> => {
+    const response = await api.post<ConnectionTestResult>(`/api/ai-models/${id}/test-connection`);
+    return response.data;
+  },
+  
+  getModelTemplates: async (id: number): Promise<any[]> => {
+    const response = await api.get(`/api/ai-models/${id}/templates`);
+    return response.data;
+  },
+  
+  associateTemplate: async (modelId: number, templateId: string | null): Promise<void> => {
+    await api.post(`/api/ai-models/${modelId}/template`, {
+      template_id: templateId
+    });
   }
 };

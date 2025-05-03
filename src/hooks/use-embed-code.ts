@@ -1,5 +1,7 @@
 
 import { useState } from "react";
+import { widgetService } from "@/utils/widgetService";
+import { useToast } from "@/hooks/use-toast";
 
 interface WidgetConfig {
   id: string;
@@ -11,8 +13,60 @@ interface WidgetConfig {
 
 export function useEmbedCode() {
   const [copied, setCopied] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [embedCodes, setEmbedCodes] = useState<Record<string, string>>({
+    standard: '',
+    iframe: '',
+    webcomponent: ''
+  });
+  const { toast } = useToast();
 
-  const generateEmbedCode = (type: string, widgetConfig: WidgetConfig) => {
+  const generateEmbedCode = async (type: string, widgetConfig: WidgetConfig) => {
+    // Check if we've already generated this type of embed code
+    if (embedCodes[type]) {
+      return embedCodes[type];
+    }
+    
+    try {
+      setIsLoading(true);
+      
+      // Call API to generate embed code
+      const response = await widgetService.generateEmbedCode(widgetConfig.id, {
+        embedType: type as 'standard' | 'iframe' | 'web-component',
+        customizations: {
+          primaryColor: widgetConfig.primaryColor,
+          borderRadius: widgetConfig.borderRadius,
+          position: widgetConfig.position,
+          initialMessage: widgetConfig.initialMessage
+        }
+      });
+      
+      const code = response.data.embed_code;
+      
+      // Update cached codes
+      setEmbedCodes(prev => ({
+        ...prev,
+        [type]: code
+      }));
+      
+      return code;
+    } catch (error) {
+      console.error("Error generating embed code:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate embed code",
+        variant: "destructive"
+      });
+      
+      // Fall back to client-side generation if API fails
+      return fallbackGenerateEmbedCode(type, widgetConfig);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fallback embed code generation in case the API call fails
+  const fallbackGenerateEmbedCode = (type: string, widgetConfig: WidgetConfig) => {
     if (type === "standard") {
       return `<script src="https://chatsystem.ai/widget/v1/script.js" 
   data-widget-id="${widgetConfig.id}"
@@ -50,6 +104,7 @@ export function useEmbedCode() {
   return {
     copied,
     setCopied,
+    isLoading,
     generateEmbedCode,
     getEmbedDescription
   };
