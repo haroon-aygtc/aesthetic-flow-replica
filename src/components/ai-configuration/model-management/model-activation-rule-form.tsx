@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -13,10 +14,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 
+// Define the types for the form
 interface RuleCondition {
   field: string;
   operator: string;
-  value: string | number;
+  value: string;
 }
 
 interface ModelActivationRule {
@@ -112,7 +114,11 @@ export function ModelActivationRuleForm({
       tenant_id: rule?.tenant_id ? String(rule.tenant_id) : null,
       priority: String(rule?.priority || 0),
       active: rule?.active ?? true,
-      conditions: rule?.conditions || [],
+      conditions: rule?.conditions?.map(c => ({
+        field: c.field,
+        operator: c.operator,
+        value: String(c.value), // Ensure value is a string
+      })) || [],
     }
   });
 
@@ -140,7 +146,7 @@ export function ModelActivationRuleForm({
     
     try {
       const endpoint = isEditing
-        ? `/api/ai-models/${modelId}/rules/${rule.id}`
+        ? `/api/ai-models/${modelId}/rules/${rule!.id}`
         : `/api/ai-models/${modelId}/rules`;
         
       const method = isEditing ? "PUT" : "POST";

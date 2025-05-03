@@ -5,8 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-export function PromptTemplatesModule() {
-  const [activeTab, setActiveTab] = useState("templates");
+export function UserManagementModule() {
+  const [activeTab, setActiveTab] = useState("users");
   
   return (
     <div className="space-y-6">
@@ -14,37 +14,37 @@ export function PromptTemplatesModule() {
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Module in development</AlertTitle>
         <AlertDescription>
-          The Prompt Templates module is currently under development. Please check back later.
+          The User Management module is currently under development. Please check back later.
         </AlertDescription>
       </Alert>
       
       <Card>
         <CardHeader>
-          <CardTitle>Prompt Templates</CardTitle>
+          <CardTitle>User Management</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
-              <TabsTrigger value="templates">Templates</TabsTrigger>
-              <TabsTrigger value="variables">Variables</TabsTrigger>
-              <TabsTrigger value="testing">Testing</TabsTrigger>
+              <TabsTrigger value="users">Users</TabsTrigger>
+              <TabsTrigger value="roles">Roles</TabsTrigger>
+              <TabsTrigger value="permissions">Permissions</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="templates" className="space-y-4">
+            <TabsContent value="users" className="space-y-4">
               <p className="text-muted-foreground">
-                Create and manage prompt templates for consistent AI responses.
+                Manage users, assign roles, and configure access permissions.
               </p>
             </TabsContent>
             
-            <TabsContent value="variables">
+            <TabsContent value="roles">
               <p className="text-muted-foreground">
-                Define variables that can be used in your prompt templates.
+                Create and configure user roles with specific permissions.
               </p>
             </TabsContent>
             
-            <TabsContent value="testing">
+            <TabsContent value="permissions">
               <p className="text-muted-foreground">
-                Test your prompt templates with different variables and inputs.
+                Define granular permissions for different features and sections of the application.
               </p>
             </TabsContent>
           </Tabs>
