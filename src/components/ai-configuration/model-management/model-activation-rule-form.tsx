@@ -13,32 +13,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-
-// Define the types for the form
-interface RuleCondition {
-  field: string;
-  operator: string;
-  value: string;
-}
-
-interface ModelActivationRule {
-  id: number;
-  model_id: number;
-  name: string;
-  query_type: string | null;
-  use_case: string | null;
-  tenant_id: number | null;
-  active: boolean;
-  priority: number;
-  conditions: RuleCondition[];
-}
-
-interface ModelActivationRuleFormProps {
-  modelId: number;
-  rule: ModelActivationRule | null;
-  onSave: (rule: ModelActivationRule, isNew: boolean) => void;
-  onCancel: () => void;
-}
+import { RuleCondition, ModelActivationRule, ModelActivationRuleFormValues } from "@/types/model-activation-rules";
 
 // Define query types and operators for the form
 const queryTypes = [
@@ -91,8 +66,12 @@ const formSchema = z.object({
   ),
 });
 
-// Define the type for form values
-type FormValues = z.infer<typeof formSchema>;
+interface ModelActivationRuleFormProps {
+  modelId: number;
+  rule: ModelActivationRule | null;
+  onSave: (rule: ModelActivationRule, isNew: boolean) => void;
+  onCancel: () => void;
+}
 
 export function ModelActivationRuleForm({
   modelId,
@@ -105,7 +84,7 @@ export function ModelActivationRuleForm({
   const isEditing = !!rule;
   const { toast } = useToast();
 
-  const form = useForm<FormValues>({
+  const form = useForm<ModelActivationRuleFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: rule?.name || "",
@@ -141,7 +120,7 @@ export function ModelActivationRuleForm({
     loadTenants();
   }, []);
 
-  const handleSubmit = async (values: FormValues) => {
+  const handleSubmit = async (values: ModelActivationRuleFormValues) => {
     setIsSaving(true);
     
     try {
@@ -151,15 +130,20 @@ export function ModelActivationRuleForm({
         
       const method = isEditing ? "PUT" : "POST";
       
+      // Convert form values to API format
+      const apiData = {
+        ...values,
+        model_id: modelId,
+        tenant_id: values.tenant_id ? Number(values.tenant_id) : null,
+        priority: Number(values.priority)
+      };
+      
       const response = await fetch(endpoint, {
         method,
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          ...values,
-          model_id: modelId,
-        })
+        body: JSON.stringify(apiData)
       });
 
       if (!response.ok) {

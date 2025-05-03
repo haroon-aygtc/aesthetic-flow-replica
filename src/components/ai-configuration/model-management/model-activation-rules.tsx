@@ -11,25 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { ModelActivationRuleForm } from "./model-activation-rule-form";
 import { AIModelData } from "@/utils/ai-model-service";
-
-// Define the ModelActivationRule type based on the PHP model
-interface ModelActivationRule {
-  id: number;
-  model_id: number;
-  name: string;
-  query_type: string | null;
-  use_case: string | null;
-  tenant_id: number | null;
-  active: boolean;
-  priority: number;
-  conditions: RuleCondition[];
-}
-
-interface RuleCondition {
-  field: string;
-  operator: string;
-  value: string | number;
-}
+import { ModelActivationRule } from "@/types/model-activation-rules";
 
 interface ModelActivationRulesProps {
   selectedModel: AIModelData | null;
