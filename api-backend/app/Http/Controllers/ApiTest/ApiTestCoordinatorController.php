@@ -19,7 +19,7 @@ class ApiTestCoordinatorController extends Controller
         $allResults = [];
         
         // Test AI Models API
-        $aiModelTestController = new AIModelTestController();
+        $aiModelTestController = new AIModelEndpointTestController();
         $aiModelResults = $aiModelTestController->testAIModelEndpoints($request)->original;
         $allResults['ai_models'] = $aiModelResults;
         

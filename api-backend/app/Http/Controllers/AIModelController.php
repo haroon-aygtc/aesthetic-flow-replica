@@ -6,6 +6,7 @@ use App\Models\AIModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use App\Services\AIService;
 
 class AIModelController extends Controller
 {
@@ -174,21 +175,146 @@ class AIModelController extends Controller
         try {
             $aiModel = AIModel::findOrFail($id);
 
-            // TODO: Implement actual connection testing logic
-            // This would typically involve making a test call to the AI provider API
-            // and checking if it returns a valid response
+            // Check if API key exists
+            if (!$aiModel->api_key) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'API key is not configured for this model'
+                ], 400);
+            }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Connection test successful'
-            ]);
+            // Get AI service
+            $aiService = app(AIService::class);
+            
+            // Perform provider-specific connection test
+            switch ($aiModel->provider) {
+                case 'openai':
+                    return $this->testOpenAIConnection($aiModel);
+                    
+                case 'anthropic':
+                    return $this->testAnthropicConnection($aiModel);
+                    
+                case 'gemini':
+                    return $this->testGeminiConnection($aiModel);
+                    
+                default:
+                    // Basic API key format validation
+                    $isKeyValid = strlen($aiModel->api_key) > 10;
+                    
+                    return response()->json([
+                        'success' => $isKeyValid,
+                        'message' => $isKeyValid 
+                            ? 'API key format appears valid. Cannot test actual connection for this provider.' 
+                            : 'API key format appears invalid.'
+                    ]);
+            }
         } catch (\Exception $e) {
             Log::error('Connection test failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Connection test failed',
-                'error' => $e->getMessage()
+                'message' => 'Connection test failed: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Test connection to OpenAI API.
+     *
+     * @param  \App\Models\AIModel  $aiModel
+     * @return \Illuminate\Http\Response
+     */
+    private function testOpenAIConnection(AIModel $aiModel)
+    {
+        try {
+            // Minimal API call to check if API key works
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
+                'Authorization' => 'Bearer ' . $aiModel->api_key,
+                'Content-Type' => 'application/json',
+            ])->get('https://api.openai.com/v1/models');
+
+            if ($response->successful()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Successfully connected to OpenAI API'
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to connect to OpenAI: ' . $response->body()
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'OpenAI connection test failed: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Test connection to Anthropic API.
+     *
+     * @param  \App\Models\AIModel  $aiModel
+     * @return \Illuminate\Http\Response
+     */
+    private function testAnthropicConnection(AIModel $aiModel)
+    {
+        try {
+            // Minimal API call to check if API key works
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
+                'x-api-key' => $aiModel->api_key,
+                'anthropic-version' => '2023-06-01',
+                'Content-Type' => 'application/json',
+            ])->get('https://api.anthropic.com/v1/models');
+
+            if ($response->successful()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Successfully connected to Anthropic API'
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to connect to Anthropic: ' . $response->body()
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anthropic connection test failed: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Test connection to Google Gemini API.
+     *
+     * @param  \App\Models\AIModel  $aiModel
+     * @return \Illuminate\Http\Response
+     */
+    private function testGeminiConnection(AIModel $aiModel)
+    {
+        try {
+            // Minimal API call to check if API key works
+            $apiKey = $aiModel->api_key;
+            $response = \Illuminate\Support\Facades\Http::get("https://generativelanguage.googleapis.com/v1/models?key={$apiKey}");
+
+            if ($response->successful()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Successfully connected to Google Gemini API'
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to connect to Google Gemini: ' . $response->body()
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Google Gemini connection test failed: ' . $e->getMessage()
+            ]);
         }
     }
 }

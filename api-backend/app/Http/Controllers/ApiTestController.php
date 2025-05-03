@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\ApiTest\ApiTestRouteController;
-use App\Http\Controllers\ApiTest\AIModelTestController;
+use App\Http\Controllers\ApiTest\AIModelEndpointTestController;
 use App\Http\Controllers\ApiTest\WidgetTestController;
 use App\Http\Controllers\ApiTest\GuestUserTestController;
 use App\Http\Controllers\ApiTest\ApiTestCoordinatorController;
@@ -31,7 +31,7 @@ class ApiTestController extends Controller
      */
     public function testAIModelEndpoints(Request $request)
     {
-        $controller = new AIModelTestController();
+        $controller = new AIModelEndpointTestController();
         return $controller->testAIModelEndpoints($request);
     }
 
