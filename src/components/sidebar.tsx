@@ -11,7 +11,8 @@ import {
   Palette, 
   Settings, 
   User, 
-  Users 
+  Users,
+  Terminal
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -147,6 +148,16 @@ export function Sidebar() {
                   }>
                     <Users className="mr-2 h-4 w-4" />
                     User Management
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/dashboard/api-tester" className={({isActive}) => 
+                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                    }`
+                  }>
+                    <Terminal className="mr-2 h-4 w-4" />
+                    API Tester
                   </NavLink>
                 </li>
               </ul>

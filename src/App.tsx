@@ -18,6 +18,7 @@ import Templates from "./pages/Templates";
 import UserManagement from "./pages/UserManagement";
 import AIConfiguration from "./pages/AIConfiguration";
 import EmbedCode from "./pages/EmbedCode";
+import ApiTester from "./pages/ApiTester";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ function App() {
                 <Route path="/dashboard/context-rules" element={<ContextRules />} />
                 <Route path="/dashboard/widget-config" element={<WidgetConfig />} />
                 <Route path="/dashboard/widget-config/:id" element={<WidgetConfig />} />
+                <Route path="/dashboard/api-tester" element={<ApiTester />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </TooltipProvider>
