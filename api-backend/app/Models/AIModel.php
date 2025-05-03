@@ -23,6 +23,9 @@ class AIModel extends Model
         'api_key',
         'settings',
         'is_default',
+        'active',
+        'fallback_model_id',
+        'confidence_threshold',
     ];
 
     /**
@@ -33,6 +36,8 @@ class AIModel extends Model
     protected $casts = [
         'settings' => 'array',
         'is_default' => 'boolean',
+        'active' => 'boolean',
+        'confidence_threshold' => 'float',
     ];
 
     /**
@@ -41,6 +46,30 @@ class AIModel extends Model
     public function widgets()
     {
         return $this->hasMany(Widget::class);
+    }
+
+    /**
+     * Get the fallback model for this model.
+     */
+    public function fallbackModel()
+    {
+        return $this->belongsTo(AIModel::class, 'fallback_model_id');
+    }
+
+    /**
+     * Get activation rules for this model.
+     */
+    public function activationRules()
+    {
+        return $this->hasMany(ModelActivationRule::class, 'model_id');
+    }
+
+    /**
+     * Get usage logs for this model.
+     */
+    public function usageLogs()
+    {
+        return $this->hasMany(ModelUsageLog::class, 'model_id');
     }
 
     /**
