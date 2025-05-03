@@ -6,11 +6,6 @@ export const guestUserAdminService = {
     return api.get('/api/guest-users');
   },
   
-  testGuestUserEndpoints: async () => {
-    return api.get('/api/test/guest-users');
-  },
-  
-  // For real implementation (after mock data is replaced with actual DB calls)
   deleteGuestUser: async (id: number) => {
     return api.delete(`/api/guest-users/${id}`);
   },

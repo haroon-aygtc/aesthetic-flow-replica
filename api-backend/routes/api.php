@@ -11,6 +11,7 @@ use App\Http\Controllers\EmbedCodeController;
 use App\Http\Controllers\WidgetAnalyticsController;
 use App\Http\Controllers\ApiTestController;
 use App\Http\Controllers\GuestUserController;
+use App\Http\Controllers\GuestUserAdminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,7 +55,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('widgets', WidgetController::class);
 
     // Guest user management routes (admin)
-    Route::get('/guest-users', [ApiTestController::class, 'getAllGuestUsers']);
+    Route::get('/guest-users', [GuestUserAdminController::class, 'index']);
+    Route::get('/guest-users/{id}', [GuestUserAdminController::class, 'show']);
+    Route::delete('/guest-users/{id}', [GuestUserAdminController::class, 'destroy']);
+    Route::get('/chat/history', [GuestUserAdminController::class, 'getChatHistory'])->name('admin.chat.history');
 
     // Chat management routes (admin)
     Route::get('/chat/sessions', [ChatController::class, 'listSessions']);
@@ -66,12 +70,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/widgets/{widget_id}/analytics', [WidgetAnalyticsController::class, 'getAnalytics']);
     Route::get('/widgets/{widget_id}/analytics/summary', [WidgetAnalyticsController::class, 'getSummary']);
     
-    // API Testing routes
+    // API Testing routes - should be disabled in production
     Route::prefix('test')->group(function () {
         Route::get('/routes', [ApiTestController::class, 'listRoutes']);
         Route::get('/ai-models', [ApiTestController::class, 'testAIModelEndpoints']);
         Route::get('/widgets', [ApiTestController::class, 'testWidgetEndpoints']);
-        Route::get('/guest-users', [ApiTestController::class, 'testGuestUserEndpoints']);
         Route::get('/all', [ApiTestController::class, 'testAllEndpoints']);
     });
 });

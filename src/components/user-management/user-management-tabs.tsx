@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UsersList } from "./users-list";
 import { RolesList } from "./roles-list";
@@ -10,10 +10,25 @@ import { PermissionsList } from "./permissions-list";
 
 export default function UserManagementTabs() {
   const [activeTab, setActiveTab] = useState("users");
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Check viewport size for responsive layout
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    handleResize(); // Initial check
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   return (
     <Tabs defaultValue="users" value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="grid w-full grid-cols-5 mb-8">
+      <TabsList className={`w-full mb-8 ${isMobile ? 'flex flex-wrap gap-2' : 'grid grid-cols-5'}`}>
         <TabsTrigger value="users">Users</TabsTrigger>
         <TabsTrigger value="roles">Roles</TabsTrigger>
         <TabsTrigger value="permissions">Permissions</TabsTrigger>

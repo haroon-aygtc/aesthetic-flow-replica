@@ -11,7 +11,7 @@ export default function UserManagement() {
         <div>
           <h2 className="text-3xl font-bold tracking-tight">User Management</h2>
           <p className="text-muted-foreground mt-2">
-            Manage users, roles, and permissions in your application.
+            Manage users, roles, and permissions for your application. Control access levels and security.
           </p>
         </div>
         
