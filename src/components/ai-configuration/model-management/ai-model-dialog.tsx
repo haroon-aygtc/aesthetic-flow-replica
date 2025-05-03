@@ -43,9 +43,6 @@ export function AIModelDialog({
       description: model?.description || "",
       api_key: model?.api_key || "",
       is_default: model?.is_default || false,
-      active: model?.active !== false,
-      fallback_model_id: model?.fallback_model_id || null,
-      confidence_threshold: model?.confidence_threshold || 0.7,
       settings: {
         model_name: model?.settings?.model_name || "",
         temperature: model?.settings?.temperature || 0.7,

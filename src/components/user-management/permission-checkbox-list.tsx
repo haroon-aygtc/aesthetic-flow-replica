@@ -1,7 +1,9 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { Search } from "lucide-react";
 
 interface Permission {
   id: number;
@@ -22,107 +24,87 @@ export function PermissionCheckboxList({
   selectedPermissionIds,
   onPermissionToggle,
 }: PermissionCheckboxListProps) {
-  const [searchTerm, setSearchTerm] = useState("");
-
+  const [searchQuery, setSearchQuery] = useState("");
+  const [groupedPermissions, setGroupedPermissions] = useState<Record<string, Permission[]>>({});
+  
   // Group permissions by category
-  const permissionsByCategory = permissions.reduce<Record<string, Permission[]>>(
-    (acc, permission) => {
-      const category = permission.category;
-      if (!acc[category]) {
-        acc[category] = [];
-      }
-      acc[category].push(permission);
-      return acc;
-    },
-    {}
-  );
-
-  // Filter permissions based on search term
-  const filteredCategories = Object.keys(permissionsByCategory).filter((category) => {
-    if (!searchTerm) return true;
-    
-    // Check if category matches search
-    if (category.toLowerCase().includes(searchTerm.toLowerCase())) return true;
-    
-    // Check if any permission in category matches search
-    return permissionsByCategory[category].some((permission) => 
-      permission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (permission.description && permission.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  useEffect(() => {
+    const filteredPermissions = permissions.filter(
+      (permission) =>
+        permission.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (permission.description &&
+          permission.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        permission.category.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  });
-
-  const getBadgeColor = (type: string) => {
-    switch (type) {
-      case "read":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
-      case "write":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-      case "delete":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
-    }
-  };
+    
+    const grouped = filteredPermissions.reduce<Record<string, Permission[]>>(
+      (acc, permission) => {
+        const category = permission.category;
+        if (!acc[category]) {
+          acc[category] = [];
+        }
+        acc[category].push(permission);
+        return acc;
+      },
+      {}
+    );
+    
+    setGroupedPermissions(grouped);
+  }, [permissions, searchQuery]);
 
   return (
     <div className="space-y-4">
-      <div className="mb-4">
-        <Input 
-          placeholder="Search permissions..." 
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full"
+      <div className="relative">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="search"
+          placeholder="Search permissions..."
+          className="pl-8"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
       
-      <div className="max-h-[400px] overflow-y-auto pr-1 space-y-6">
-        {filteredCategories.length > 0 ? (
-          filteredCategories.map((category) => {
-            const categoryPermissions = permissionsByCategory[category].filter((permission) => {
-              if (!searchTerm) return true;
-              return (
-                permission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (permission.description && permission.description.toLowerCase().includes(searchTerm.toLowerCase()))
-              );
-            });
-
-            if (categoryPermissions.length === 0) return null;
-
-            return (
-              <div key={category} className="space-y-2">
-                <h3 className="font-medium text-sm uppercase tracking-wide text-muted-foreground">
-                  {category}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {categoryPermissions.map((permission) => (
-                    <div key={permission.id} className="flex items-center space-x-2 rounded-md border p-2">
-                      <input
-                        type="checkbox"
-                        id={`permission-${permission.id}`}
-                        checked={selectedPermissionIds.includes(permission.id)}
-                        onChange={(e) => onPermissionToggle(permission.id, e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                      />
-                      <div className="flex-1">
-                        <label htmlFor={`permission-${permission.id}`} className="text-sm font-medium cursor-pointer flex items-center justify-between">
-                          <span>{permission.name}</span>
-                          <span className={cn("inline-flex items-center px-2 py-0.5 rounded text-xs font-medium", getBadgeColor(permission.type))}>
-                            {permission.type}
-                          </span>
-                        </label>
-                        {permission.description && (
-                          <p className="text-xs text-muted-foreground mt-0.5">{permission.description}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+      <div className="space-y-6">
+        {Object.entries(groupedPermissions).map(([category, categoryPermissions]) => (
+          <div key={category} className="space-y-3">
+            <h3 className="font-medium text-sm text-muted-foreground">{category}</h3>
+            <div className="space-y-2">
+              {categoryPermissions.map((permission) => (
+                <div key={permission.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`permission-${permission.id}`}
+                    checked={selectedPermissionIds.includes(permission.id)}
+                    onCheckedChange={(checked) => {
+                      onPermissionToggle(permission.id, checked === true);
+                    }}
+                  />
+                  <div>
+                    <Label htmlFor={`permission-${permission.id}`} className="font-medium">
+                      {permission.name}
+                    </Label>
+                    {permission.description && (
+                      <p className="text-xs text-muted-foreground">{permission.description}</p>
+                    )}
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-xs ml-auto ${
+                    permission.type === 'read' 
+                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' 
+                      : permission.type === 'write' 
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
+                        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                  }`}>
+                    {permission.type}
+                  </span>
                 </div>
-              </div>
-            );
-          })
-        ) : (
+              ))}
+            </div>
+          </div>
+        ))}
+        
+        {Object.keys(groupedPermissions).length === 0 && (
           <div className="text-center py-4 text-muted-foreground">
-            No permissions found matching "{searchTerm}"
+            No permissions found matching your search
           </div>
         )}
       </div>

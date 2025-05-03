@@ -27,7 +27,7 @@ export function useAIModelManagement() {
   const fetchModels = async () => {
     setIsLoading(true);
     try {
-      const data = await aiModelService.getModels();
+      const data = await aiModelService.getAllModels();
       setModels(data);
       
       // Select default model if available

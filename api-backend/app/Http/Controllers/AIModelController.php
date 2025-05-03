@@ -1,3 +1,4 @@
+
 <?php
 namespace App\Http\Controllers;
 
@@ -105,9 +106,6 @@ class AIModelController extends Controller
             'api_key' => 'nullable|string',
             'settings' => 'nullable|array',
             'is_default' => 'boolean',
-            'active' => 'boolean',
-            'fallback_model_id' => 'nullable|integer|exists:ai_models,id',
-            'confidence_threshold' => 'nullable|numeric|min:0|max:1',
         ]);
 
         if ($validator->fails()) {
@@ -116,14 +114,6 @@ class AIModelController extends Controller
 
         try {
             $aiModel = AIModel::findOrFail($id);
-
-            // Prevent circular fallback references
-            if ($request->has('fallback_model_id') && $request->fallback_model_id == $id) {
-                return response()->json([
-                    'message' => 'A model cannot be set as its own fallback',
-                    'success' => false
-                ], 422);
-            }
 
             // If this model is being set as default, unset other defaults
             if ($request->has('is_default') && $request->input('is_default') && !$aiModel->is_default) {
@@ -167,69 +157,6 @@ class AIModelController extends Controller
             Log::error('Failed to delete AI model: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Failed to delete AI model',
-                'error' => $e->getMessage(),
-                'success' => false
-            ], 500);
-        }
-    }
-
-    /**
-     * Get available fallback models for a specific model.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function getFallbackOptions($id)
-    {
-        try {
-            // Get all models except the current one
-            $models = AIModel::where('id', '!=', $id)
-                ->where('active', true)
-                ->get(['id', 'name', 'provider', 'description']);
-                
-            return response()->json(['data' => $models, 'success' => true]);
-        } catch (\Exception $e) {
-            Log::error('Failed to get fallback options: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Failed to get fallback options',
-                'error' => $e->getMessage(),
-                'success' => false
-            ], 500);
-        }
-    }
-
-    /**
-     * Toggle model activation status.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function toggleActivation(Request $request, $id)
-    {
-        try {
-            $aiModel = AIModel::findOrFail($id);
-            
-            // Don't allow deactivating the default model
-            if ($aiModel->is_default && $aiModel->active && !$request->input('active', true)) {
-                return response()->json([
-                    'message' => 'Cannot deactivate the default model',
-                    'success' => false
-                ], 422);
-            }
-            
-            $aiModel->active = $request->input('active', !$aiModel->active);
-            $aiModel->save();
-            
-            return response()->json([
-                'message' => $aiModel->active ? 'Model activated' : 'Model deactivated',
-                'data' => $aiModel,
-                'success' => true
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to toggle model activation: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Failed to toggle model activation',
                 'error' => $e->getMessage(),
                 'success' => false
             ], 500);
