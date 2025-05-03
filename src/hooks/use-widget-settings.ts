@@ -1,12 +1,13 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { WidgetSettings, widgetService } from "@/utils/widgetService";
+import { WidgetSettings, Widget, widgetService } from "@/utils/widgetService";
 
 export function useWidgetSettings() {
   const { toast } = useToast();
   const [widgets, setWidgets] = useState<{ id: string; name: string }[]>([]);
-  const [selectedWidget, setSelectedWidget] = useState("");
+  const [selectedWidget, setSelectedWidget] = useState<string>("");
+  const [selectedWidgetId, setSelectedWidgetId] = useState<number | null>(null);
   const [widgetSettings, setWidgetSettings] = useState<WidgetSettings>({
     primaryColor: "#4f46e5",
     borderRadius: 8,
@@ -28,7 +29,8 @@ export function useWidgetSettings() {
       const response = await widgetService.getAllWidgets();
       const widgetData = response.data.map((widget: any) => ({
         id: widget.widget_id || widget.id.toString(),
-        name: widget.name
+        name: widget.name,
+        numericId: widget.id // Store the numeric ID for API calls
       }));
       
       setWidgets(widgetData);
@@ -36,6 +38,8 @@ export function useWidgetSettings() {
       // Select first widget if available
       if (widgetData.length > 0 && !selectedWidget) {
         handleWidgetChange(widgetData[0].id);
+      } else if (widgetData.length === 0) {
+        setIsLoading(false);
       }
     } catch (error) {
       console.error("Error fetching widgets:", error);
@@ -44,7 +48,6 @@ export function useWidgetSettings() {
         description: "Failed to load widgets",
         variant: "destructive"
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -55,7 +58,36 @@ export function useWidgetSettings() {
     setIsLoading(true);
     
     try {
-      const response = await widgetService.getWidgetByPublicId(widgetId);
+      // Find the numeric ID for this widget
+      const widget = widgets.find(w => w.id === widgetId);
+      const numericId = widget?.numericId;
+      setSelectedWidgetId(numericId || null);
+      
+      // For local development without backend, can use mock response:
+      let response;
+      try {
+        if (numericId) {
+          response = await widgetService.getWidget(numericId);
+        } else {
+          response = await widgetService.getWidgetByPublicId(widgetId);
+        }
+      } catch (error) {
+        // Fallback mock response if API fails
+        console.warn("Using fallback mock data for widget:", error);
+        response = {
+          data: {
+            widget_id: widgetId,
+            settings: {
+              primaryColor: "#4f46e5",
+              borderRadius: 8,
+              position: "bottom-right",
+              initialMessage: "Hello! How can I help you today?",
+              headerTitle: "AI Assistant"
+            }
+          }
+        };
+      }
+      
       const data = response.data;
       
       if (data && data.settings) {
@@ -82,6 +114,30 @@ export function useWidgetSettings() {
     }
   };
 
+  // Update widget settings in the API
+  const updateWidgetSettings = async (newSettings: Partial<WidgetSettings>) => {
+    if (!selectedWidgetId) {
+      console.error("No widget selected");
+      return Promise.reject(new Error("No widget selected"));
+    }
+    
+    try {
+      // Merge new settings with existing settings
+      const updatedSettings = { ...widgetSettings, ...newSettings };
+      setWidgetSettings(updatedSettings);
+      
+      // Update API
+      await widgetService.updateWidget(selectedWidgetId, {
+        settings: updatedSettings
+      });
+      
+      return Promise.resolve();
+    } catch (error) {
+      console.error("Error updating widget settings:", error);
+      return Promise.reject(error);
+    }
+  };
+
   const getWidgetConfig = () => {
     return {
       id: selectedWidget,
@@ -98,6 +154,7 @@ export function useWidgetSettings() {
     widgetSettings,
     isLoading,
     setSelectedWidget: handleWidgetChange,
+    updateWidgetSettings,
     getWidgetConfig,
     refreshWidgets: fetchWidgets
   };

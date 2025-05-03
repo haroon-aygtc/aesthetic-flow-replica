@@ -1,3 +1,4 @@
+
 import api from './api';
 
 // Types for widget configurations
@@ -16,6 +17,12 @@ export interface WidgetSettings {
   sendButtonText?: string;
   offlineMessage?: string;
   systemPrompt?: string;
+  ai_model_id?: number | null;
+  persistSession?: boolean;
+  requireGuestInfo?: boolean;
+  showNotifications?: boolean;
+  triggerAfterPageViews?: number;
+  pageTargeting?: string;
   avatar?: {
     enabled?: boolean;
     imageUrl?: string;
@@ -105,5 +112,29 @@ export const widgetService = {
     }
     
     return api.get(`/api/widgets/${widgetId}/analytics?${params.toString()}`);
+  },
+  
+  // Additional widget configuration methods
+  updateWidgetSettings: async (widgetId: number, settings: WidgetSettings) => {
+    return api.put(`/api/widgets/${widgetId}`, {
+      settings: settings
+    });
+  },
+  
+  // Widget activation/deactivation
+  setWidgetActive: async (widgetId: number, isActive: boolean) => {
+    return api.put(`/api/widgets/${widgetId}`, {
+      is_active: isActive
+    });
+  },
+  
+  // Guest settings
+  updateGuestSettings: async (widgetId: number, requireGuestInfo: boolean, guestFields?: string[]) => {
+    return api.put(`/api/widgets/${widgetId}`, {
+      settings: { 
+        requireGuestInfo: requireGuestInfo,
+        guestFields: guestFields
+      }
+    });
   }
 };
