@@ -12,9 +12,10 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogTrigger
+  DialogTrigger,
+  DialogHeader
 } from "@/components/ui/dialog";
-import { Pencil, Trash } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { PermissionForm } from "./permission-form";
 import { PermissionDeleteDialog } from "./permission-delete-dialog";
 import { PermissionTypeBadge } from "./permission-type-badge";
@@ -144,7 +145,7 @@ export function PermissionsTable({ permissions, onEdit, onDelete, isLoading }: P
                             size="icon"
                             onClick={() => setEditingPermission(permission)}
                           >
-                            <Trash className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </DialogTrigger>
                         <DialogContent>

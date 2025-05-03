@@ -79,7 +79,8 @@ export function PermissionsList() {
     }
   };
 
-  const handleEditPermission = async (id: number, permissionUpdate: any) => {
+  // Modified to return void instead of boolean
+  const handleEditPermission = async (id: number, permissionUpdate: any): Promise<void> => {
     try {
       await permissionService.updatePermission(id, permissionUpdate);
       toast({
@@ -87,7 +88,6 @@ export function PermissionsList() {
         description: "Permission updated successfully",
       });
       fetchPermissions(); // Refresh the permissions list
-      return true;
     } catch (error: any) {
       toast({
         title: "Error",
@@ -98,7 +98,8 @@ export function PermissionsList() {
     }
   };
 
-  const handleDeletePermission = async (id: number) => {
+  // Modified to return void instead of boolean
+  const handleDeletePermission = async (id: number): Promise<void> => {
     try {
       await permissionService.deletePermission(id);
       toast({
@@ -106,7 +107,6 @@ export function PermissionsList() {
         description: "Permission deleted successfully",
       });
       fetchPermissions(); // Refresh the permissions list
-      return true;
     } catch (error: any) {
       toast({
         title: "Error",
