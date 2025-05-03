@@ -1,8 +1,8 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import UsersList from "./users-list";
-import RolesList from "./roles-list";
+import { UsersList } from "./users-list";
+import { RolesList } from "./roles-list";
 import GuestUsersList from "./guest-users-list";
 
 export default function UserManagementTabs() {
