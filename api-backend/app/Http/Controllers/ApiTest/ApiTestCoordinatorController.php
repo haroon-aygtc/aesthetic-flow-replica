@@ -28,10 +28,16 @@ class ApiTestCoordinatorController extends Controller
         $widgetResults = $widgetTestController->testWidgetEndpoints($request)->original;
         $allResults['widgets'] = $widgetResults;
         
+        // Test Guest User API
+        $guestUserTestController = new GuestUserTestController();
+        $guestUserResults = $guestUserTestController->testGuestUserEndpoints($request)->original;
+        $allResults['guest_users'] = $guestUserResults;
+        
         // Overall success
         $overallSuccess = 
             ($aiModelResults['success'] ?? false) && 
-            ($widgetResults['success'] ?? false);
+            ($widgetResults['success'] ?? false) &&
+            ($guestUserResults['success'] ?? false);
         
         return response()->json([
             'success' => $overallSuccess,

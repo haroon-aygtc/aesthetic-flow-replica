@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\ApiTest\ApiTestRouteController;
 use App\Http\Controllers\ApiTest\AIModelTestController;
 use App\Http\Controllers\ApiTest\WidgetTestController;
+use App\Http\Controllers\ApiTest\GuestUserTestController;
 use App\Http\Controllers\ApiTest\ApiTestCoordinatorController;
 
 class ApiTestController extends Controller
@@ -44,6 +45,29 @@ class ApiTestController extends Controller
     {
         $controller = new WidgetTestController();
         return $controller->testWidgetEndpoints($request);
+    }
+
+    /**
+     * Test Guest User API endpoints
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function testGuestUserEndpoints(Request $request)
+    {
+        $controller = new GuestUserTestController();
+        return $controller->testGuestUserEndpoints($request);
+    }
+
+    /**
+     * Get all guest users
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function getAllGuestUsers()
+    {
+        $controller = new GuestUserTestController();
+        return $controller->getAllGuestUsers();
     }
 
     /**

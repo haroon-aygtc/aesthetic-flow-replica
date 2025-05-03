@@ -1,23 +1,19 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UsersList } from "./users-list";
-import { RolesList } from "./roles-list";
-import { PermissionsList } from "./permissions-list";
-import { UserRoleAssignment } from "./user-role-assignment";
-import { RolePermissionAssignment } from "./role-permission-assignment";
-import { RoleDetails } from "./role-details";
+import UsersList from "./users-list";
+import RolesList from "./roles-list";
+import GuestUsersList from "./guest-users-list";
 
-const UserManagementTabs = () => {
+export default function UserManagementTabs() {
+  const [activeTab, setActiveTab] = useState("users");
+
   return (
-    <Tabs defaultValue="users" className="w-full">
-      <TabsList className="grid grid-cols-6 mb-8">
+    <Tabs defaultValue="users" value={activeTab} onValueChange={setActiveTab}>
+      <TabsList className="grid w-full grid-cols-3 mb-8">
         <TabsTrigger value="users">Users</TabsTrigger>
         <TabsTrigger value="roles">Roles</TabsTrigger>
-        <TabsTrigger value="permissions">Permissions</TabsTrigger>
-        <TabsTrigger value="user-roles">User Roles</TabsTrigger>
-        <TabsTrigger value="role-permissions">Role Permissions</TabsTrigger>
-        <TabsTrigger value="role-details">Role Details</TabsTrigger>
+        <TabsTrigger value="guests">Guest Users</TabsTrigger>
       </TabsList>
       
       <TabsContent value="users">
@@ -28,23 +24,9 @@ const UserManagementTabs = () => {
         <RolesList />
       </TabsContent>
       
-      <TabsContent value="permissions">
-        <PermissionsList />
-      </TabsContent>
-      
-      <TabsContent value="user-roles">
-        <UserRoleAssignment />
-      </TabsContent>
-
-      <TabsContent value="role-permissions">
-        <RolePermissionAssignment />
-      </TabsContent>
-
-      <TabsContent value="role-details">
-        <RoleDetails />
+      <TabsContent value="guests">
+        <GuestUsersList />
       </TabsContent>
     </Tabs>
   );
-};
-
-export default UserManagementTabs;
+}

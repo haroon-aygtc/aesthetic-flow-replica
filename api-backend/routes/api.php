@@ -53,6 +53,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Widget routes
     Route::apiResource('widgets', WidgetController::class);
 
+    // Guest user management routes (admin)
+    Route::get('/guest-users', [ApiTestController::class, 'getAllGuestUsers']);
+
     // Chat management routes (admin)
     Route::get('/chat/sessions', [ChatController::class, 'listSessions']);
 
@@ -68,6 +71,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/routes', [ApiTestController::class, 'listRoutes']);
         Route::get('/ai-models', [ApiTestController::class, 'testAIModelEndpoints']);
         Route::get('/widgets', [ApiTestController::class, 'testWidgetEndpoints']);
+        Route::get('/guest-users', [ApiTestController::class, 'testGuestUserEndpoints']);
         Route::get('/all', [ApiTestController::class, 'testAllEndpoints']);
     });
 });
