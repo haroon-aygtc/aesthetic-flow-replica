@@ -6,7 +6,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/hooks/use-toast";
 import { AIModelData, aiModelService } from "@/utils/ai-model-service";
 import { ModelFallbackCard } from "@/components/ai-configuration/model-management/model-fallback-card";
-import { ModelActivationRules } from "@/components/ai-configuration/model-management/model-activation-rules";
+import { ModelActivationRules } from "@/components/ai-configuration/model-management/activation-rules/model-activation-rules";
 import { ModelAnalytics } from "@/components/ai-configuration/model-management/model-analytics";
 import { TemplateSelector } from "@/components/ai-configuration/model-management/template-selector";
 
