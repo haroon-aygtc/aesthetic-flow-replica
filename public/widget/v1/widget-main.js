@@ -1,4 +1,3 @@
-
 /**
  * AI Chat Widget Main Script
  * This script handles the actual widget functionality after being loaded by the loader script
@@ -22,6 +21,7 @@
     chatIconSize: parseInt(script.getAttribute('data-chat-icon-size') || '50'),
     mobileBehavior: script.getAttribute('data-mobile-behavior') || 'responsive',
     visitorId: script.getAttribute('data-visitor-id') || generateVisitorId(),
+    requireGuestInfo: script.getAttribute('data-require-guest-info') === 'true',
   };
 
   // Widget state
@@ -31,6 +31,9 @@
     messages: [],
     isTyping: false,
     unreadMessages: 0,
+    isGuestRegistered: false,
+    guestSessionId: null,
+    showGuestForm: false,
   };
 
   // DOM elements
@@ -38,8 +41,9 @@
   let chatContainer;
   let messagesList;
   let inputField;
+  let guestForm;
   
-  // Base URL for API requests
+  // Base URL for loading resources
   const baseUrl = (function() {
     const scriptSrc = script.src;
     return scriptSrc.substring(0, scriptSrc.indexOf('/widget/v1/'));
@@ -248,6 +252,50 @@
         justify-content: center;
         border-radius: 50%;
       }
+      
+      .ai-chat-guest-form {
+        padding: 16px;
+        background-color: white;
+        border-radius: 8px;
+        margin-bottom: 16px;
+      }
+      
+      .ai-chat-guest-form h3 {
+        margin-top: 0;
+        margin-bottom: 16px;
+        font-size: 16px;
+        font-weight: 500;
+      }
+      
+      .ai-chat-guest-input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        margin-bottom: 12px;
+      }
+      
+      .ai-chat-guest-input:focus {
+        border-color: #a0aec0;
+        outline: none;
+      }
+      
+      .ai-chat-guest-submit {
+        width: 100%;
+        padding: 8px 16px;
+        border: none;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 8px;
+      }
+      
+      .ai-chat-guest-error {
+        color: #e53e3e;
+        font-size: 12px;
+        margin-top: -8px;
+        margin-bottom: 12px;
+      }
     `;
     document.head.appendChild(style);
   }
@@ -280,6 +328,28 @@
     return button;
   }
 
+  function createGuestForm() {
+    const form = document.createElement('div');
+    form.className = 'ai-chat-guest-form';
+    form.style.display = 'none'; // Hidden by default
+    
+    form.innerHTML = `
+      <h3>Please provide your information to start chatting</h3>
+      <input type="text" class="ai-chat-guest-input" id="ai-chat-guest-name" placeholder="Full Name *" required>
+      <div class="ai-chat-guest-error" id="ai-chat-guest-name-error"></div>
+      
+      <input type="email" class="ai-chat-guest-input" id="ai-chat-guest-email" placeholder="Email">
+      <div class="ai-chat-guest-error" id="ai-chat-guest-email-error"></div>
+      
+      <input type="tel" class="ai-chat-guest-input" id="ai-chat-guest-phone" placeholder="Phone Number *" required>
+      <div class="ai-chat-guest-error" id="ai-chat-guest-phone-error"></div>
+      
+      <button type="button" class="ai-chat-guest-submit" id="ai-chat-guest-submit">Start Chatting</button>
+    `;
+    
+    return form;
+  }
+
   function createChatWindow() {
     const chat = document.createElement('div');
     chat.className = 'ai-chat-widget-chat';
@@ -306,6 +376,12 @@
     messagesContainer.className = 'ai-chat-messages';
     messagesList = messagesContainer;
     
+    // Guest form (conditionally added)
+    if (config.requireGuestInfo) {
+      guestForm = createGuestForm();
+      messagesContainer.appendChild(guestForm);
+    }
+    
     // Input area
     const inputContainer = document.createElement('div');
     inputContainer.className = 'ai-chat-input-container';
@@ -317,6 +393,7 @@
     inputField.type = 'text';
     inputField.className = 'ai-chat-input';
     inputField.placeholder = config.inputPlaceholder;
+    inputField.disabled = config.requireGuestInfo; // Disabled until guest registers if required
     
     const sendButton = document.createElement('button');
     sendButton.type = 'submit';
@@ -357,14 +434,19 @@
       const unreadBadge = widgetContainer.querySelector('.ai-chat-unread');
       if (unreadBadge) unreadBadge.remove();
       
-      // Focus input field
-      setTimeout(() => {
-        inputField.focus();
-      }, 100);
-      
-      // Initialize session if not already done
-      if (!state.sessionId) {
-        initChatSession();
+      // Show guest form if required and not registered
+      if (config.requireGuestInfo && !state.isGuestRegistered) {
+        guestForm.style.display = 'block';
+      } else {
+        // Focus input field
+        setTimeout(() => {
+          inputField.focus();
+        }, 100);
+        
+        // Initialize session if not already done and guest info not required
+        if (!state.sessionId && (!config.requireGuestInfo || state.isGuestRegistered)) {
+          initChatSession();
+        }
       }
     }
   }
@@ -481,23 +563,30 @@
     }
   }
 
-  async function initChatSession() {
+  async function initChatSession(isGuest = false) {
     try {
+      const payload = {
+        widget_id: config.widgetId,
+        visitor_id: config.visitorId,
+        metadata: {
+          url: window.location.href,
+          referrer: document.referrer,
+          userAgent: navigator.userAgent,
+          language: navigator.language,
+        }
+      };
+      
+      // Add guest session ID if available
+      if (isGuest && state.guestSessionId) {
+        payload.guest_session_id = state.guestSessionId;
+      }
+      
       const response = await fetch(`${baseUrl}/api/chat/session/init`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          widget_id: config.widgetId,
-          visitor_id: config.visitorId,
-          metadata: {
-            url: window.location.href,
-            referrer: document.referrer,
-            userAgent: navigator.userAgent,
-            language: navigator.language,
-          }
-        })
+        body: JSON.stringify(payload)
       });
       
       if (!response.ok) {
@@ -507,8 +596,8 @@
       const data = await response.json();
       state.sessionId = data.session_id;
       
-      // Add initial message
-      if (config.initialMessage) {
+      // Add initial message if not a guest (guests get a personalized welcome)
+      if (!isGuest && config.initialMessage) {
         displayMessage(config.initialMessage, 'assistant');
         state.messages.push({
           role: 'assistant',
@@ -582,6 +671,92 @@
     return response.json();
   }
 
+  function registerGuestUser() {
+    const nameInput = document.getElementById('ai-chat-guest-name');
+    const emailInput = document.getElementById('ai-chat-guest-email');
+    const phoneInput = document.getElementById('ai-chat-guest-phone');
+    
+    const nameError = document.getElementById('ai-chat-guest-name-error');
+    const emailError = document.getElementById('ai-chat-guest-email-error');
+    const phoneError = document.getElementById('ai-chat-guest-phone-error');
+    
+    // Reset errors
+    nameError.textContent = '';
+    emailError.textContent = '';
+    phoneError.textContent = '';
+    
+    // Validate inputs
+    let isValid = true;
+    
+    if (!nameInput.value.trim()) {
+      nameError.textContent = 'Full name is required';
+      isValid = false;
+    }
+    
+    if (emailInput.value.trim() && !isValidEmail(emailInput.value)) {
+      emailError.textContent = 'Please enter a valid email address';
+      isValid = false;
+    }
+    
+    if (!phoneInput.value.trim()) {
+      phoneError.textContent = 'Phone number is required';
+      isValid = false;
+    }
+    
+    if (!isValid) return;
+    
+    // Submit form to API
+    fetch(`${baseUrl}/api/guest/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fullname: nameInput.value.trim(),
+        email: emailInput.value.trim() || null,
+        phone: phoneInput.value.trim(),
+        widget_id: config.widgetId,
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Hide form and enable chat
+        guestForm.style.display = 'none';
+        inputField.disabled = false;
+        inputField.focus();
+        
+        // Update state
+        state.isGuestRegistered = true;
+        state.guestSessionId = data.session_id;
+        
+        // Initialize chat session with guest info
+        initChatSession(true);
+        
+        // Show welcome message
+        displayMessage(`Welcome, ${nameInput.value.trim()}! How can I help you today?`, 'assistant');
+      } else {
+        console.error('Failed to register guest user:', data);
+        // Show generic error
+        const genericError = document.createElement('div');
+        genericError.className = 'ai-chat-guest-error';
+        genericError.textContent = 'Failed to register. Please try again.';
+        guestForm.appendChild(genericError);
+      }
+    })
+    .catch(error => {
+      console.error('Error registering guest:', error);
+      // Show generic error
+      const genericError = document.createElement('div');
+      genericError.className = 'ai-chat-guest-error';
+      genericError.textContent = 'An unexpected error occurred. Please try again.';
+      guestForm.appendChild(genericError);
+    });
+  }
+
+  function isValidEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  }
+
   // Initialize widget
   function initWidget() {
     // Create widget container
@@ -619,6 +794,52 @@
         if (!state.isOpen) toggleChat();
       }, autoOpenDelay * 1000);
     }
+    
+    // Set up guest form submit handler
+    if (config.requireGuestInfo) {
+      const submitButton = document.getElementById('ai-chat-guest-submit');
+      if (submitButton) {
+        submitButton.addEventListener('click', registerGuestUser);
+        submitButton.style.backgroundColor = config.primaryColor;
+      }
+    }
+    
+    // Check for existing guest session
+    const storedGuestSession = localStorage.getItem(`ai-chat-guest-${config.widgetId}`);
+    if (storedGuestSession && config.requireGuestInfo) {
+      validateExistingGuestSession(storedGuestSession);
+    }
+  }
+  
+  function validateExistingGuestSession(sessionId) {
+    fetch(`${baseUrl}/api/guest/validate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.valid) {
+        // Auto-restore guest session
+        state.isGuestRegistered = true;
+        state.guestSessionId = sessionId;
+        
+        // Hide form and enable chat
+        if (guestForm) {
+          guestForm.style.display = 'none';
+        }
+        
+        if (inputField) {
+          inputField.disabled = false;
+        }
+      } else {
+        // Clear invalid session
+        localStorage.removeItem(`ai-chat-guest-${config.widgetId}`);
+      }
+    })
+    .catch(error => {
+      console.error('Error validating guest session:', error);
+    });
   }
 
   // Check if already initialized
@@ -638,3 +859,5 @@
   // Initialize the widget
   initWidget();
 })();
+
+</edits_to_apply>

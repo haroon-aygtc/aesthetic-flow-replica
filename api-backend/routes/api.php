@@ -10,6 +10,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\EmbedCodeController;
 use App\Http\Controllers\WidgetAnalyticsController;
 use App\Http\Controllers\ApiTestController;
+use App\Http\Controllers\GuestUserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,6 +28,11 @@ Route::post('/chat/session/init', [ChatController::class, 'initSession']);
 Route::post('/chat/message', [ChatController::class, 'sendMessage']);
 Route::get('/chat/history', [ChatController::class, 'getHistory']);
 Route::post('/widget/analytics/view', [WidgetAnalyticsController::class, 'trackEvent']);
+
+// Guest user routes for widget
+Route::post('/guest/register', [GuestUserController::class, 'register']);
+Route::post('/guest/validate', [GuestUserController::class, 'validateSession']);
+Route::post('/guest/details', [GuestUserController::class, 'getDetails']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {

@@ -4,128 +4,110 @@ namespace App\Http\Controllers;
 use App\Models\ChatSession;
 use App\Models\ChatMessage;
 use App\Models\Widget;
+use App\Models\GuestUser;
 use App\Services\AIService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class ChatController extends Controller
 {
-    protected $aiService;
-
-    public function __construct(AIService $aiService)
-    {
-        $this->aiService = $aiService;
-    }
-
     /**
      * Initialize a new chat session.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function initSession(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $request->validate([
             'widget_id' => 'required|string|exists:widgets,widget_id',
-            'visitor_id' => 'nullable|string|max:255',
+            'visitor_id' => 'nullable|string',
             'metadata' => 'nullable|array',
+            'guest_session_id' => 'nullable|string|exists:guest_users,session_id',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
+        // Find the widget
         $widget = Widget::where('widget_id', $request->widget_id)
                        ->where('is_active', true)
                        ->firstOrFail();
 
-        $chatSession = ChatSession::create([
-            'widget_id' => $widget->id,
-            'visitor_id' => $request->visitor_id ?? Str::random(16),
-            'metadata' => $request->metadata,
-            'last_activity_at' => now(),
-        ]);
-
-        // Create initial system message based on widget settings
-        if (!empty($widget->settings['initialMessage'])) {
-            ChatMessage::create([
-                'chat_session_id' => $chatSession->id,
-                'content' => $widget->settings['initialMessage'] ?? 'Hello! How can I help you today?',
-                'role' => 'assistant',
-            ]);
+        // Generate session ID and visitor ID if not provided
+        $sessionId = Str::uuid()->toString();
+        $visitorId = $request->visitor_id ?? ('visitor_' . Str::random(12));
+        
+        // Create a new session
+        $session = new ChatSession();
+        $session->widget_id = $widget->id;
+        $session->session_id = $sessionId;
+        $session->visitor_id = $visitorId;
+        $session->metadata = $request->metadata;
+        $session->last_activity_at = now();
+        
+        // If a guest session ID is provided, link it to this chat session
+        if ($request->has('guest_session_id')) {
+            $guestUser = GuestUser::where('session_id', $request->guest_session_id)->first();
+            if ($guestUser) {
+                $session->visitor_id = $guestUser->session_id;
+                $session->metadata = array_merge($session->metadata ?? [], [
+                    'guest_user_id' => $guestUser->id,
+                    'guest_name' => $guestUser->fullname
+                ]);
+            }
         }
+        
+        $session->save();
 
         return response()->json([
-            'session_id' => $chatSession->session_id,
-            'visitor_id' => $chatSession->visitor_id,
-            'created_at' => $chatSession->created_at,
+            'session_id' => $sessionId,
+            'visitor_id' => $session->visitor_id,
         ]);
     }
 
     /**
-     * Send a message and get an AI response.
+     * Send a chat message.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function sendMessage(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $request->validate([
             'session_id' => 'required|string|exists:chat_sessions,session_id',
             'message' => 'required|string',
             'metadata' => 'nullable|array',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
+        // Find the session
+        $session = ChatSession::where('session_id', $request->session_id)->firstOrFail();
 
-        $chatSession = ChatSession::where('session_id', $request->session_id)->firstOrFail();
-        $chatSession->update(['last_activity_at' => now()]);
+        // Determine the role based on the session (assuming user is always 'user')
+        $role = 'user';
 
-        // Save user message
-        $userMessage = ChatMessage::create([
-            'chat_session_id' => $chatSession->id,
-            'content' => $request->message,
-            'role' => 'user',
-            'metadata' => $request->metadata,
-        ]);
+        // Save the message
+        $chatMessage = new ChatMessage();
+        $chatMessage->chat_session_id = $session->id;
+        $chatMessage->role = $role;
+        $chatMessage->content = $request->message;
+        $chatMessage->metadata = $request->metadata;
+        $chatMessage->save();
 
-        // Get conversation history
-        $messages = $chatSession->messages()
-                              ->orderBy('created_at')
-                              ->get()
-                              ->map(function($message) {
-                                  return [
-                                      'role' => $message->role,
-                                      'content' => $message->content,
-                                  ];
-                              })
-                              ->toArray();
+        // Update the session's last activity timestamp
+        $session->last_activity_at = now();
+        $session->save();
 
-        // Get widget and associated AI model
-        $widget = $chatSession->widget;
-        $aiModel = $widget->aiModel;
+        // Get AI response
+        $aiService = new AIService();
+        $response = $aiService->getAIResponse($session->widget_id, $request->message, $session->session_id);
 
-        // Process with AI service
-        $response = $this->aiService->processMessage(
-            $messages,
-            $aiModel,
-            $widget->settings
-        );
-
-        // Save assistant response
-        $assistantMessage = ChatMessage::create([
-            'chat_session_id' => $chatSession->id,
-            'content' => $response['content'],
-            'role' => 'assistant',
-            'metadata' => $response['metadata'] ?? null,
-        ]);
+        // Save the AI response
+        $aiChatMessage = new ChatMessage();
+        $aiChatMessage->chat_session_id = $session->id;
+        $aiChatMessage->role = 'assistant';
+        $aiChatMessage->content = $response;
+        $aiChatMessage->save();
 
         return response()->json([
-            'message' => $assistantMessage->content,
-            'created_at' => $assistantMessage->created_at,
+            'message' => $response,
         ]);
     }
 
@@ -133,60 +115,39 @@ class ChatController extends Controller
      * Get chat history for a session.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getHistory(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $request->validate([
             'session_id' => 'required|string|exists:chat_sessions,session_id',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
+        // Find the session
+        $session = ChatSession::where('session_id', $request->session_id)->firstOrFail();
 
-        $chatSession = ChatSession::where('session_id', $request->session_id)->firstOrFail();
+        // Get chat messages
+        $chatMessages = ChatMessage::where('chat_session_id', $session->id)
+                                    ->orderBy('created_at')
+                                    ->get();
 
-        $messages = $chatSession->messages()
-                              ->orderBy('created_at')
-                              ->get()
-                              ->map(function($message) {
-                                  return [
-                                      'id' => $message->id,
-                                      'content' => $message->content,
-                                      'role' => $message->role,
-                                      'created_at' => $message->created_at,
-                                  ];
-                              });
-
-        return response()->json($messages);
+        return response()->json($chatMessages);
     }
 
     /**
-     * List chat sessions for a widget (admin only).
+     * List all chat sessions (admin only).
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function listSessions(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'widget_id' => 'required|integer|exists:widgets,id',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+        // Check if the user is an admin
+        if (!$request->user()->hasRole('admin')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // Ensure widget belongs to authenticated user
-        $widget = Widget::where('id', $request->widget_id)
-                       ->where('user_id', $request->user()->id)
-                       ->firstOrFail();
-
-        $sessions = ChatSession::where('widget_id', $widget->id)
-                              ->orderBy('created_at', 'desc')
-                              ->with('messages')
-                              ->paginate(20);
+        $sessions = ChatSession::with('widget')->get();
 
         return response()->json($sessions);
     }

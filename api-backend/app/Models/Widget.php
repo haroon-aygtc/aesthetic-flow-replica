@@ -1,3 +1,4 @@
+
 <?php
 namespace App\Models;
 
@@ -72,5 +73,13 @@ class Widget extends Model
     public function chatSessions()
     {
         return $this->hasMany(ChatSession::class);
+    }
+    
+    /**
+     * Get the guest users for this widget.
+     */
+    public function guestUsers()
+    {
+        return $this->hasMany(GuestUser::class);
     }
 }

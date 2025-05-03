@@ -73,4 +73,38 @@ api.interceptors.response.use(
   }
 );
 
+// Guest user services
+export const guestUserService = {
+  register: async (data: { fullname: string; email?: string; phone: string; widget_id: string }) => {
+    return api.post('/api/guest/register', data);
+  },
+  
+  validateSession: async (sessionId: string) => {
+    return api.post('/api/guest/validate', { session_id: sessionId });
+  },
+  
+  getDetails: async (sessionId: string) => {
+    return api.post('/api/guest/details', { session_id: sessionId });
+  },
+};
+
+// Widget service enhancements
+export const widgetService = {
+  getByWidgetId: async (widgetId: string) => {
+    return api.get(`/api/widgets/public/${widgetId}`);
+  },
+  
+  updateWidgetSettings: async (widgetId: number, settings: any) => {
+    return api.put(`/api/widgets/${widgetId}`, { settings });
+  },
+  
+  updateGuestSettings: async (widgetId: number, requireGuestInfo: boolean) => {
+    return api.put(`/api/widgets/${widgetId}`, {
+      settings: { 
+        requireGuestInfo: requireGuestInfo 
+      }
+    });
+  }
+};
+
 export default api;
