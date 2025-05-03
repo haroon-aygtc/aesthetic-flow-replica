@@ -14,6 +14,21 @@ export interface AIModelData {
   confidence_threshold?: number;
 }
 
+// Analytics data interfaces
+export interface ModelAnalytics {
+  model_id: number;
+  total_requests: number;
+  total_input_tokens: number;
+  total_output_tokens: number;
+  avg_response_time: number;
+  avg_confidence_score: number;
+  successful_requests: number;
+  fallback_requests: number;
+  date?: string;
+  query_type?: string;
+  use_case?: string;
+}
+
 export const aiModelService = {
   // Get all models
   getModels: async (): Promise<AIModelData[]> => {
@@ -94,6 +109,12 @@ export const aiModelService = {
   // Get model error logs
   getModelErrorLogs: async (modelId: number, period: string = '7d'): Promise<any> => {
     const response = await api.get(`/api/analytics/models/${modelId}/errors?period=${period}`);
+    return response.data;
+  },
+
+  // Get detailed analytics for a model
+  getModelDetailedAnalytics: async (modelId: number, period: string = 'month', groupBy: string = 'day'): Promise<any> => {
+    const response = await api.get(`/api/analytics/models/${modelId}/detailed?period=${period}&group_by=${groupBy}`);
     return response.data;
   }
 };

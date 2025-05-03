@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,7 +50,8 @@ export function ModelAnalyticsCard({ selectedModel }: ModelAnalyticsCardProps) {
     }
   };
 
-  const formatChartData = (data: any[]) => {
+  // Helper function to format chart data
+  function formatChartData(data: any[]) {
     if (!data || !Array.isArray(data)) return [];
     
     return data.map(item => {

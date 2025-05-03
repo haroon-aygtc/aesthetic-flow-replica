@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -78,8 +77,8 @@ const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   query_type: z.string().nullable(),
   use_case: z.string().nullable(),
-  tenant_id: z.string().nullable().transform(val => val ? parseInt(val) : null),
-  priority: z.string().transform(val => parseInt(val)),
+  tenant_id: z.string().nullable().transform(val => val ? Number(val) : null),
+  priority: z.string().transform(val => Number(val)),
   active: z.boolean(),
   conditions: z.array(
     z.object({
@@ -89,6 +88,9 @@ const formSchema = z.object({
     })
   ),
 });
+
+// Define the type for form values
+type FormValues = z.infer<typeof formSchema>;
 
 export function ModelActivationRuleForm({
   modelId,
@@ -101,7 +103,7 @@ export function ModelActivationRuleForm({
   const isEditing = !!rule;
   const { toast } = useToast();
 
-  const form = useForm({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: rule?.name || "",
@@ -133,7 +135,7 @@ export function ModelActivationRuleForm({
     loadTenants();
   }, []);
 
-  const handleSubmit = async (values: z.infer<typeof formSchema>) => {
+  const handleSubmit = async (values: FormValues) => {
     setIsSaving(true);
     
     try {
@@ -151,8 +153,6 @@ export function ModelActivationRuleForm({
         body: JSON.stringify({
           ...values,
           model_id: modelId,
-          priority: parseInt(values.priority.toString()),
-          tenant_id: values.tenant_id ? parseInt(values.tenant_id.toString()) : null,
         })
       });
 
