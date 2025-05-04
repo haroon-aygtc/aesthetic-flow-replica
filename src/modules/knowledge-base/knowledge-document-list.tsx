@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { knowledgeBaseService } from "@/utils/knowledge-base-service";
+import { knowledgeBaseService, KnowledgeDocument } from "@/utils/knowledge-base-service";
 import { DocumentUploadDialog } from "./document-upload-dialog";
 import { cn } from "@/lib/utils";
 import { 
@@ -24,17 +24,6 @@ import {
   AlertCircle,
   Clock 
 } from "lucide-react";
-
-interface KnowledgeDocument {
-  id: string;
-  filename: string;
-  filetype: string;
-  size: number;
-  status: "processed" | "processing" | "failed";
-  created_at: string;
-  category: string;
-  url?: string;
-}
 
 interface KnowledgeDocumentListProps {
   documents: KnowledgeDocument[];
@@ -76,10 +65,16 @@ export function KnowledgeDocumentList({ documents, onDocumentsChange }: Knowledg
   const handleDownloadDocument = async (document: KnowledgeDocument) => {
     try {
       const response = await knowledgeBaseService.downloadDocument(document.id);
+      
+      // Create blob URL from the response data
       const url = window.URL.createObjectURL(new Blob([response.data]));
+      
+      // Create a link element
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', document.filename);
+      
+      // Append to the document, trigger click, and clean up
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

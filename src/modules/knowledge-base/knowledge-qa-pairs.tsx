@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { knowledgeBaseService } from "@/utils/knowledge-base-service";
+import { knowledgeBaseService, QAPair } from "@/utils/knowledge-base-service";
 import { cn } from "@/lib/utils";
 import { 
   Search, 
@@ -25,14 +25,6 @@ import {
   ChevronUp,
   Loader2
 } from "lucide-react";
-
-interface QAPair {
-  id: string;
-  question: string;
-  answer: string;
-  category: string;
-  created_at: string;
-}
 
 interface KnowledgeQAPairsProps {
   qaPairs: QAPair[];
