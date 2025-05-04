@@ -6,16 +6,13 @@ import {
   Code, 
   FileText, 
   Home, 
+  Layout, 
+  MessageSquare, 
   Palette, 
   Settings, 
+  User, 
   Users,
-  Terminal,
-  Database,
-  MessageSquare,
-  Award,
-  Rocket,
-  User,
-  Shield
+  Terminal
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -117,63 +114,13 @@ export function Sidebar() {
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/dashboard/model-management" className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                    }`
-                  }>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Model Management
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to="/dashboard/knowledge-base" className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                    }`
-                  }>
-                    <Database className="mr-2 h-4 w-4" />
-                    Knowledge Base
-                  </NavLink>
-                </li>
-                <li>
                   <NavLink to="/dashboard/templates" className={({isActive}) => 
                     `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                       isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`
                   }>
                     <FileText className="mr-2 h-4 w-4" />
-                    Prompt Templates
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to="/dashboard/response-formatter" className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                    }`
-                  }>
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    Response Formatter
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to="/dashboard/branding" className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                    }`
-                  }>
-                    <Award className="mr-2 h-4 w-4" />
-                    Branding
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to="/dashboard/follow-up" className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                    }`
-                  }>
-                    <Rocket className="mr-2 h-4 w-4" />
-                    Follow-Up Engine
+                    Response Templates
                   </NavLink>
                 </li>
                 <li>
@@ -211,16 +158,6 @@ export function Sidebar() {
                   }>
                     <Terminal className="mr-2 h-4 w-4" />
                     API Tester
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to="/dashboard/analytics" className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                    }`
-                  }>
-                    <BarChart2 className="mr-2 h-4 w-4" />
-                    Analytics
                   </NavLink>
                 </li>
               </ul>

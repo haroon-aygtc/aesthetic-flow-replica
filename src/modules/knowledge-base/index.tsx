@@ -1,49 +1,23 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { KnowledgeDocumentList } from "./knowledge-document-list";
-import { KnowledgeQAPairs } from "./knowledge-qa-pairs";
-import { KnowledgeInsights } from "./knowledge-insights";
-import { knowledgeBaseService } from "@/utils/knowledge-base-service";
-import { useToast } from "@/hooks/use-toast";
-import { Spinner } from "@/components/ui/spinner";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export function KnowledgeBaseModule() {
   const [activeTab, setActiveTab] = useState("documents");
-  const [isLoading, setIsLoading] = useState(true);
-  const [documents, setDocuments] = useState([]);
-  const [qaPairs, setQaPairs] = useState([]);
-  const { toast } = useToast();
-  
-  useEffect(() => {
-    const fetchKnowledgeBaseData = async () => {
-      try {
-        setIsLoading(true);
-        const [docsResponse, qaResponse] = await Promise.all([
-          knowledgeBaseService.getDocuments(),
-          knowledgeBaseService.getQAPairs()
-        ]);
-        
-        setDocuments(docsResponse.data || []);
-        setQaPairs(qaResponse.data || []);
-      } catch (error) {
-        console.error("Error fetching knowledge base data:", error);
-        toast({
-          title: "Error fetching knowledge base data",
-          description: "Please try again later",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchKnowledgeBaseData();
-  }, [toast]);
   
   return (
     <div className="space-y-6">
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Module in development</AlertTitle>
+        <AlertDescription>
+          The Knowledge Base module is currently under development. Please check back later.
+        </AlertDescription>
+      </Alert>
+      
       <Card>
         <CardHeader>
           <CardTitle>Knowledge Base</CardTitle>
@@ -56,25 +30,23 @@ export function KnowledgeBaseModule() {
               <TabsTrigger value="insights">Insights</TabsTrigger>
             </TabsList>
             
-            {isLoading ? (
-              <div className="flex justify-center py-12">
-                <Spinner />
-              </div>
-            ) : (
-              <>
-                <TabsContent value="documents">
-                  <KnowledgeDocumentList documents={documents} onDocumentsChange={setDocuments} />
-                </TabsContent>
-                
-                <TabsContent value="qa">
-                  <KnowledgeQAPairs qaPairs={qaPairs} onQAPairsChange={setQaPairs} />
-                </TabsContent>
-                
-                <TabsContent value="insights">
-                  <KnowledgeInsights documents={documents} qaPairs={qaPairs} />
-                </TabsContent>
-              </>
-            )}
+            <TabsContent value="documents" className="space-y-4">
+              <p className="text-muted-foreground">
+                Upload and manage documents that will serve as a knowledge base for your AI.
+              </p>
+            </TabsContent>
+            
+            <TabsContent value="qa">
+              <p className="text-muted-foreground">
+                Create question and answer pairs to supplement your knowledge base.
+              </p>
+            </TabsContent>
+            
+            <TabsContent value="insights">
+              <p className="text-muted-foreground">
+                View insights about how your knowledge base is being used and which documents are most relevant.
+              </p>
+            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
