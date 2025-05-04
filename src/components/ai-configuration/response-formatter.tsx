@@ -1,403 +1,361 @@
 
 import { useState } from "react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle,
-  CardFooter
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useToast } from "@/components/ui/use-toast";
-import { 
-  Code,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Bold,
-  Italic,
-  List,
-  ListOrdered,
-  RefreshCcw,
-  Save,
-  Heading1,
-  Heading2,
-  Heading3
-} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { toast } from "@/hooks/use-toast";
+import { z } from "zod";
+import { ChatWidgetPreview } from "@/components/widget-preview";
 
-// Import the marked utility
-import { marked } from "./utils/marked";
+// Define schema for response formatter settings
+const responseFormatterSchema = z.object({
+  formatType: z.string().min(1, "Please select a format type"),
+  codeHighlighting: z.boolean().default(true),
+  markdownFormatting: z.boolean().default(true),
+  autoFormatting: z.boolean().default(true),
+  mediaEmbedding: z.boolean().default(true),
+  responseStyling: z.string().default("clean"),
+  customCSS: z.string().optional(),
+  maximumResponseLength: z.string().transform((val) => parseInt(val) || 2000),
+  bulletListStyle: z.string().default("disc"),
+  snippetLanguages: z.string().default("javascript,python,html,css"),
+});
+
+type ResponseFormatterValues = z.infer<typeof responseFormatterSchema>;
 
 export function ResponseFormatter() {
-  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("formatting");
+  const [previewResponse, setPreviewResponse] = useState(false);
   
-  const [previewText, setPreviewText] = useState(
-    "# AI Response Example\n\nThis is an example of how your AI responses will be formatted. The formatting rules you select will apply to all AI responses.\n\n## Key Points\n\n- Formatting can include **bold text** and *italics*\n- Lists and headings help organize information\n- Code blocks for technical content\n\n```javascript\nconst greeting = 'Hello, world!';\nconsole.log(greeting);\n```\n\nThe tone and style of responses can be customized to match your brand voice."
-  );
-  
-  const [formattingOptions, setFormattingOptions] = useState({
-    headings: true,
-    bold: true,
-    italic: true,
-    lists: true,
-    codeBlocks: true,
-    alignment: "left",
-    paragraphSpacing: 1.5,
-    maxParagraphLength: 4
+  // Initialize form with defaults
+  const form = useForm<ResponseFormatterValues>({
+    resolver: zodResolver(responseFormatterSchema),
+    defaultValues: {
+      formatType: "markdown",
+      codeHighlighting: true,
+      markdownFormatting: true,
+      autoFormatting: true,
+      mediaEmbedding: true,
+      responseStyling: "clean",
+      customCSS: "",
+      maximumResponseLength: "2000",
+      bulletListStyle: "disc",
+      snippetLanguages: "javascript,python,html,css"
+    },
   });
-  
-  const [activePreset, setActivePreset] = useState<string | null>(null);
-  
-  const presets = [
-    { id: "minimal", name: "Minimal", description: "Clean, simple formatting with minimal styling" },
-    { id: "technical", name: "Technical", description: "Optimized for code and technical content" },
-    { id: "business", name: "Business", description: "Professional formatting for business communication" },
-    { id: "creative", name: "Creative", description: "Enhanced styling for creative content" }
-  ];
 
-  const handleOptionChange = (option: string, value: any) => {
-    setFormattingOptions({ ...formattingOptions, [option]: value });
-    // In a real implementation, this would regenerate the preview
-    setActivePreset(null); // Clear active preset when custom changes are made
-  };
-
-  const handleApplyPreset = (presetId: string) => {
-    let newOptions;
-    
-    switch(presetId) {
-      case "minimal":
-        newOptions = {
-          headings: true,
-          bold: false,
-          italic: false,
-          lists: true,
-          codeBlocks: false,
-          alignment: "left",
-          paragraphSpacing: 1,
-          maxParagraphLength: 6
-        };
-        break;
-      case "technical":
-        newOptions = {
-          headings: true,
-          bold: true,
-          italic: true,
-          lists: true,
-          codeBlocks: true,
-          alignment: "left",
-          paragraphSpacing: 1.8,
-          maxParagraphLength: 3
-        };
-        break;
-      case "business":
-        newOptions = {
-          headings: true,
-          bold: true,
-          italic: false,
-          lists: true,
-          codeBlocks: false,
-          alignment: "left",
-          paragraphSpacing: 1.5,
-          maxParagraphLength: 4
-        };
-        break;
-      case "creative":
-        newOptions = {
-          headings: true,
-          bold: true,
-          italic: true,
-          lists: true,
-          codeBlocks: true,
-          alignment: "center",
-          paragraphSpacing: 2,
-          maxParagraphLength: 2
-        };
-        break;
-      default:
-        return;
-    }
-    
-    setFormattingOptions(newOptions);
-    setActivePreset(presetId);
+  const onSubmit = (values: ResponseFormatterValues) => {
+    console.log("Response formatter settings:", values);
     
     toast({
-      title: "Preset Applied",
-      description: `The ${presets.find(p => p.id === presetId)?.name} formatting preset has been applied.`
+      title: "Settings saved",
+      description: "Response formatter settings have been updated.",
     });
   };
 
-  const handleSaveSettings = () => {
-    toast({
-      title: "Settings Saved",
-      description: "Your formatting settings have been saved and will be applied to all AI responses."
-    });
-  };
-
-  const handleResetSettings = () => {
-    setFormattingOptions({
-      headings: true,
-      bold: true,
-      italic: true,
-      lists: true,
-      codeBlocks: true,
-      alignment: "left",
-      paragraphSpacing: 1.5,
-      maxParagraphLength: 4
-    });
-    setActivePreset(null);
-    
-    toast({
-      title: "Settings Reset",
-      description: "Formatting settings have been reset to default values."
-    });
+  // Sample widget settings for preview
+  const widgetSettings = {
+    primaryColor: "#4f46e5",
+    secondaryColor: "#4f46e5",
+    borderRadius: 8,
+    position: "bottom-right",
+    headerTitle: "AI Chat",
+    initialMessage: "Hello! How can I help you today?"
   };
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      <div className="space-y-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-xl flex items-center gap-2">
-              <Code className="h-5 w-5" />
-              Formatting Rules
-            </CardTitle>
-            <CardDescription>
-              Configure how AI responses should be formatted
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              <div>
-                <Label className="text-base">Formatting Elements</Label>
-                <div className="mt-3 space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="headings" 
-                      checked={formattingOptions.headings}
-                      onCheckedChange={(checked) => 
-                        handleOptionChange("headings", checked === true)
-                      }
-                    />
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="headings" className="font-medium flex items-center">
-                        <Heading2 className="h-4 w-4 mr-2" /> Headings
-                      </Label>
-                      <p className="text-muted-foreground text-xs">Allow the AI to use headings for sections</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="bold" 
-                      checked={formattingOptions.bold}
-                      onCheckedChange={(checked) => 
-                        handleOptionChange("bold", checked === true)
-                      }
-                    />
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="bold" className="font-medium flex items-center">
-                        <Bold className="h-4 w-4 mr-2" /> Bold Text
-                      </Label>
-                      <p className="text-muted-foreground text-xs">Allow emphasis with bold formatting</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="italic" 
-                      checked={formattingOptions.italic}
-                      onCheckedChange={(checked) => 
-                        handleOptionChange("italic", checked === true)
-                      }
-                    />
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="italic" className="font-medium flex items-center">
-                        <Italic className="h-4 w-4 mr-2" /> Italic Text
-                      </Label>
-                      <p className="text-muted-foreground text-xs">Allow emphasis with italic formatting</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="lists" 
-                      checked={formattingOptions.lists}
-                      onCheckedChange={(checked) => 
-                        handleOptionChange("lists", checked === true)
-                      }
-                    />
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="lists" className="font-medium flex items-center">
-                        <List className="h-4 w-4 mr-2" /> Lists
-                      </Label>
-                      <p className="text-muted-foreground text-xs">Format information as bullet and numbered lists</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="codeBlocks" 
-                      checked={formattingOptions.codeBlocks}
-                      onCheckedChange={(checked) => 
-                        handleOptionChange("codeBlocks", checked === true)
-                      }
-                    />
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="codeBlocks" className="font-medium flex items-center">
-                        <Code className="h-4 w-4 mr-2" /> Code Blocks
-                      </Label>
-                      <p className="text-muted-foreground text-xs">Format code snippets in code blocks</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <Label className="text-base" htmlFor="alignment">Text Alignment</Label>
-                <RadioGroup 
-                  id="alignment" 
-                  className="flex space-x-2 mt-2"
-                  value={formattingOptions.alignment}
-                  onValueChange={(value) => handleOptionChange("alignment", value)}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="left" id="align-left" />
-                    <Label htmlFor="align-left" className="flex items-center">
-                      <AlignLeft className="h-4 w-4 mr-2" /> Left
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="center" id="align-center" />
-                    <Label htmlFor="align-center" className="flex items-center">
-                      <AlignCenter className="h-4 w-4 mr-2" /> Center
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="right" id="align-right" />
-                    <Label htmlFor="align-right" className="flex items-center">
-                      <AlignRight className="h-4 w-4 mr-2" /> Right
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="paragraph-spacing">
-                    Paragraph Spacing: {formattingOptions.paragraphSpacing}x
-                  </Label>
-                </div>
-                <Slider
-                  id="paragraph-spacing"
-                  min={1}
-                  max={3}
-                  step={0.1}
-                  value={[formattingOptions.paragraphSpacing]}
-                  onValueChange={(value) => handleOptionChange("paragraphSpacing", value[0])}
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Compact</span>
-                  <span>Balanced</span>
-                  <span>Spacious</span>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="max-paragraph">
-                    Max Paragraph Length: {formattingOptions.maxParagraphLength} sentences
-                  </Label>
-                </div>
-                <Slider
-                  id="max-paragraph"
-                  min={1}
-                  max={8}
-                  step={1}
-                  value={[formattingOptions.maxParagraphLength]}
-                  onValueChange={(value) => handleOptionChange("maxParagraphLength", value[0])}
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Short</span>
-                  <span>Medium</span>
-                  <span>Long</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button variant="outline" onClick={handleResetSettings}>
-              <RefreshCcw className="h-4 w-4 mr-2" /> Reset
-            </Button>
-            <Button onClick={handleSaveSettings}>
-              <Save className="h-4 w-4 mr-2" /> Save Settings
-            </Button>
-          </CardFooter>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Formatting Presets</CardTitle>
-            <CardDescription>
-              Apply predefined formatting styles
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-2">
-              {presets.map((preset) => (
-                <Button
-                  key={preset.id}
-                  variant={activePreset === preset.id ? "default" : "outline"}
-                  className="justify-start font-normal"
-                  onClick={() => handleApplyPreset(preset.id)}
-                >
-                  <div className="text-left">
-                    <p className="font-medium">{preset.name}</p>
-                    <p className="text-xs text-muted-foreground">{preset.description}</p>
-                  </div>
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      
+    <div className="space-y-6">
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <Code className="h-5 w-5" />
-            Format Preview
-          </CardTitle>
+        <CardHeader>
+          <CardTitle>Response Formatter</CardTitle>
           <CardDescription>
-            See how your AI responses will look with current settings
+            Configure how AI responses are formatted and presented to users
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div 
-            className={`border rounded-md p-4 prose max-w-none dark:prose-invert prose-headings:mb-2 prose-p:my-1.5 overflow-auto max-h-[600px] text-${formattingOptions.alignment}`}
-            style={{ 
-              lineHeight: formattingOptions.paragraphSpacing * 1.5
-            }}
-          >
-            <div dangerouslySetInnerHTML={{ 
-              __html: marked.parse(previewText) 
-            }} />
-          </div>
-          <p className="text-xs text-muted-foreground mt-2 text-center">
-            This preview shows how your AI responses will be formatted based on current settings.
-          </p>
+          <Tabs defaultValue="formatting" value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="formatting">Formatting Options</TabsTrigger>
+              <TabsTrigger value="styling">Styling & Preview</TabsTrigger>
+            </TabsList>
+            
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-6">
+                <TabsContent value="formatting" className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="formatType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Format Type</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select format type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="markdown">Markdown</SelectItem>
+                            <SelectItem value="html">HTML</SelectItem>
+                            <SelectItem value="plaintext">Plain Text</SelectItem>
+                            <SelectItem value="rich">Rich Text</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Choose how you want your AI responses to be formatted
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="codeHighlighting"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                          <div>
+                            <FormLabel>Code Highlighting</FormLabel>
+                            <FormDescription>
+                              Syntax highlighting for code blocks
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="markdownFormatting"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                          <div>
+                            <FormLabel>Markdown Formatting</FormLabel>
+                            <FormDescription>
+                              Format responses with Markdown
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="autoFormatting"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                          <div>
+                            <FormLabel>Auto Formatting</FormLabel>
+                            <FormDescription>
+                              Automatically format responses
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="mediaEmbedding"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                          <div>
+                            <FormLabel>Media Embedding</FormLabel>
+                            <FormDescription>
+                              Allow embedding of images and media
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name="snippetLanguages"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Supported Code Languages</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="javascript,python,html,css" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Comma-separated list of languages for code highlighting
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="maximumResponseLength"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Maximum Response Length</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Maximum number of characters in a single response
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </TabsContent>
+                
+                <TabsContent value="styling" className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="responseStyling"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Response Style</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select style" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="clean">Clean</SelectItem>
+                            <SelectItem value="compact">Compact</SelectItem>
+                            <SelectItem value="expanded">Expanded</SelectItem>
+                            <SelectItem value="custom">Custom</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Choose the visual style for AI responses
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="bulletListStyle"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Bullet List Style</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select bullet style" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="disc">Disc (•)</SelectItem>
+                            <SelectItem value="circle">Circle (○)</SelectItem>
+                            <SelectItem value="square">Square (■)</SelectItem>
+                            <SelectItem value="dash">Dash (-)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Style for bullet points in lists
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {form.watch("responseStyling") === "custom" && (
+                    <FormField
+                      control={form.control}
+                      name="customCSS"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Custom CSS</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder=".response { padding: 10px; }" 
+                              className="font-mono text-sm h-32"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Custom CSS for response formatting
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  
+                  <div className="pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setPreviewResponse(!previewResponse)}
+                      className="mb-4"
+                    >
+                      {previewResponse ? "Hide Preview" : "Show Preview"}
+                    </Button>
+                    
+                    {previewResponse && (
+                      <div className="border rounded-lg p-4 mt-2">
+                        <h4 className="text-sm font-medium mb-2">Response Preview</h4>
+                        <div className="max-w-sm mx-auto">
+                          <ChatWidgetPreview settings={widgetSettings} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+                
+                <div className="flex justify-end space-x-2">
+                  <Button type="button" variant="outline" onClick={() => form.reset()}>
+                    Reset
+                  </Button>
+                  <Button type="submit">
+                    Save Changes
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
