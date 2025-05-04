@@ -1,3 +1,4 @@
+
 <?php
 
 use Illuminate\Support\Facades\Route;
@@ -12,6 +13,8 @@ use App\Http\Controllers\WidgetAnalyticsController;
 use App\Http\Controllers\ApiTestController;
 use App\Http\Controllers\GuestUserController;
 use App\Http\Controllers\GuestUserAdminController;
+use App\Http\Controllers\FollowUpController;
+use App\Http\Controllers\BrandingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -92,11 +95,17 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Follow-up Engine routes
-    Route::get('/widgets/{widgetId}/follow-up', 'App\Http\Controllers\FollowUpController@getSettings');
-    Route::put('/widgets/{widgetId}/follow-up', 'App\Http\Controllers\FollowUpController@updateSettings');
-    Route::get('/widgets/{widgetId}/suggestions', 'App\Http\Controllers\FollowUpController@getSuggestions');
-    Route::post('/widgets/{widgetId}/suggestions', 'App\Http\Controllers\FollowUpController@addSuggestion');
-    Route::put('/widgets/{widgetId}/suggestions/{suggestionId}', 'App\Http\Controllers\FollowUpController@updateSuggestion');
-    Route::delete('/widgets/{widgetId}/suggestions/{suggestionId}', 'App\Http\Controllers\FollowUpController@deleteSuggestion');
-    Route::get('/widgets/{widgetId}/follow-up/stats', 'App\Http\Controllers\FollowUpController@getStats');
+    Route::get('/widgets/{widgetId}/follow-up', [FollowUpController::class, 'getSettings']);
+    Route::put('/widgets/{widgetId}/follow-up', [FollowUpController::class, 'updateSettings']);
+    Route::get('/widgets/{widgetId}/suggestions', [FollowUpController::class, 'getSuggestions']);
+    Route::post('/widgets/{widgetId}/suggestions', [FollowUpController::class, 'addSuggestion']);
+    Route::put('/widgets/{widgetId}/suggestions/{suggestionId}', [FollowUpController::class, 'updateSuggestion']);
+    Route::delete('/widgets/{widgetId}/suggestions/{suggestionId}', [FollowUpController::class, 'deleteSuggestion']);
+    Route::get('/widgets/{widgetId}/follow-up/stats', [FollowUpController::class, 'getStats']);
+    
+    // Branding Engine routes
+    Route::get('/widgets/{widgetId}/branding', [BrandingController::class, 'getBrandingSettings']);
+    Route::put('/widgets/{widgetId}/branding', [BrandingController::class, 'updateBrandingSettings']);
+    Route::post('/widgets/{widgetId}/branding/preview', [BrandingController::class, 'generatePreview']);
+    Route::get('/branding-templates', [BrandingController::class, 'getBrandingTemplates']);
 });

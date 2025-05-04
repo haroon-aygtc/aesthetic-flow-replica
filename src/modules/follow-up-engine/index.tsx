@@ -3,9 +3,49 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FollowUpEngine } from "@/components/ai-configuration/follow-up-engine";
+import { useFollowUp } from "@/hooks/use-follow-up";
+import { Spinner } from "@/components/ui/spinner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 export function FollowUpEngineModule() {
   const [activeTab, setActiveTab] = useState("configuration");
+  const { 
+    settings, 
+    suggestions, 
+    stats, 
+    isLoading, 
+    hasError,
+    settingsError 
+  } = useFollowUp({ 
+    widgetId: 1, // Default widget ID, in production this would come from context or URL params
+    initialSettings: {
+      enabled: true,
+      position: "end",
+      suggestionsCount: 3
+    }
+  });
+  
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center p-12">
+        <Spinner size="lg" className="mr-2" />
+        <p>Loading follow-up configuration...</p>
+      </div>
+    );
+  }
+  
+  if (hasError) {
+    return (
+      <Alert variant="destructive" className="mb-6">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertDescription>
+          Failed to load follow-up configuration. Please try refreshing the page.
+          {settingsError && <p className="mt-2">{settingsError.message}</p>}
+        </AlertDescription>
+      </Alert>
+    );
+  }
   
   return (
     <div className="space-y-6">
@@ -25,7 +65,7 @@ export function FollowUpEngineModule() {
             </TabsContent>
             
             <TabsContent value="analytics">
-              <FollowUpAnalytics />
+              <FollowUpAnalytics stats={stats} />
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -35,27 +75,35 @@ export function FollowUpEngineModule() {
 }
 
 // Analytics component to track follow-up performance
-function FollowUpAnalytics() {
+function FollowUpAnalytics({ stats }: { stats: any }) {
+  if (!stats) {
+    return (
+      <div className="text-center py-6">
+        <p className="text-muted-foreground">No analytics data available</p>
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard 
           title="Engagement Rate" 
-          value="24.8%" 
-          change="+5.3%" 
+          value={`${stats.engagementRate.toFixed(1)}%`}
+          change={`+${stats.topPerforming[0]?.change.toFixed(1)}%`}
           trend="up" 
         />
         <StatCard 
           title="Click-through Rate" 
-          value="12.3%" 
-          change="+2.1%" 
+          value={`${stats.clickThroughRate.toFixed(1)}%`}
+          change={`+${stats.topPerforming[1]?.change.toFixed(1)}%`}
           trend="up" 
         />
         <StatCard 
           title="Conversion Rate" 
-          value="3.7%" 
-          change="-0.5%" 
-          trend="down" 
+          value={`${stats.conversionRate.toFixed(1)}%`}
+          change={`${stats.topPerforming[2]?.change > 0 ? '+' : ''}${stats.topPerforming[2]?.change.toFixed(1)}%`}
+          trend={stats.topPerforming[2]?.change > 0 ? "up" : "down"}
         />
       </div>
 
@@ -65,29 +113,17 @@ function FollowUpAnalytics() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex justify-between items-center border-b pb-2">
-              <div>
-                <p className="font-medium">Tell me about your pricing</p>
-                <p className="text-sm text-muted-foreground">67% engagement rate</p>
+            {stats.topPerforming.map((item: any, index: number) => (
+              <div key={index} className="flex justify-between items-center border-b pb-2 last:border-b-0">
+                <div>
+                  <p className="font-medium">{item.text}</p>
+                  <p className="text-sm text-muted-foreground">{item.engagementRate.toFixed(0)}% engagement rate</p>
+                </div>
+                <p className={`text-sm font-medium ${item.change > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {item.change > 0 ? '+' : ''}{item.change.toFixed(1)}%
+                </p>
               </div>
-              <p className="text-sm font-medium text-green-600">+12.4%</p>
-            </div>
-
-            <div className="flex justify-between items-center border-b pb-2">
-              <div>
-                <p className="font-medium">How does your support work?</p>
-                <p className="text-sm text-muted-foreground">52% engagement rate</p>
-              </div>
-              <p className="text-sm font-medium text-green-600">+8.7%</p>
-            </div>
-
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="font-medium">Need help with something else?</p>
-                <p className="text-sm text-muted-foreground">43% engagement rate</p>
-              </div>
-              <p className="text-sm font-medium text-green-600">+5.2%</p>
-            </div>
+            ))}
           </div>
         </CardContent>
       </Card>
