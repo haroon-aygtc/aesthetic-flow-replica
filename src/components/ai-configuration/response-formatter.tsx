@@ -23,7 +23,7 @@ const responseFormatterSchema = z.object({
   mediaEmbedding: z.boolean().default(true),
   responseStyling: z.string().default("clean"),
   customCSS: z.string().optional(),
-  maximumResponseLength: z.string().transform((val) => parseInt(val) || 2000),
+  maximumResponseLength: z.coerce.number().default(2000),
   bulletListStyle: z.string().default("disc"),
   snippetLanguages: z.string().default("javascript,python,html,css"),
 });
@@ -45,7 +45,7 @@ export function ResponseFormatter() {
       mediaEmbedding: true,
       responseStyling: "clean",
       customCSS: "",
-      maximumResponseLength: "2000",
+      maximumResponseLength: 2000,
       bulletListStyle: "disc",
       snippetLanguages: "javascript,python,html,css"
     },
