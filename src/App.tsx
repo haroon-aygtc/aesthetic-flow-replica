@@ -11,6 +11,11 @@ import UserManagement from "./pages/UserManagement";
 import ApiTester from "./pages/ApiTester";
 import WidgetConfig from "./pages/WidgetConfig";
 import EmbedCode from "./pages/EmbedCode";
+import KnowledgeBase from "./pages/KnowledgeBase";
+import ResponseFormatter from "./pages/ResponseFormatter";
+import Branding from "./pages/Branding";
+import FollowUp from "./pages/FollowUp";
+import Analytics from "./pages/Analytics";
 
 function App() {
   return (
@@ -27,6 +32,11 @@ function App() {
           <Route path="/dashboard/api-tester" element={<ApiTester />} />
           <Route path="/dashboard/widget-config" element={<WidgetConfig />} />
           <Route path="/dashboard/embed-code" element={<EmbedCode />} />
+          <Route path="/dashboard/knowledge-base" element={<KnowledgeBase />} />
+          <Route path="/dashboard/response-formatter" element={<ResponseFormatter />} />
+          <Route path="/dashboard/branding" element={<Branding />} />
+          <Route path="/dashboard/follow-up" element={<FollowUp />} />
+          <Route path="/dashboard/analytics" element={<Analytics />} />
           <Route path="*" element={<Templates />} />
         </Routes>
       </BrowserRouter>
