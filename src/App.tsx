@@ -1,57 +1,37 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
-import { AuthProvider } from "@/hooks/use-auth";
-
-// Pages
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
-import WidgetConfig from "./pages/WidgetConfig";
-import ContextRules from "./pages/ContextRules";
+import { Toaster } from "@/components/ui/toaster";
 import Templates from "./pages/Templates";
-import UserManagement from "./pages/UserManagement";
+import ModelManagement from "./pages/ModelManagement";
 import AIConfiguration from "./pages/AIConfiguration";
-import EmbedCode from "./pages/EmbedCode";
+import { PromptTemplatesModule } from "./modules/prompt-templates";
+import ContextRules from "./pages/ContextRules";
+import UserManagement from "./pages/UserManagement";
 import ApiTester from "./pages/ApiTester";
-import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient();
+import WidgetConfig from "./pages/WidgetConfig";
+import EmbedCode from "./pages/EmbedCode";
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider defaultTheme="light">
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/dashboard/user-management" element={<UserManagement />} />
-                <Route path="/dashboard/ai-configuration" element={<AIConfiguration />} />
-                <Route path="/dashboard/embed-code" element={<EmbedCode />} />
-                <Route path="/dashboard/templates" element={<Templates />} />
-                <Route path="/dashboard/context-rules" element={<ContextRules />} />
-                <Route path="/dashboard/widget-config" element={<WidgetConfig />} />
-                <Route path="/dashboard/widget-config/:id" element={<WidgetConfig />} />
-                <Route path="/dashboard/api-tester" element={<ApiTester />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </TooltipProvider>
-          </ThemeProvider>
-        </QueryClientProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+      <BrowserRouter>
+        <Routes>
+          <Route path="/dashboard" element={<Templates />} />
+          <Route path="/dashboard/templates" element={<Templates />} />
+          <Route path="/dashboard/prompts" element={<PromptTemplatesModule />} />
+          <Route path="/dashboard/model-management" element={<ModelManagement />} />
+          <Route path="/dashboard/ai-configuration" element={<AIConfiguration />} />
+          <Route path="/dashboard/context-rules" element={<ContextRules />} />
+          <Route path="/dashboard/user-management" element={<UserManagement />} />
+          <Route path="/dashboard/api-tester" element={<ApiTester />} />
+          <Route path="/dashboard/widget-config" element={<WidgetConfig />} />
+          <Route path="/dashboard/embed-code" element={<EmbedCode />} />
+          <Route path="*" element={<Templates />} />
+        </Routes>
+      </BrowserRouter>
+      <Toaster />
+    </ThemeProvider>
   );
 }
 

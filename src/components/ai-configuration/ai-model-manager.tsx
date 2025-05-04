@@ -6,6 +6,10 @@ import { AIModelDialog } from "./model-management/ai-model-dialog";
 import { ModelSelectionCard } from "./model-management/model-selection-card";
 import { ApiKeyCard } from "./model-management/api-key-card";
 import { ConfigParametersCard } from "./model-management/config-parameters-card";
+import { ModelFallbackCard } from "./model-management/model-fallback-card";
+import { ModelAnalyticsCard } from "./model-management/model-analytics-card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Settings, History, BarChart } from "lucide-react";
 
 export function AIModelManager() {
   const {
@@ -113,6 +117,15 @@ export function AIModelManager() {
     );
   };
 
+  // Handle model update
+  const onUpdateModel = (updatedModel: AIModelData) => {
+    setSelectedModel(updatedModel);
+    // Also update in the models array
+    setModels(models.map(model => 
+      model.id === updatedModel.id ? updatedModel : model
+    ));
+  };
+
   return (
     <div className="space-y-6">
       {/* Model Selection Card */}
@@ -127,28 +140,63 @@ export function AIModelManager() {
       
       {/* Only show configuration cards if a model is selected */}
       {selectedModel && (
-        <div className="grid gap-6 md:grid-cols-2">
-          <ApiKeyCard 
-            selectedModel={selectedModel}
-            apiKey={apiKey}
-            isAPIKeyValid={isAPIKeyValid}
-            isSaving={isSaving}
-            isTesting={isTesting}
-            onApiKeyChange={setApiKey}
-            onApiKeySave={onApiKeySave}
-            onTestConnection={onTestConnection}
-          />
+        <Tabs defaultValue="basic" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="basic" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Basic Settings
+            </TabsTrigger>
+            <TabsTrigger value="advanced" className="flex items-center gap-2">
+              <History className="h-4 w-4" />
+              Advanced Settings
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart className="h-4 w-4" />
+              Analytics
+            </TabsTrigger>
+          </TabsList>
 
-          <ConfigParametersCard 
-            selectedModel={selectedModel}
-            temperature={temperature}
-            maxTokens={maxTokens}
-            isSaving={isSaving}
-            onTemperatureChange={setTemperature}
-            onMaxTokensChange={setMaxTokens}
-            onSaveConfiguration={onSaveConfiguration}
-          />
-        </div>
+          <TabsContent value="basic">
+            <div className="grid gap-6 md:grid-cols-2">
+              <ApiKeyCard 
+                selectedModel={selectedModel}
+                apiKey={apiKey}
+                isAPIKeyValid={isAPIKeyValid}
+                isSaving={isSaving}
+                isTesting={isTesting}
+                onApiKeyChange={setApiKey}
+                onApiKeySave={onApiKeySave}
+                onTestConnection={onTestConnection}
+              />
+
+              <ConfigParametersCard 
+                selectedModel={selectedModel}
+                temperature={temperature}
+                maxTokens={maxTokens}
+                isSaving={isSaving}
+                onTemperatureChange={setTemperature}
+                onMaxTokensChange={setMaxTokens}
+                onSaveConfiguration={onSaveConfiguration}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="advanced">
+            <div className="grid gap-6 md:grid-cols-2">
+              <ModelFallbackCard 
+                selectedModel={selectedModel}
+                onUpdateModel={onUpdateModel}
+                isLoading={isLoading}
+              />
+
+              {/* Additional advanced settings could go here */}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <ModelAnalyticsCard selectedModel={selectedModel} />
+          </TabsContent>
+        </Tabs>
       )}
       
       {/* Model Dialog */}

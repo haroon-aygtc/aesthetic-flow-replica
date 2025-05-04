@@ -1,10 +1,11 @@
 
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AIModelController;
+use App\Http\Controllers\ModelActivationRuleController;
+use App\Http\Controllers\ModelAnalyticsController;
 use App\Http\Controllers\WidgetController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\EmbedCodeController;
@@ -50,6 +51,19 @@ Route::middleware('auth:sanctum')->group(function () {
     // AI Model routes
     Route::apiResource('ai-models', AIModelController::class);
     Route::post('/ai-models/{id}/test', [AIModelController::class, 'testConnection']);
+    Route::get('/ai-models/{id}/fallback-options', [AIModelController::class, 'getFallbackOptions']);
+    Route::post('/ai-models/{id}/toggle-activation', [AIModelController::class, 'toggleActivation']);
+    
+    // Model activation rules routes
+    Route::get('/ai-models/{modelId}/rules', [ModelActivationRuleController::class, 'index']);
+    Route::post('/ai-models/{modelId}/rules', [ModelActivationRuleController::class, 'store']);
+    Route::put('/ai-models/{modelId}/rules/{ruleId}', [ModelActivationRuleController::class, 'update']);
+    Route::delete('/ai-models/{modelId}/rules/{ruleId}', [ModelActivationRuleController::class, 'destroy']);
+
+    // Model analytics routes
+    Route::get('/analytics/models', [ModelAnalyticsController::class, 'getModelAnalytics']);
+    Route::get('/analytics/models/{modelId}', [ModelAnalyticsController::class, 'getModelDetailedAnalytics']);
+    Route::get('/analytics/models/{modelId}/errors', [ModelAnalyticsController::class, 'getModelErrorLogs']);
 
     // Widget routes
     Route::apiResource('widgets', WidgetController::class);
