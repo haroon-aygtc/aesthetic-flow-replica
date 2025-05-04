@@ -1,4 +1,3 @@
-
 <?php
 
 use Illuminate\Support\Facades\Route;
@@ -91,4 +90,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/widgets', [ApiTestController::class, 'testWidgetEndpoints']);
         Route::get('/all', [ApiTestController::class, 'testAllEndpoints']);
     });
+
+    // Follow-up Engine routes
+    Route::get('/widgets/{widgetId}/follow-up', 'App\Http\Controllers\FollowUpController@getSettings');
+    Route::put('/widgets/{widgetId}/follow-up', 'App\Http\Controllers\FollowUpController@updateSettings');
+    Route::get('/widgets/{widgetId}/suggestions', 'App\Http\Controllers\FollowUpController@getSuggestions');
+    Route::post('/widgets/{widgetId}/suggestions', 'App\Http\Controllers\FollowUpController@addSuggestion');
+    Route::put('/widgets/{widgetId}/suggestions/{suggestionId}', 'App\Http\Controllers\FollowUpController@updateSuggestion');
+    Route::delete('/widgets/{widgetId}/suggestions/{suggestionId}', 'App\Http\Controllers\FollowUpController@deleteSuggestion');
+    Route::get('/widgets/{widgetId}/follow-up/stats', 'App\Http\Controllers\FollowUpController@getStats');
 });

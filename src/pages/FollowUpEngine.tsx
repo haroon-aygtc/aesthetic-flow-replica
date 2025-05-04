@@ -2,7 +2,7 @@
 import { AdminLayout } from "@/components/admin-layout";
 import { FollowUpEngineModule } from "@/modules/follow-up-engine";
 
-const FollowUp = () => {
+const FollowUpEnginePage = () => {
   return (
     <AdminLayout>
       <div className="flex flex-col">
@@ -19,4 +19,4 @@ const FollowUp = () => {
   );
 };
 
-export default FollowUp;
+export default FollowUpEnginePage;
