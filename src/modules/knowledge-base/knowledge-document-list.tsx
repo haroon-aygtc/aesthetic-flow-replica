@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,22 +61,22 @@ export function KnowledgeDocumentList({ documents, onDocumentsChange }: Knowledg
     }
   };
   
-  const handleDownloadDocument = async (document: KnowledgeDocument) => {
+  const handleDownloadDocument = async (doc: KnowledgeDocument) => {
     try {
-      const response = await knowledgeBaseService.downloadDocument(document.id);
+      const response = await knowledgeBaseService.downloadDocument(doc.id);
       
       // Create blob URL from the response data
       const url = window.URL.createObjectURL(new Blob([response.data]));
       
-      // Create a link element using the document global object, not the KnowledgeDocument
-      const link = document.createElement('a');
+      // Use the global document object, not the KnowledgeDocument parameter
+      const link = window.document.createElement('a');
       link.href = url;
-      link.setAttribute('download', document.filename);
+      link.setAttribute('download', doc.filename);
       
-      // Append to the global document body, not the KnowledgeDocument
-      document.body.appendChild(link);
+      // Append to the global document body
+      window.document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      window.document.body.removeChild(link);
     } catch (error) {
       console.error("Error downloading document:", error);
       toast({
@@ -115,7 +114,7 @@ export function KnowledgeDocumentList({ documents, onDocumentsChange }: Knowledg
         return null;
     }
   };
-
+  
   const getStatusClass = (status: string) => {
     switch (status) {
       case "processed":
