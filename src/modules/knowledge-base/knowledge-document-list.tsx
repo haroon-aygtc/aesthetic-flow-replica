@@ -69,12 +69,12 @@ export function KnowledgeDocumentList({ documents, onDocumentsChange }: Knowledg
       // Create blob URL from the response data
       const url = window.URL.createObjectURL(new Blob([response.data]));
       
-      // Create a link element
+      // Create a link element using the document global object, not the KnowledgeDocument
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', document.filename);
       
-      // Append to the document, trigger click, and clean up
+      // Append to the global document body, not the KnowledgeDocument
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
