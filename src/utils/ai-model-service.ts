@@ -16,7 +16,6 @@ export interface AIModelData {
   id?: number;
   name: string;
   provider: string;
-  description?: string;
   api_key?: string;
   settings?: AIModelSettings;
   is_default?: boolean;
