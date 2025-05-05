@@ -5,6 +5,7 @@ import { Spinner } from "@/components/ui/spinner";
 interface Widget {
   id: string;
   name: string;
+  numericId?: number; // Add optional numericId to match our hook's type
 }
 
 interface WidgetSelectorProps {

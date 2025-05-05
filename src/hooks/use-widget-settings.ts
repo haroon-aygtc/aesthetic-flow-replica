@@ -3,9 +3,16 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { WidgetSettings, Widget, widgetService } from "@/utils/widgetService";
 
+// Define a more complete type for our internal widget representation
+interface WidgetListItem {
+  id: string;
+  name: string;
+  numericId?: number; // Add the numericId property that was missing
+}
+
 export function useWidgetSettings() {
   const { toast } = useToast();
-  const [widgets, setWidgets] = useState<{ id: string; name: string }[]>([]);
+  const [widgets, setWidgets] = useState<WidgetListItem[]>([]);
   const [selectedWidget, setSelectedWidget] = useState<string>("");
   const [selectedWidgetId, setSelectedWidgetId] = useState<number | null>(null);
   const [widgetSettings, setWidgetSettings] = useState<WidgetSettings>({
