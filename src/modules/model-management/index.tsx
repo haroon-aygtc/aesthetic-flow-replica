@@ -9,6 +9,11 @@ import { ModelFallbackCard } from "@/components/ai-configuration/model-managemen
 import { ModelActivationRules } from "@/components/ai-configuration/model-management/activation-rules/model-activation-rules";
 import { ModelAnalytics } from "@/components/ai-configuration/model-management/model-analytics";
 import { TemplateSelector } from "@/components/ai-configuration/model-management/template-selector";
+import { AIModelManager } from "@/components/ai-configuration/ai-model-manager";
+import { ModelSelectionPanel } from "./components/model-selection-panel";
+import { ModelConfigurationPanel } from "./components/model-configuration-panel";
+import { Button } from "@/components/ui/button";
+import { PlusCircle, Settings, Book, BarChart3 } from "lucide-react";
 
 export function ModelManagementModule() {
   const [models, setModels] = useState<AIModelData[]>([]);
@@ -16,7 +21,7 @@ export function ModelManagementModule() {
   const [selectedModel, setSelectedModel] = useState<AIModelData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("configuration");
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -27,11 +32,8 @@ export function ModelManagementModule() {
     if (selectedModelId && models.length) {
       const model = models.find(m => m.id === selectedModelId) || null;
       setSelectedModel(model);
-      // You can load template ID here if implementing that feature
-      setSelectedTemplateId(null);
     } else {
       setSelectedModel(null);
-      setSelectedTemplateId(null);
     }
   }, [selectedModelId, models]);
 
@@ -41,9 +43,10 @@ export function ModelManagementModule() {
       const loadedModels = await aiModelService.getModels();
       setModels(loadedModels);
       
-      // Select the first model by default
+      // Select the first model by default or the default model if available
       if (loadedModels.length > 0 && !selectedModelId) {
-        setSelectedModelId(loadedModels[0].id!);
+        const defaultModel = loadedModels.find(m => m.is_default);
+        setSelectedModelId(defaultModel?.id || loadedModels[0].id!);
       }
     } catch (error) {
       console.error("Failed to load AI models:", error);
@@ -65,8 +68,30 @@ export function ModelManagementModule() {
     setSelectedModel(updatedModel);
   };
 
+  const handleCreateModel = async (modelData: AIModelData) => {
+    try {
+      setIsLoading(true);
+      const newModel = await aiModelService.createModel(modelData);
+      setModels([...models, newModel]);
+      setSelectedModelId(newModel.id!);
+      toast({
+        title: "Success",
+        description: `Model "${newModel.name}" has been created.`
+      });
+    } catch (error) {
+      console.error("Failed to create model:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create the model. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleRuleUpdate = () => {
-    // Refresh the model data if needed after rule updates
+    // Refresh the model data after rule updates
     if (selectedModelId) {
       loadModelDetails(selectedModelId);
     }
@@ -81,51 +106,62 @@ export function ModelManagementModule() {
     }
   };
 
-  const handleTemplateSelect = (templateId: string | null) => {
-    setSelectedTemplateId(templateId);
-    // Here you would also update the model to use this template
-    // through an API call to your backend
-  };
+  // If using the simplified view
+  if (!showAdvancedOptions) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold">Model Management</h2>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowAdvancedOptions(true)}
+            className="flex items-center gap-2"
+          >
+            <Settings className="h-4 w-4" />
+            Advanced Mode
+          </Button>
+        </div>
+        <AIModelManager />
+      </div>
+    );
+  }
 
-  const handleCreateTemplate = () => {
-    // Navigate to template creation or open modal
-    // For now just show a toast since we'd need to implement that UI separately
-    toast({
-      title: "Create Template",
-      description: "Template creation interface would open here."
-    });
-  };
-
+  // Advanced mode with more options
   return (
     <div className="grid gap-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Advanced Model Management</h2>
+        <Button 
+          variant="outline" 
+          onClick={() => setShowAdvancedOptions(false)}
+        >
+          Simple Mode
+        </Button>
+      </div>
+
       <div className="grid md:grid-cols-12 gap-6">
         {/* Model Selection */}
         <Card className="md:col-span-3">
           <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-4">AI Models</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">AI Models</h2>
+              <Button size="sm" onClick={() => {
+                // Open create model dialog logic
+              }}>
+                <PlusCircle className="h-4 w-4 mr-2" /> Add
+              </Button>
+            </div>
+            
             {isLoading ? (
               <div className="py-8 flex justify-center">
                 <Spinner size="lg" />
               </div>
-            ) : models.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No AI models configured</p>
-              </div>
             ) : (
-              <div className="space-y-2">
-                {models.map((model) => (
-                  <div
-                    key={model.id}
-                    className={`p-3 border rounded-md cursor-pointer transition-colors hover:bg-muted ${
-                      selectedModelId === model.id ? "border-primary bg-muted" : ""
-                    }`}
-                    onClick={() => setSelectedModelId(model.id!)}
-                  >
-                    <div className="font-medium">{model.name}</div>
-                    <div className="text-xs text-muted-foreground">{model.provider}</div>
-                  </div>
-                ))}
-              </div>
+              <ModelSelectionPanel 
+                models={models} 
+                selectedModelId={selectedModelId} 
+                onModelSelect={setSelectedModelId} 
+              />
             )}
           </CardContent>
         </Card>
@@ -150,22 +186,24 @@ export function ModelManagementModule() {
           ) : (
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="mb-4">
-                <TabsTrigger value="configuration">Configuration</TabsTrigger>
-                <TabsTrigger value="rules">Activation Rules</TabsTrigger>
-                <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                <TabsTrigger value="configuration" className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Configuration
+                </TabsTrigger>
+                <TabsTrigger value="rules" className="flex items-center gap-2">
+                  <Book className="h-4 w-4" />
+                  Activation Rules
+                </TabsTrigger>
+                <TabsTrigger value="analytics" className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  Analytics
+                </TabsTrigger>
               </TabsList>
               
               <TabsContent value="configuration" className="space-y-6">
-                <ModelFallbackCard 
+                <ModelConfigurationPanel
                   selectedModel={selectedModel}
                   onUpdateModel={handleUpdateModel}
-                />
-                
-                <TemplateSelector
-                  selectedModelId={selectedModelId}
-                  onTemplateSelect={handleTemplateSelect}
-                  onCreateTemplate={handleCreateTemplate}
-                  selectedTemplateId={selectedTemplateId}
                 />
               </TabsContent>
               
