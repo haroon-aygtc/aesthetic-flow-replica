@@ -22,7 +22,7 @@ export function CreateWidgetDialog({ open, onOpenChange, onWidgetCreated }: Crea
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name.trim()) {
       toast({
         title: "Widget name required",
@@ -31,13 +31,13 @@ export function CreateWidgetDialog({ open, onOpenChange, onWidgetCreated }: Crea
       });
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       await widgetService.createWidget({
         name,
-        ai_model_id: aiModel ? parseInt(aiModel) : null,
+        ai_model_id: aiModel && aiModel !== "default" ? parseInt(aiModel) : null,
         is_active: true,
         // Set default settings
         settings: {
@@ -51,12 +51,12 @@ export function CreateWidgetDialog({ open, onOpenChange, onWidgetCreated }: Crea
           sendButtonText: "Send"
         }
       });
-      
+
       toast({
         title: "Widget created",
         description: `Widget "${name}" has been created successfully.`
       });
-      
+
       onWidgetCreated();
       resetForm();
     } catch (error) {
@@ -70,7 +70,7 @@ export function CreateWidgetDialog({ open, onOpenChange, onWidgetCreated }: Crea
       setIsLoading(false);
     }
   };
-  
+
   const resetForm = () => {
     setName("");
     setAiModel(null);
@@ -86,7 +86,7 @@ export function CreateWidgetDialog({ open, onOpenChange, onWidgetCreated }: Crea
               Create a new chat widget for your website or application.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="name">Widget Name*</Label>
@@ -98,15 +98,15 @@ export function CreateWidgetDialog({ open, onOpenChange, onWidgetCreated }: Crea
                 disabled={isLoading}
               />
             </div>
-            
+
             <div className="grid gap-2">
               <Label htmlFor="aiModel">AI Model</Label>
-              <Select value={aiModel || ""} onValueChange={setAiModel} disabled={isLoading}>
+              <Select value={aiModel || "default"} onValueChange={setAiModel} disabled={isLoading}>
                 <SelectTrigger id="aiModel">
                   <SelectValue placeholder="Select an AI model" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Default Model</SelectItem>
+                  <SelectItem value="default">Default Model</SelectItem>
                   <SelectItem value="1">GPT-4o</SelectItem>
                   <SelectItem value="2">GPT-3.5 Turbo</SelectItem>
                   <SelectItem value="3">Claude 3 Opus</SelectItem>
@@ -115,11 +115,11 @@ export function CreateWidgetDialog({ open, onOpenChange, onWidgetCreated }: Crea
               </Select>
             </div>
           </div>
-          
+
           <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => onOpenChange(false)} 
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
               type="button"
               disabled={isLoading}
             >

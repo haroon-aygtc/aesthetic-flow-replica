@@ -1,4 +1,4 @@
-
+// Import necessary libraries and components
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,20 +50,20 @@ export function useRuleForm({ modelId, rule, onSave }: UseRuleFormProps) {
         console.error("Error loading tenants:", error);
       }
     };
-    
+
     loadTenants();
   }, []);
 
   const handleSubmit = async (values: ModelActivationRuleFormValues) => {
     setIsSaving(true);
-    
+
     try {
       const endpoint = isEditing
-        ? `/api/ai-models/${modelId}/rules/${rule!.id}`
-        : `/api/ai-models/${modelId}/rules`;
-        
+        ? `/ai-models/${modelId}/rules/${rule!.id}`
+        : `/ai-models/${modelId}/rules`;
+
       const method = isEditing ? "PUT" : "POST";
-      
+
       // Convert form values to API format
       const apiData = {
         ...values,
@@ -71,7 +71,7 @@ export function useRuleForm({ modelId, rule, onSave }: UseRuleFormProps) {
         tenant_id: values.tenant_id ? Number(values.tenant_id) : null,
         priority: Number(values.priority)
       };
-      
+
       const response = await fetch(endpoint, {
         method,
         headers: {
@@ -86,12 +86,12 @@ export function useRuleForm({ modelId, rule, onSave }: UseRuleFormProps) {
       }
 
       const savedRule = await response.json();
-      
+
       toast({
         title: isEditing ? "Rule Updated" : "Rule Created",
         description: `"${values.name}" has been ${isEditing ? "updated" : "created"} successfully.`
       });
-      
+
       onSave(savedRule, !isEditing);
     } catch (error) {
       console.error("Error saving rule:", error);

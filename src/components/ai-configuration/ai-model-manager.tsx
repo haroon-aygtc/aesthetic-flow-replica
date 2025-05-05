@@ -38,7 +38,7 @@ export function AIModelManager() {
     setEditingModel,
     fetchModels
   } = useAIModelManagement();
-  
+
   const {
     handleModelSelect,
     handleAPIKeySave,
@@ -50,13 +50,13 @@ export function AIModelManager() {
   // Handle model selection
   const onModelSelect = (modelId: string) => {
     handleModelSelect(
-      modelId, 
-      models, 
-      setSelectedModelId, 
-      setSelectedModel, 
-      setTemperature, 
-      setMaxTokens, 
-      setApiKey, 
+      modelId,
+      models,
+      setSelectedModelId,
+      setSelectedModel,
+      setTemperature,
+      setMaxTokens,
+      setApiKey,
       setIsAPIKeyValid
     );
   };
@@ -64,10 +64,10 @@ export function AIModelManager() {
   // Handle API key save
   const onApiKeySave = async () => {
     await handleAPIKeySave(
-      selectedModel, 
-      selectedModelId, 
-      apiKey, 
-      setIsAPIKeyValid, 
+      selectedModel,
+      selectedModelId,
+      apiKey,
+      setIsAPIKeyValid,
       setIsSaving
     );
   };
@@ -120,16 +120,18 @@ export function AIModelManager() {
   // Handle model update
   const onUpdateModel = (updatedModel: AIModelData) => {
     setSelectedModel(updatedModel);
-    // Also update in the models array
-    setModels(models.map(model => 
-      model.id === updatedModel.id ? updatedModel : model
-    ));
+    // Also update in the models array if it exists and is an array
+    if (models && Array.isArray(models)) {
+      setModels(models.map(model =>
+        model.id === updatedModel.id ? updatedModel : model
+      ));
+    }
   };
 
   return (
     <div className="space-y-6">
       {/* Model Selection Card */}
-      <ModelSelectionCard 
+      <ModelSelectionCard
         models={models}
         selectedModelId={selectedModelId}
         onModelSelect={onModelSelect}
@@ -137,7 +139,7 @@ export function AIModelManager() {
         onEditModel={onEditModel}
         isLoading={isLoading}
       />
-      
+
       {/* Only show configuration cards if a model is selected */}
       {selectedModel && (
         <Tabs defaultValue="basic" className="w-full">
@@ -158,7 +160,7 @@ export function AIModelManager() {
 
           <TabsContent value="basic">
             <div className="grid gap-6 md:grid-cols-2">
-              <ApiKeyCard 
+              <ApiKeyCard
                 selectedModel={selectedModel}
                 apiKey={apiKey}
                 isAPIKeyValid={isAPIKeyValid}
@@ -169,7 +171,7 @@ export function AIModelManager() {
                 onTestConnection={onTestConnection}
               />
 
-              <ConfigParametersCard 
+              <ConfigParametersCard
                 selectedModel={selectedModel}
                 temperature={temperature}
                 maxTokens={maxTokens}
@@ -183,7 +185,7 @@ export function AIModelManager() {
 
           <TabsContent value="advanced">
             <div className="grid gap-6 md:grid-cols-2">
-              <ModelFallbackCard 
+              <ModelFallbackCard
                 selectedModel={selectedModel}
                 onUpdateModel={onUpdateModel}
                 isLoading={isLoading}
@@ -198,7 +200,7 @@ export function AIModelManager() {
           </TabsContent>
         </Tabs>
       )}
-      
+
       {/* Model Dialog */}
       <AIModelDialog
         model={editingModel || undefined}

@@ -2,6 +2,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/react-query";
 import Templates from "./pages/Templates";
 import ModelManagement from "./pages/ModelManagement";
 import AIConfiguration from "./pages/AIConfiguration";
@@ -16,35 +18,43 @@ import ResponseFormatter from "./pages/ResponseFormatter";
 import Branding from "./pages/Branding";
 import FollowUp from "./pages/FollowUp";
 import Analytics from "./pages/Analytics";
+import Index from "./pages/Index";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import { AuthProvider } from "./hooks/use-auth";
 
 function App() {
   return (
-    <AuthProvider>
-      <ThemeProvider defaultTheme="system" storageKey="ui-theme">
-        <BrowserRouter>
-          <Routes>
-            <Route path="/dashboard" element={<Templates />} />
-            <Route path="/dashboard/templates" element={<Templates />} />
-            <Route path="/dashboard/prompts" element={<PromptTemplatesModule />} />
-            <Route path="/dashboard/model-management" element={<ModelManagement />} />
-            <Route path="/dashboard/ai-configuration" element={<AIConfiguration />} />
-            <Route path="/dashboard/context-rules" element={<ContextRules />} />
-            <Route path="/dashboard/user-management" element={<UserManagement />} />
-            <Route path="/dashboard/api-tester" element={<ApiTester />} />
-            <Route path="/dashboard/widget-config" element={<WidgetConfig />} />
-            <Route path="/dashboard/embed-code" element={<EmbedCode />} />
-            <Route path="/dashboard/knowledge-base" element={<KnowledgeBase />} />
-            <Route path="/dashboard/response-formatter" element={<ResponseFormatter />} />
-            <Route path="/dashboard/branding" element={<Branding />} />
-            <Route path="/dashboard/follow-up" element={<FollowUp />} />
-            <Route path="/dashboard/analytics" element={<Analytics />} />
-            <Route path="*" element={<Templates />} />
-          </Routes>
-        </BrowserRouter>
-        <Toaster />
-      </ThemeProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/dashboard" element={<Templates />} />
+              <Route path="/dashboard/templates" element={<Templates />} />
+              <Route path="/dashboard/prompts" element={<PromptTemplatesModule />} />
+              <Route path="/dashboard/model-management" element={<ModelManagement />} />
+              <Route path="/dashboard/ai-configuration" element={<AIConfiguration />} />
+              <Route path="/dashboard/context-rules" element={<ContextRules />} />
+              <Route path="/dashboard/user-management" element={<UserManagement />} />
+              <Route path="/dashboard/api-tester" element={<ApiTester />} />
+              <Route path="/dashboard/widget-config" element={<WidgetConfig />} />
+              <Route path="/dashboard/embed-code" element={<EmbedCode />} />
+              <Route path="/dashboard/knowledge-base" element={<KnowledgeBase />} />
+              <Route path="/dashboard/response-formatter" element={<ResponseFormatter />} />
+              <Route path="/dashboard/branding" element={<Branding />} />
+              <Route path="/dashboard/follow-up" element={<FollowUp />} />
+              <Route path="/dashboard/analytics" element={<Analytics />} />
+              <Route path="*" element={<Index />} />
+            </Routes>
+          </BrowserRouter>
+          <Toaster />
+        </ThemeProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

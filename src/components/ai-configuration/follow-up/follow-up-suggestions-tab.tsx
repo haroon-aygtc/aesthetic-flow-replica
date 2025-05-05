@@ -14,10 +14,19 @@ import { Suggestion, suggestionSchema, SuggestionValues, suggestionFormatOptions
 
 interface FollowUpSuggestionsTabProps {
   suggestions: Suggestion[];
-  setSuggestions: React.Dispatch<React.SetStateAction<Suggestion[]>>;
+  onAddSuggestion: (suggestion: Omit<Suggestion, 'id' | 'widget_id'>) => void;
+  onUpdateSuggestion: (suggestionId: number, suggestion: Partial<Suggestion>) => void;
+  onDeleteSuggestion: (suggestionId: number) => void;
+  onToggleStatus: (suggestionId: number) => void;
 }
 
-export function FollowUpSuggestionsTab({ suggestions, setSuggestions }: FollowUpSuggestionsTabProps) {
+export function FollowUpSuggestionsTab({
+  suggestions,
+  onAddSuggestion,
+  onUpdateSuggestion,
+  onDeleteSuggestion,
+  onToggleStatus
+}: FollowUpSuggestionsTabProps) {
   const suggestionForm = useForm<SuggestionValues>({
     resolver: zodResolver(suggestionSchema),
     defaultValues: {
@@ -33,19 +42,22 @@ export function FollowUpSuggestionsTab({ suggestions, setSuggestions }: FollowUp
   const watchFormat = suggestionForm.watch("format");
 
   const onSuggestionSubmit = (values: SuggestionValues) => {
-    // Add new suggestion
-    const newSuggestionItem: Suggestion = {
-      id: Date.now().toString(),
+    // Create new suggestion object
+    const newSuggestion = {
       text: values.text,
       category: values.category,
       context: values.context,
-      active: true,
+      position: "end", // Default position
       format: values.format,
-      url: values.url,
-      tooltipText: values.tooltipText,
+      url: values.url || undefined,
+      tooltip_text: values.tooltipText || undefined,
+      active: true,
     };
-    
-    setSuggestions((prev) => [...prev, newSuggestionItem]);
+
+    // Call API to add suggestion
+    onAddSuggestion(newSuggestion);
+
+    // Reset form
     suggestionForm.reset({
       text: "",
       category: "general",
@@ -54,33 +66,20 @@ export function FollowUpSuggestionsTab({ suggestions, setSuggestions }: FollowUp
       url: "",
       tooltipText: "",
     });
-    
-    toast({
-      title: "Suggestion added",
-      description: "Your follow-up suggestion has been added to the list.",
-    });
   };
 
-  const toggleSuggestionStatus = (id: string) => {
-    setSuggestions((prev) => 
-      prev.map((suggestion) => 
-        suggestion.id === id 
-          ? { ...suggestion, active: !suggestion.active } 
-          : suggestion
-      )
-    );
+  const handleToggleStatus = (id: number) => {
+    // Call the API to toggle the suggestion status
+    onToggleStatus(id);
   };
 
-  const deleteSuggestion = (id: string) => {
-    setSuggestions((prev) => prev.filter((suggestion) => suggestion.id !== id));
-    toast({
-      title: "Suggestion deleted",
-      description: "The follow-up suggestion has been removed.",
-    });
+  const handleDeleteSuggestion = (id: number) => {
+    // Call the API to delete the suggestion
+    onDeleteSuggestion(id);
   };
 
   const getFormatIcon = (format: string | undefined) => {
-    switch(format) {
+    switch (format) {
       case "link": return <Link className="h-4 w-4" />;
       case "bubble": return <Circle className="h-4 w-4" />;
       case "tooltip": return <HelpCircle className="h-4 w-4" />;
@@ -94,7 +93,7 @@ export function FollowUpSuggestionsTab({ suggestions, setSuggestions }: FollowUp
       <Form {...suggestionForm}>
         <form onSubmit={suggestionForm.handleSubmit(onSuggestionSubmit)} className="space-y-4 border rounded-md p-4">
           <h3 className="font-medium">Add New Suggestion</h3>
-          
+
           <FormField
             control={suggestionForm.control}
             name="text"
@@ -108,7 +107,7 @@ export function FollowUpSuggestionsTab({ suggestions, setSuggestions }: FollowUp
               </FormItem>
             )}
           />
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={suggestionForm.control}
@@ -135,7 +134,7 @@ export function FollowUpSuggestionsTab({ suggestions, setSuggestions }: FollowUp
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={suggestionForm.control}
               name="context"
@@ -162,7 +161,7 @@ export function FollowUpSuggestionsTab({ suggestions, setSuggestions }: FollowUp
               )}
             />
           </div>
-          
+
           <FormField
             control={suggestionForm.control}
             name="format"
@@ -208,7 +207,7 @@ export function FollowUpSuggestionsTab({ suggestions, setSuggestions }: FollowUp
               )}
             />
           )}
-          
+
           {watchFormat === "tooltip" && (
             <FormField
               control={suggestionForm.control}
@@ -224,7 +223,7 @@ export function FollowUpSuggestionsTab({ suggestions, setSuggestions }: FollowUp
               )}
             />
           )}
-          
+
           <div className="flex justify-end">
             <Button type="submit">
               <Plus className="mr-2 h-4 w-4" />
@@ -233,7 +232,7 @@ export function FollowUpSuggestionsTab({ suggestions, setSuggestions }: FollowUp
           </div>
         </form>
       </Form>
-      
+
       <div className="border rounded-md">
         <Table>
           <TableHeader>
@@ -259,7 +258,7 @@ export function FollowUpSuggestionsTab({ suggestions, setSuggestions }: FollowUp
                   <TableCell>
                     <Checkbox
                       checked={suggestion.active}
-                      onCheckedChange={() => toggleSuggestionStatus(suggestion.id)}
+                      onCheckedChange={() => handleToggleStatus(Number(suggestion.id))}
                     />
                   </TableCell>
                   <TableCell>{suggestion.text}</TableCell>
@@ -272,10 +271,10 @@ export function FollowUpSuggestionsTab({ suggestions, setSuggestions }: FollowUp
                   <TableCell className="capitalize">{suggestion.category}</TableCell>
                   <TableCell className="capitalize">{suggestion.context}</TableCell>
                   <TableCell className="text-right">
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="sm"
-                      onClick={() => deleteSuggestion(suggestion.id)}
+                      onClick={() => handleDeleteSuggestion(Number(suggestion.id))}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>

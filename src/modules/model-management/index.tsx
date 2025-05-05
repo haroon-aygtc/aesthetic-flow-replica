@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/hooks/use-toast";
 import { AIModelData, aiModelService } from "@/utils/ai-model-service";
+import { templateService } from "@/utils/template-service";
 import { ModelFallbackCard } from "@/components/ai-configuration/model-management/model-fallback-card";
 import { ModelActivationRules } from "@/components/ai-configuration/model-management/activation-rules/model-activation-rules";
 import { ModelAnalytics } from "@/components/ai-configuration/model-management/model-analytics";
@@ -16,7 +17,7 @@ export function ModelManagementModule() {
   const [selectedModel, setSelectedModel] = useState<AIModelData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("configuration");
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -40,7 +41,7 @@ export function ModelManagementModule() {
     try {
       const loadedModels = await aiModelService.getModels();
       setModels(loadedModels);
-      
+
       // Select the first model by default
       if (loadedModels.length > 0 && !selectedModelId) {
         setSelectedModelId(loadedModels[0].id!);
@@ -58,7 +59,7 @@ export function ModelManagementModule() {
   };
 
   const handleUpdateModel = (updatedModel: AIModelData) => {
-    const updatedModels = models.map(m => 
+    const updatedModels = models.map(m =>
       m.id === updatedModel.id ? updatedModel : m
     );
     setModels(updatedModels);
@@ -76,15 +77,40 @@ export function ModelManagementModule() {
     try {
       const model = await aiModelService.getModel(modelId);
       handleUpdateModel(model);
+
+      // Set the selected template ID if the model has one
+      setSelectedTemplateId(model.template_id || null);
     } catch (error) {
       console.error("Failed to load model details:", error);
     }
   };
 
-  const handleTemplateSelect = (templateId: string | null) => {
+  const handleTemplateSelect = async (templateId: number | null) => {
     setSelectedTemplateId(templateId);
-    // Here you would also update the model to use this template
-    // through an API call to your backend
+
+    if (selectedModelId) {
+      try {
+        // Update the model to use this template
+        await templateService.assignTemplateToModel(selectedModelId, templateId);
+
+        // Reload the model details to get the updated model
+        await loadModelDetails(selectedModelId);
+
+        toast({
+          title: templateId ? "Template Assigned" : "Template Removed",
+          description: templateId
+            ? "The template has been assigned to this model."
+            : "The template has been removed from this model."
+        });
+      } catch (error) {
+        console.error("Failed to assign template to model:", error);
+        toast({
+          title: "Error",
+          description: "Failed to assign template to model. Please try again.",
+          variant: "destructive"
+        });
+      }
+    }
   };
 
   const handleCreateTemplate = () => {
@@ -116,9 +142,8 @@ export function ModelManagementModule() {
                 {models.map((model) => (
                   <div
                     key={model.id}
-                    className={`p-3 border rounded-md cursor-pointer transition-colors hover:bg-muted ${
-                      selectedModelId === model.id ? "border-primary bg-muted" : ""
-                    }`}
+                    className={`p-3 border rounded-md cursor-pointer transition-colors hover:bg-muted ${selectedModelId === model.id ? "border-primary bg-muted" : ""
+                      }`}
                     onClick={() => setSelectedModelId(model.id!)}
                   >
                     <div className="font-medium">{model.name}</div>
@@ -154,13 +179,13 @@ export function ModelManagementModule() {
                 <TabsTrigger value="rules">Activation Rules</TabsTrigger>
                 <TabsTrigger value="analytics">Analytics</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="configuration" className="space-y-6">
-                <ModelFallbackCard 
+                <ModelFallbackCard
                   selectedModel={selectedModel}
                   onUpdateModel={handleUpdateModel}
                 />
-                
+
                 <TemplateSelector
                   selectedModelId={selectedModelId}
                   onTemplateSelect={handleTemplateSelect}
@@ -168,14 +193,14 @@ export function ModelManagementModule() {
                   selectedTemplateId={selectedTemplateId}
                 />
               </TabsContent>
-              
+
               <TabsContent value="rules">
                 <ModelActivationRules
                   selectedModel={selectedModel}
                   onRuleUpdate={handleRuleUpdate}
                 />
               </TabsContent>
-              
+
               <TabsContent value="analytics">
                 <ModelAnalytics selectedModel={selectedModel} />
               </TabsContent>

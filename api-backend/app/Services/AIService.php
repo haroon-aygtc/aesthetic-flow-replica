@@ -1,5 +1,5 @@
-
 <?php
+
 namespace App\Services;
 
 use App\Models\AIModel;
@@ -33,7 +33,7 @@ class AIService
         $startTime = microtime(true);
         $context = $context ?? [];
         $context['widget_settings'] = $widgetSettings;
-        
+
         // If no specific AI model is provided, use the selector to find the best one
         if (!$aiModel) {
             $aiModel = $this->modelSelector->selectModel($context);
@@ -66,16 +66,16 @@ class AIService
             try {
                 // Get the appropriate provider
                 $provider = $this->getProviderForModel($model);
-                
+
                 // Process the message with the provider
                 $response = $provider->processMessage($model, $messages, $temperature, $maxTokens, $widgetSettings);
-                
+
                 // Estimate token count for output
                 $tokensOutput = $this->countTokens([$response['content']]);
-                
+
                 // Extract or calculate confidence score
                 $confidenceScore = $response['metadata']['confidence'] ?? 1.0;
-                
+
                 // Check if the response meets the confidence threshold
                 if ($confidenceScore >= $confidenceThreshold) {
                     // Log the successful response
@@ -94,14 +94,14 @@ class AIService
                         true,
                         null
                     );
-                    
+
                     return $response;
                 }
-                
+
                 // If we're here, response didn't meet confidence threshold
                 $usedFallback = true;
                 $lastError = "Response didn't meet confidence threshold of {$confidenceThreshold}";
-                
+
             } catch (\Exception $e) {
                 Log::error("AI processing error with {$model->provider}: " . $e->getMessage());
                 $usedFallback = true;
@@ -131,7 +131,7 @@ class AIService
             'metadata' => ['error' => $lastError],
         ];
     }
-    
+
     /**
      * Get the appropriate AI provider for the given model.
      *
@@ -144,13 +144,13 @@ class AIService
         switch ($aiModel->provider) {
             case 'openai':
                 return new OpenAIProvider();
-                
+
             case 'anthropic':
                 return new AnthropicProvider();
-                
+
             case 'gemini':
                 return new GeminiProvider();
-                
+
             default:
                 throw new \Exception("Unsupported AI provider: {$aiModel->provider}");
         }
@@ -212,14 +212,14 @@ class AIService
 
     /**
      * Simple token counter (estimate)
-     * 
+     *
      * @param array $messages
      * @return int
      */
     private function countTokens(array $messages): int
     {
         $text = '';
-        
+
         foreach ($messages as $message) {
             if (is_array($message) && isset($message['content'])) {
                 $text .= $message['content'] . ' ';
@@ -227,7 +227,7 @@ class AIService
                 $text .= $message . ' ';
             }
         }
-        
+
         // Very rough approximation: 1 token ≈ 4 characters
         return (int)ceil(strlen($text) / 4);
     }

@@ -14,18 +14,19 @@ import { Label } from "@/components/ui/label";
 
 interface FollowUpSettingsTabProps {
   defaultValues: FollowUpConfigValues;
+  onSubmit: (values: FollowUpConfigValues) => void;
 }
 
-export function FollowUpSettingsTab({ defaultValues }: FollowUpSettingsTabProps) {
+export function FollowUpSettingsTab({ defaultValues, onSubmit }: FollowUpSettingsTabProps) {
   const configForm = useForm<FollowUpConfigValues>({
     resolver: zodResolver(followUpConfigSchema),
     defaultValues,
   });
 
   const onConfigSubmit = (values: FollowUpConfigValues) => {
-    // In a real implementation, this would call an API to save the follow-up settings
-    console.log("Follow-up settings:", values);
-    
+    // Call the parent component's onSubmit function
+    onSubmit(values);
+
     toast({
       title: "Follow-up settings saved",
       description: "Your AI follow-up configuration has been updated.",
@@ -57,7 +58,7 @@ export function FollowUpSettingsTab({ defaultValues }: FollowUpSettingsTabProps)
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={configForm.control}
           name="position"
@@ -85,7 +86,7 @@ export function FollowUpSettingsTab({ defaultValues }: FollowUpSettingsTabProps)
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={configForm.control}
           name="suggestionsCount"
@@ -114,7 +115,7 @@ export function FollowUpSettingsTab({ defaultValues }: FollowUpSettingsTabProps)
             </FormItem>
           )}
         />
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={configForm.control}
@@ -141,7 +142,7 @@ export function FollowUpSettingsTab({ defaultValues }: FollowUpSettingsTabProps)
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={configForm.control}
             name="buttonStyle"
@@ -167,7 +168,7 @@ export function FollowUpSettingsTab({ defaultValues }: FollowUpSettingsTabProps)
             )}
           />
         </div>
-        
+
         <FormField
           control={configForm.control}
           name="customPrompt"
@@ -175,7 +176,7 @@ export function FollowUpSettingsTab({ defaultValues }: FollowUpSettingsTabProps)
             <FormItem>
               <FormLabel>Custom Instructions</FormLabel>
               <FormControl>
-                <Textarea 
+                <Textarea
                   placeholder="Enter specific instructions for generating follow-up questions..."
                   className="h-24"
                   {...field}
@@ -188,11 +189,11 @@ export function FollowUpSettingsTab({ defaultValues }: FollowUpSettingsTabProps)
             </FormItem>
           )}
         />
-        
+
         <div className="flex justify-end gap-2">
-          <Button 
-            type="button" 
-            variant="outline" 
+          <Button
+            type="button"
+            variant="outline"
             onClick={() => configForm.reset()}
           >
             Reset

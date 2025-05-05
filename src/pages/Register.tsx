@@ -5,12 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Check, Eye, EyeOff, MessageSquare } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import axios from "axios";
-
-// Set up axios default configuration if not already set in Login
-axios.defaults.baseURL = "http://localhost:8000";
-axios.defaults.headers.common["Content-Type"] = "application/json";
-axios.defaults.withCredentials = true;
+import * as authService from "@/utils/authService";
 
 const Register = () => {
   const [fullName, setFullName] = useState("");
@@ -25,7 +20,7 @@ const Register = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Basic validation
     if (!fullName || !email || !password || !confirmPassword) {
       toast({
@@ -35,7 +30,7 @@ const Register = () => {
       });
       return;
     }
-    
+
     if (password !== confirmPassword) {
       toast({
         title: "Error",
@@ -44,7 +39,7 @@ const Register = () => {
       });
       return;
     }
-    
+
     if (password.length < 8) {
       toast({
         title: "Error",
@@ -53,26 +48,23 @@ const Register = () => {
       });
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
-      // Get CSRF cookie first (required for Sanctum)
-      await axios.get("/sanctum/csrf-cookie");
-      
-      // Attempt registration
-      const response = await axios.post("/api/register", {
+      // Attempt registration using our API service
+      await authService.register({
         name: fullName,
         email: email,
         password: password,
         password_confirmation: confirmPassword,
       });
-      
+
       toast({
         title: "Registration successful!",
         description: "Please login with your credentials",
       });
-      
+
       // Navigate to login page after successful registration
       setTimeout(() => navigate("/login"), 1500);
     } catch (error: any) {
@@ -103,7 +95,7 @@ const Register = () => {
           <MessageSquare className="h-6 w-6" />
           <span className="font-bold text-xl">ChatSystem</span>
         </div>
-        
+
         <div className="flex flex-col items-center justify-center flex-grow text-center">
           <div className="w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center mb-6">
             <MessageSquare className="h-12 w-12 text-gray-300" />
@@ -114,7 +106,7 @@ const Register = () => {
             platform and start building your own AI
             assistants.
           </p>
-          
+
           <div className="mt-12 space-y-4">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center">
@@ -122,14 +114,14 @@ const Register = () => {
               </div>
               <p className="text-gray-300 text-sm">Customize your chat widget</p>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center">
                 <Check className="h-3.5 w-3.5 text-white" />
               </div>
               <p className="text-gray-300 text-sm">Create context-aware AI responses</p>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center">
                 <Check className="h-3.5 w-3.5 text-white" />
@@ -139,7 +131,7 @@ const Register = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Right side - Registration form */}
       <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-8">
         <div className="w-full max-w-md">
@@ -149,18 +141,18 @@ const Register = () => {
               <span className="font-bold text-xl">ChatSystem</span>
             </div>
           </div>
-          
+
           <div className="flex justify-center mb-6">
             <div className="rounded-full bg-gray-100 p-3">
               <MessageSquare className="h-6 w-6 text-gray-500" />
             </div>
           </div>
-          
+
           <h1 className="text-2xl font-bold text-center mb-2">Create an Admin Account</h1>
           <p className="text-center text-muted-foreground mb-8">
             Enter your details to register as an admin for ChatEmbed
           </p>
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <label htmlFor="fullName" className="text-sm font-medium">Full Name</label>
@@ -171,7 +163,7 @@ const Register = () => {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="John Doe"
-                  className="pr-8 bg-gray-50 border border-gray-200"
+                  className="pr-8 bg-gray-50 border border-gray-200 text-gray-900"
                   disabled={isLoading}
                 />
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -181,7 +173,7 @@ const Register = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">Email</label>
               <div className="relative">
@@ -191,7 +183,7 @@ const Register = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="email@example.com"
-                  className="pr-8 bg-gray-50 border border-gray-200"
+                  className="pr-8 bg-gray-50 border border-gray-200 text-gray-900"
                   disabled={isLoading}
                 />
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -201,7 +193,7 @@ const Register = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium">Password</label>
               <div className="relative">
@@ -211,7 +203,7 @@ const Register = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="pr-8 bg-gray-50 border border-gray-200"
+                  className="pr-8 bg-gray-50 border border-gray-200 text-gray-900"
                   disabled={isLoading}
                 />
                 <button
@@ -224,7 +216,7 @@ const Register = () => {
               </div>
               <p className="text-xs text-muted-foreground">Must be at least 8 characters</p>
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password</label>
               <div className="relative">
@@ -234,7 +226,7 @@ const Register = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="pr-8 bg-gray-50 border border-gray-200"
+                  className="pr-8 bg-gray-50 border border-gray-200 text-gray-900"
                   disabled={isLoading}
                 />
                 <button
@@ -246,19 +238,19 @@ const Register = () => {
                 </button>
               </div>
             </div>
-            
+
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Registering..." : "Register"}
             </Button>
           </form>
-          
+
           <p className="text-center mt-6 text-sm">
             Already have an account?{" "}
             <Link to="/login" className="text-primary hover:underline font-medium">
               Login
             </Link>
           </p>
-          
+
           <p className="text-center mt-6 text-xs text-muted-foreground">
             By registering, you agree to our Terms of Service and Privacy Policy
           </p>

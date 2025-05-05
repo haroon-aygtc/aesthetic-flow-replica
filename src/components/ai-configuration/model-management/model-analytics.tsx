@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, LineChart, PieChart } from "lucide-react";
+import { BarChart } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
 import { ResponsiveContainer, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart as RechartsLineChart, Line, PieChart as RechartsPieChart, Pie, Cell } from "recharts";
@@ -62,8 +62,28 @@ export function ModelAnalytics({ selectedModel }: ModelAnalyticsProps) {
       if (!response.ok) {
         throw new Error("Failed to load analytics");
       }
-      const data = await response.json();
-      setAnalytics(data);
+
+      const responseData = await response.json();
+
+      // Check if the response has a data property
+      const data = responseData && responseData.data ? responseData.data : responseData;
+
+      // Create a default analytics object with all required properties
+      const defaultAnalytics: ModelAnalytics = {
+        totalRequests: 0,
+        successRate: 0,
+        averageResponseTime: 0,
+        tokensUsed: 0,
+        costEstimate: 0,
+        fallbackRate: 0,
+        requestsOverTime: [],
+        useCaseDistribution: [],
+        confidenceScoreDistribution: [],
+        errorMessages: []
+      };
+
+      // Merge the received data with the default values to ensure all properties exist
+      setAnalytics({ ...defaultAnalytics, ...data });
     } catch (error) {
       console.error("Error loading model analytics:", error);
       toast({
@@ -107,7 +127,7 @@ export function ModelAnalytics({ selectedModel }: ModelAnalyticsProps) {
               Performance metrics and usage statistics for this model
             </CardDescription>
           </div>
-          
+
           <Tabs value={period} onValueChange={handlePeriodChange} className="mt-2 sm:mt-0">
             <TabsList>
               <TabsTrigger value="7d">7 Days</TabsTrigger>
@@ -117,7 +137,7 @@ export function ModelAnalytics({ selectedModel }: ModelAnalyticsProps) {
           </Tabs>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         {isLoading ? (
           <div className="py-20 flex justify-center">
@@ -156,10 +176,10 @@ export function ModelAnalytics({ selectedModel }: ModelAnalyticsProps) {
               </div>
               <div className="bg-card rounded-lg border p-4">
                 <div className="text-muted-foreground text-sm">Est. Cost</div>
-                <div className="text-2xl font-bold mt-1">${analytics.costEstimate.toFixed(2)}</div>
+                <div className="text-2xl font-bold mt-1">${(analytics.costEstimate || 0).toFixed(2)}</div>
               </div>
             </div>
-            
+
             {/* Charts */}
             <Tabs defaultValue="requests" className="mt-6">
               <TabsList className="mb-4">
@@ -168,72 +188,90 @@ export function ModelAnalytics({ selectedModel }: ModelAnalyticsProps) {
                 <TabsTrigger value="confidence">Confidence Scores</TabsTrigger>
                 <TabsTrigger value="errors">Errors</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="requests" className="pt-4">
                 <h4 className="text-sm font-medium mb-4">Requests & Failures Over Time</h4>
-                <div className="h-80 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsLineChart
-                      data={analytics.requestsOverTime}
-                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis yAxisId="left" />
-                      <YAxis yAxisId="right" orientation="right" />
-                      <Tooltip />
-                      <Legend />
-                      <Line yAxisId="left" type="monotone" dataKey="requests" stroke="#8884d8" name="Requests" />
-                      <Line yAxisId="right" type="monotone" dataKey="failures" stroke="#ff5252" name="Failures" />
-                    </RechartsLineChart>
-                  </ResponsiveContainer>
-                </div>
+                {analytics.requestsOverTime.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No request data available for this period</p>
+                  </div>
+                ) : (
+                  <div className="h-80 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsLineChart
+                        data={analytics.requestsOverTime}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis yAxisId="left" />
+                        <YAxis yAxisId="right" orientation="right" />
+                        <Tooltip />
+                        <Legend />
+                        <Line yAxisId="left" type="monotone" dataKey="requests" stroke="#8884d8" name="Requests" />
+                        <Line yAxisId="right" type="monotone" dataKey="failures" stroke="#ff5252" name="Failures" />
+                      </RechartsLineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </TabsContent>
-              
+
               <TabsContent value="use-cases" className="pt-4">
                 <h4 className="text-sm font-medium mb-4">Distribution by Use Case</h4>
-                <div className="h-80 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsBarChart
-                      data={analytics.useCaseDistribution}
-                      margin={{ top: 5, right: 30, left: 20, bottom: 50 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="useCase" angle={-45} textAnchor="end" height={70} />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="requests" name="Requests" fill="#8884d8" />
-                    </RechartsBarChart>
-                  </ResponsiveContainer>
-                </div>
+                {analytics.useCaseDistribution.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No use case data available for this period</p>
+                  </div>
+                ) : (
+                  <div className="h-80 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsBarChart
+                        data={analytics.useCaseDistribution}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 50 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="useCase" angle={-45} textAnchor="end" height={70} />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="requests" name="Requests" fill="#8884d8" />
+                      </RechartsBarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </TabsContent>
-              
+
               <TabsContent value="confidence" className="pt-4">
                 <h4 className="text-sm font-medium mb-4">Confidence Score Distribution</h4>
-                <div className="h-80 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsPieChart>
-                      <Pie
-                        data={analytics.confidenceScoreDistribution}
-                        nameKey="range"
-                        dataKey="count"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        label={(entry) => `${entry.range}: ${entry.count}`}
-                      >
-                        {analytics.confidenceScoreDistribution.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </RechartsPieChart>
-                  </ResponsiveContainer>
-                </div>
+                {analytics.confidenceScoreDistribution.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No confidence score data available for this period</p>
+                  </div>
+                ) : (
+                  <div className="h-80 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsPieChart>
+                        <Pie
+                          data={analytics.confidenceScoreDistribution}
+                          nameKey="range"
+                          dataKey="count"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          label={(entry) => `${entry.range}: ${entry.count}`}
+                        >
+                          {analytics.confidenceScoreDistribution.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </RechartsPieChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </TabsContent>
-              
+
               <TabsContent value="errors" className="pt-4">
                 <h4 className="text-sm font-medium mb-4">Common Error Messages</h4>
                 {analytics.errorMessages.length === 0 ? (

@@ -1,42 +1,44 @@
 
-import { useState } from "react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle, 
-  CardFooter 
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
+import { Spinner } from "@/components/ui/spinner";
+import { knowledgeBaseService } from "@/utils/knowledge-base-service";
 
-import { 
-  Database, 
-  FileText, 
-  FolderPlus, 
-  Trash2, 
-  Upload, 
+import {
+  Database,
+  FileText,
+  FolderPlus,
+  Trash2,
+  Upload,
   FileImage,
-  AlertCircle, 
-  Archive 
+  AlertCircle,
+  Archive
 } from "lucide-react";
-import { 
-  Accordion, 
-  AccordionContent, 
-  AccordionItem, 
-  AccordionTrigger 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
 } from "@/components/ui/accordion";
 
 interface KnowledgeDocument {
@@ -51,62 +53,81 @@ interface KnowledgeDocument {
 
 export function KnowledgeBaseIntegration() {
   const { toast } = useToast();
-  const [documents, setDocuments] = useState<KnowledgeDocument[]>([
-    {
-      id: "doc-1",
-      name: "Company FAQ.pdf",
-      type: "PDF",
-      size: "2.3 MB",
-      category: "Customer Support",
-      uploadDate: "2025-04-25",
-      status: "indexed"
-    },
-    {
-      id: "doc-2",
-      name: "Product Manual.docx",
-      type: "DOCX",
-      size: "1.7 MB",
-      category: "Technical Documentation",
-      uploadDate: "2025-04-24",
-      status: "indexed"
-    },
-    {
-      id: "doc-3",
-      name: "Support Knowledge Base.csv",
-      type: "CSV",
-      size: "0.9 MB",
-      category: "Customer Support",
-      uploadDate: "2025-04-23",
-      status: "processing"
-    },
-    {
-      id: "doc-4",
-      name: "Product Specifications.xlsx",
-      type: "XLSX",
-      size: "1.2 MB",
-      category: "Technical Documentation",
-      uploadDate: "2025-04-22",
-      status: "failed"
-    }
-  ]);
-  
-  const [categories, setCategories] = useState<string[]>([
-    "Customer Support", 
-    "Technical Documentation", 
-    "Marketing Materials",
-    "Legal Documents"
-  ]);
-  
+  const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [categories, setCategories] = useState<string[]>([]);
+
   const [newCategory, setNewCategory] = useState("");
   const [relevanceWeight, setRelevanceWeight] = useState<number[]>([0.7]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  const handleDeleteDocument = (id: string) => {
-    setDocuments(documents.filter(doc => doc.id !== id));
-    toast({
-      title: "Document Deleted",
-      description: "The document has been removed from your knowledge base."
-    });
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      try {
+        setIsLoading(true);
+        const response = await knowledgeBaseService.getDocuments();
+
+        if (response.data) {
+          // Transform the data to match our component's expected format
+          const formattedDocs = response.data.map((doc: any) => ({
+            id: doc.id,
+            name: doc.name,
+            type: doc.type.toUpperCase(),
+            size: formatFileSize(doc.size),
+            category: doc.category,
+            uploadDate: new Date(doc.created_at).toLocaleDateString(),
+            status: doc.status
+          }));
+
+          setDocuments(formattedDocs);
+
+          // Extract unique categories
+          const uniqueCategories = Array.from(
+            new Set(formattedDocs.map((doc: any) => doc.category))
+          );
+
+          setCategories(uniqueCategories);
+        }
+      } catch (error) {
+        console.error("Error fetching documents:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load knowledge base documents",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDocuments();
+  }, [toast]);
+
+  // Helper function to format file size
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+  const handleDeleteDocument = async (id: string) => {
+    try {
+      await knowledgeBaseService.deleteDocument(id);
+      setDocuments(documents.filter(doc => doc.id !== id));
+      toast({
+        title: "Document Deleted",
+        description: "The document has been removed from your knowledge base."
+      });
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete document. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleAddCategory = () => {
@@ -120,19 +141,55 @@ export function KnowledgeBaseIntegration() {
     }
   };
 
-  const handleUpload = () => {
-    toast({
-      title: "Upload Started",
-      description: "Your documents are being processed and will be available shortly."
-    });
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0) return;
+
+    const file = event.target.files[0];
+    const category = selectedCategory === "all" ? "General" : selectedCategory;
+
+    try {
+      toast({
+        title: "Upload Started",
+        description: "Your document is being processed and will be available shortly."
+      });
+
+      const response = await knowledgeBaseService.uploadDocument(file, category);
+
+      // Add the new document to the list
+      if (response.data) {
+        const newDoc = {
+          id: response.data.id,
+          name: response.data.name,
+          type: response.data.type.toUpperCase(),
+          size: formatFileSize(response.data.size),
+          category: response.data.category,
+          uploadDate: new Date(response.data.created_at).toLocaleDateString(),
+          status: response.data.status
+        };
+
+        setDocuments([newDoc, ...documents]);
+
+        toast({
+          title: "Upload Complete",
+          description: "Your document has been uploaded and is being processed."
+        });
+      }
+    } catch (error) {
+      console.error("Error uploading document:", error);
+      toast({
+        title: "Upload Failed",
+        description: "There was an error uploading your document. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const filteredDocuments = selectedCategory === "all" 
-    ? documents 
+  const filteredDocuments = selectedCategory === "all"
+    ? documents
     : documents.filter(doc => doc.category === selectedCategory);
 
   const getStatusBadgeClasses = (status: string) => {
-    switch(status) {
+    switch (status) {
       case "indexed":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
       case "processing":
@@ -159,15 +216,15 @@ export function KnowledgeBaseIntegration() {
           </CardHeader>
           <CardContent>
             <div className="mb-4 flex flex-wrap gap-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className={`${selectedCategory === "all" ? "bg-primary text-primary-foreground" : ""}`}
                 onClick={() => setSelectedCategory("all")}
               >
                 All
               </Button>
               {categories.map(category => (
-                <Button 
+                <Button
                   key={category}
                   variant="outline"
                   className={`${selectedCategory === category ? "bg-primary text-primary-foreground" : ""}`}
@@ -177,7 +234,7 @@ export function KnowledgeBaseIntegration() {
                 </Button>
               ))}
             </div>
-            
+
             <div className="border rounded-md">
               <div className="grid grid-cols-5 p-4 border-b bg-muted/40 font-medium text-sm">
                 <div className="col-span-2">Document</div>
@@ -186,7 +243,12 @@ export function KnowledgeBaseIntegration() {
                 <div>Status</div>
               </div>
               <div className="divide-y">
-                {filteredDocuments.length > 0 ? (
+                {isLoading ? (
+                  <div className="p-8 text-center">
+                    <Spinner className="mx-auto mb-2" />
+                    <p className="text-muted-foreground">Loading documents...</p>
+                  </div>
+                ) : filteredDocuments.length > 0 ? (
                   filteredDocuments.map((doc) => (
                     <div key={doc.id} className="grid grid-cols-5 p-4 items-center text-sm">
                       <div className="col-span-2 flex items-center gap-3">
@@ -202,8 +264,8 @@ export function KnowledgeBaseIntegration() {
                         <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeClasses(doc.status)}`}>
                           {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
                         </span>
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteDocument(doc.id)}
                         >
@@ -221,9 +283,20 @@ export function KnowledgeBaseIntegration() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full" onClick={handleUpload}>
-              <Upload className="mr-2 h-4 w-4" /> Upload New Documents
-            </Button>
+            <div className="w-full">
+              <label htmlFor="file-upload" className="w-full">
+                <input
+                  id="file-upload"
+                  type="file"
+                  className="hidden"
+                  onChange={handleUpload}
+                  accept=".pdf,.doc,.docx,.txt,.csv,.xlsx,.json"
+                />
+                <Button className="w-full" onClick={() => document.getElementById('file-upload')?.click()}>
+                  <Upload className="mr-2 h-4 w-4" /> Upload New Documents
+                </Button>
+              </label>
+            </div>
           </CardFooter>
         </Card>
 
@@ -241,9 +314,9 @@ export function KnowledgeBaseIntegration() {
             <div className="space-y-2">
               <Label htmlFor="new-category">New Category</Label>
               <div className="flex gap-2">
-                <Input 
-                  id="new-category" 
-                  placeholder="Enter category name" 
+                <Input
+                  id="new-category"
+                  placeholder="Enter category name"
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
                 />
@@ -252,7 +325,7 @@ export function KnowledgeBaseIntegration() {
                 </Button>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label>Document Types</Label>
               <div className="space-y-2">
@@ -264,7 +337,7 @@ export function KnowledgeBaseIntegration() {
                 ))}
               </div>
             </div>
-            
+
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="indexing">
                 <AccordionTrigger>Indexing Settings</AccordionTrigger>
@@ -274,7 +347,7 @@ export function KnowledgeBaseIntegration() {
                       <Checkbox id="auto-index" defaultChecked />
                       <Label htmlFor="auto-index" className="text-sm">Automatically index new documents</Label>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label htmlFor="relevance">Relevance Weight: {relevanceWeight[0].toFixed(1)}</Label>
@@ -292,7 +365,7 @@ export function KnowledgeBaseIntegration() {
                         <span>Precise Results</span>
                       </div>
                     </div>
-                    
+
                     <Button size="sm" className="w-full">Reindex All Documents</Button>
                   </div>
                 </AccordionContent>
@@ -301,7 +374,7 @@ export function KnowledgeBaseIntegration() {
           </CardContent>
         </Card>
       </div>
-      
+
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-xl flex items-center gap-2">

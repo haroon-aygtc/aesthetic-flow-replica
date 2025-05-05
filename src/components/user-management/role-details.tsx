@@ -1,41 +1,31 @@
 
 import { useState, useEffect } from "react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
-import { roleService } from "@/utils/api";
+import { roleService, type Role } from "@/utils/roleService";
+import { type Permission } from "@/utils/permissionService";
 
 import { RoleSelector } from "./roles/role-selector";
 import { RoleInfoCard } from "./roles/role-info-card";
 import { PermissionSummaryCard } from "./roles/permission-summary-card";
 import { PermissionListByCategory } from "./roles/permission-list-by-category";
 
-interface Role {
-  id: number;
-  name: string;
-  description: string | null;
-  users_count: number;
-  permissions: Permission[];
-}
-
-interface Permission {
-  id: number;
-  name: string;
-  description: string | null;
-  category: string;
-  type: string;
+interface RoleWithUserCount extends Role {
+  users_count?: number;
+  permissions?: Permission[];
 }
 
 export function RoleDetails() {
-  const [roles, setRoles] = useState<Role[]>([]);
+  const [roles, setRoles] = useState<RoleWithUserCount[]>([]);
   const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [selectedRole, setSelectedRole] = useState<RoleWithUserCount | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [permissionsByCategory, setPermissionsByCategory] = useState<Record<string, Permission[]>>({});
   const { toast } = useToast();
@@ -69,14 +59,15 @@ export function RoleDetails() {
   useEffect(() => {
     const fetchRoleDetails = async () => {
       if (!selectedRoleId) return;
-      
+
       setIsLoading(true);
       try {
         const response = await roleService.getRole(selectedRoleId);
         setSelectedRole(response.data);
-        
+
         // Group permissions by category
-        const grouped = response.data.permissions.reduce((acc: Record<string, Permission[]>, permission: Permission) => {
+        const permissions = response.data.permissions || [];
+        const grouped = permissions.reduce((acc: Record<string, Permission[]>, permission: Permission) => {
           const category = permission.category;
           if (!acc[category]) {
             acc[category] = [];
@@ -84,7 +75,7 @@ export function RoleDetails() {
           acc[category].push(permission);
           return acc;
         }, {});
-        
+
         setPermissionsByCategory(grouped);
       } catch (error: any) {
         console.error("Failed to fetch role details:", error);

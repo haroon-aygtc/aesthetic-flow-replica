@@ -28,31 +28,46 @@ export function useAIModelManagement() {
     setIsLoading(true);
     try {
       const data = await aiModelService.getModels();
-      setModels(data);
-      
-      // Select default model if available
-      const defaultModel = data.find(model => model.is_default);
-      if (defaultModel) {
-        setSelectedModelId(defaultModel.id!);
-        setSelectedModel(defaultModel);
-        
-        // Set UI state based on model settings
-        if (defaultModel.settings) {
-          if (defaultModel.settings.temperature !== undefined) {
-            setTemperature([defaultModel.settings.temperature]);
+
+      // Ensure data is an array
+      if (data && Array.isArray(data)) {
+        setModels(data);
+
+        // Select default model if available
+        const defaultModel = data.find(model => model.is_default);
+        if (defaultModel) {
+          setSelectedModelId(defaultModel.id!);
+          setSelectedModel(defaultModel);
+
+          // Set UI state based on model settings
+          if (defaultModel.settings) {
+            if (defaultModel.settings.temperature !== undefined) {
+              setTemperature([defaultModel.settings.temperature]);
+            }
+            if (defaultModel.settings.max_tokens !== undefined) {
+              setMaxTokens([defaultModel.settings.max_tokens]);
+            }
           }
-          if (defaultModel.settings.max_tokens !== undefined) {
-            setMaxTokens([defaultModel.settings.max_tokens]);
+
+          // Set API key if available
+          if (defaultModel.api_key) {
+            setApiKey("••••••••••••••••");
+            setIsAPIKeyValid(true);
           }
         }
-        
-        // Set API key if available
-        if (defaultModel.api_key) {
-          setApiKey("••••••••••••••••");
-          setIsAPIKeyValid(true);
-        }
+      } else {
+        // If data is not an array, set models to empty array
+        setModels([]);
+        toast({
+          title: "Warning",
+          description: "Received invalid data format for AI models",
+          variant: "destructive"
+        });
+        console.error("Invalid data format for AI models:", data);
       }
     } catch (error: any) {
+      // Set models to empty array on error
+      setModels([]);
       toast({
         title: "Error",
         description: "Failed to fetch AI models",

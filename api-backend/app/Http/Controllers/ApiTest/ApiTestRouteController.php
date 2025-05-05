@@ -1,4 +1,3 @@
-
 <?php
 
 namespace App\Http\Controllers\ApiTest;
@@ -26,7 +25,7 @@ class ApiTestRouteController extends Controller
                 $action = $route->getAction();
                 $name = $action['as'] ?? '';
                 $controller = $action['controller'] ?? '';
-                
+
                 $apiRoutes[] = [
                     'uri' => $uri,
                     'methods' => $methods,

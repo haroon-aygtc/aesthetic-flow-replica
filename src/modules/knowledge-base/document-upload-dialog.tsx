@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { knowledgeBaseService } from "@/utils/knowledge-base-service";
 import { Upload, X, FileText, AlertCircle, Loader2 } from "lucide-react";
 
@@ -44,7 +44,7 @@ export function DocumentUploadDialog({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
-    
+
     const newFiles = Array.from(e.target.files).map((file) => ({
       id: crypto.randomUUID(),
       file,
@@ -52,9 +52,9 @@ export function DocumentUploadDialog({
       status: "pending" as const,
       category: category,
     }));
-    
+
     setFiles((prev) => [...prev, ...newFiles]);
-    
+
     // Reset the input value to allow selecting the same file again
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -67,15 +67,15 @@ export function DocumentUploadDialog({
 
   const handleUpload = async () => {
     if (!files.length) return;
-    
+
     setIsUploading(true);
-    
+
     try {
       const uploadedDocuments = [];
-      
+
       for (const file of files) {
         if (file.status === "complete") continue;
-        
+
         try {
           // Update file status to uploading
           setFiles((prev) =>
@@ -83,9 +83,9 @@ export function DocumentUploadDialog({
               f.id === file.id ? { ...f, status: "uploading" as const } : f
             )
           );
-          
+
           const result = await knowledgeBaseService.uploadDocument(file.file, file.category);
-          
+
           // Update file status to complete
           setFiles((prev) =>
             prev.map((f) =>
@@ -94,7 +94,7 @@ export function DocumentUploadDialog({
                 : f
             )
           );
-          
+
           uploadedDocuments.push(result.data);
         } catch (error) {
           console.error("Error uploading file:", error);
@@ -111,7 +111,7 @@ export function DocumentUploadDialog({
           );
         }
       }
-      
+
       if (uploadedDocuments.length) {
         onUploadComplete(uploadedDocuments);
         resetState();
@@ -165,7 +165,7 @@ export function DocumentUploadDialog({
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer hover:border-gray-400 transition-colors"
             onClick={() => fileInputRef.current?.click()}>
             <Upload className="h-10 w-10 text-gray-400 mb-2" />
@@ -185,7 +185,7 @@ export function DocumentUploadDialog({
               disabled={isUploading}
             />
           </div>
-          
+
           {files.length > 0 && (
             <div className="border rounded-lg divide-y max-h-60 overflow-y-auto">
               {files.map((file) => (

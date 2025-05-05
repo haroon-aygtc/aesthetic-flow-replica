@@ -1,13 +1,13 @@
 
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
-import { 
-  BarChart2, 
-  Code, 
-  FileText, 
-  Home, 
-  Palette, 
-  Settings, 
+import { NavLink, useNavigate } from "react-router-dom";
+import {
+  BarChart2,
+  Code,
+  FileText,
+  Home,
+  Palette,
+  Settings,
   Users,
   Terminal,
   Database,
@@ -20,10 +20,9 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { 
-  Sidebar as SidebarComponent, 
-  SidebarHeader, 
+import {
+  Sidebar as SidebarComponent,
+  SidebarHeader,
   SidebarContent,
   SidebarFooter
 } from "@/components/ui/sidebar";
@@ -60,29 +59,27 @@ export function Sidebar() {
           </Button>
         </div>
       </SidebarHeader>
-      
+
       <SidebarContent>
         <nav className="p-4">
           <ul className="space-y-1">
             <li>
-              <NavLink to="/dashboard" className={({isActive}) => 
-                `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+              <NavLink to="/dashboard" className={({ isActive }) =>
+                `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                 }`
               }>
                 <Home className="mr-2 h-4 w-4" />
                 Dashboard
               </NavLink>
             </li>
-            
+
             {/* Widget Management */}
             <li className="mt-6">
               <div className="text-sm font-medium text-muted-foreground px-2 mb-2">Widget Management</div>
               <ul className="space-y-1">
                 <li>
-                  <NavLink to="/dashboard/widget-config" className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                  <NavLink to="/dashboard/widget-config" className={({ isActive }) =>
+                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`
                   }>
                     <Palette className="mr-2 h-4 w-4" />
@@ -90,9 +87,8 @@ export function Sidebar() {
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/dashboard/embed-code" className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                  <NavLink to="/dashboard/embed-code" className={({ isActive }) =>
+                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`
                   }>
                     <Code className="mr-2 h-4 w-4" />
@@ -107,9 +103,8 @@ export function Sidebar() {
               <div className="text-sm font-medium text-muted-foreground px-2 mb-2">AI Configuration</div>
               <ul className="space-y-1">
                 <li>
-                  <NavLink to="/dashboard/ai-configuration" className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                  <NavLink to="/dashboard/ai-configuration" className={({ isActive }) =>
+                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`
                   }>
                     <Settings className="mr-2 h-4 w-4" />
@@ -117,9 +112,8 @@ export function Sidebar() {
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/dashboard/model-management" className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                  <NavLink to="/dashboard/model-management" className={({ isActive }) =>
+                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`
                   }>
                     <Settings className="mr-2 h-4 w-4" />
@@ -127,9 +121,8 @@ export function Sidebar() {
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/dashboard/knowledge-base" className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                  <NavLink to="/dashboard/knowledge-base" className={({ isActive }) =>
+                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`
                   }>
                     <Database className="mr-2 h-4 w-4" />
@@ -137,9 +130,8 @@ export function Sidebar() {
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/dashboard/templates" className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                  <NavLink to="/dashboard/templates" className={({ isActive }) =>
+                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`
                   }>
                     <FileText className="mr-2 h-4 w-4" />
@@ -147,9 +139,8 @@ export function Sidebar() {
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/dashboard/response-formatter" className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                  <NavLink to="/dashboard/response-formatter" className={({ isActive }) =>
+                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`
                   }>
                     <MessageSquare className="mr-2 h-4 w-4" />
@@ -157,9 +148,8 @@ export function Sidebar() {
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/dashboard/branding" className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                  <NavLink to="/dashboard/branding" className={({ isActive }) =>
+                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`
                   }>
                     <Award className="mr-2 h-4 w-4" />
@@ -167,9 +157,8 @@ export function Sidebar() {
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/dashboard/follow-up" className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                  <NavLink to="/dashboard/follow-up" className={({ isActive }) =>
+                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`
                   }>
                     <Rocket className="mr-2 h-4 w-4" />
@@ -177,9 +166,8 @@ export function Sidebar() {
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/dashboard/context-rules" className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                  <NavLink to="/dashboard/context-rules" className={({ isActive }) =>
+                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`
                   }>
                     <MessageSquare className="mr-2 h-4 w-4" />
@@ -194,9 +182,8 @@ export function Sidebar() {
               <div className="text-sm font-medium text-muted-foreground px-2 mb-2">Administration</div>
               <ul className="space-y-1">
                 <li>
-                  <NavLink to="/dashboard/user-management" className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                  <NavLink to="/dashboard/user-management" className={({ isActive }) =>
+                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`
                   }>
                     <Users className="mr-2 h-4 w-4" />
@@ -204,9 +191,8 @@ export function Sidebar() {
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/dashboard/api-tester" className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                  <NavLink to="/dashboard/api-tester" className={({ isActive }) =>
+                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`
                   }>
                     <Terminal className="mr-2 h-4 w-4" />
@@ -214,9 +200,8 @@ export function Sidebar() {
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/dashboard/analytics" className={({isActive}) => 
-                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                  <NavLink to="/dashboard/analytics" className={({ isActive }) =>
+                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                     }`
                   }>
                     <BarChart2 className="mr-2 h-4 w-4" />
@@ -228,7 +213,7 @@ export function Sidebar() {
           </ul>
         </nav>
       </SidebarContent>
-      
+
       <SidebarFooter className="p-4 text-center text-muted-foreground border-t">
         <p className="text-xs">
           &copy; {new Date().getFullYear()} AI Chat System. All rights reserved.

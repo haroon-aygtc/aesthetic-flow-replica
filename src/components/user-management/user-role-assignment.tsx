@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { 
+import {
   Card,
   CardContent,
   CardDescription,
@@ -8,7 +8,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { userService, roleService } from "@/utils/api";
+import { userService } from "@/utils/api-service";
+import { roleService, type Role } from "@/utils/roleService";
 import { UserRoleAssignmentForm } from "./user-role-assignment-form";
 
 interface User {
@@ -16,12 +17,6 @@ interface User {
   name: string;
   email: string;
   roles?: { id: number; name: string }[];
-}
-
-interface Role {
-  id: number;
-  name: string;
-  description?: string;
 }
 
 export function UserRoleAssignment() {
@@ -76,9 +71,9 @@ export function UserRoleAssignment() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <UserRoleAssignmentForm 
-          users={users} 
-          roles={roles} 
+        <UserRoleAssignmentForm
+          users={users}
+          roles={roles}
           isLoading={isLoading}
           onSuccess={handleAssignmentSuccess}
         />

@@ -1,4 +1,3 @@
-
 <?php
 
 namespace App\Http\Controllers\ApiTest;
@@ -17,22 +16,22 @@ class ApiTestCoordinatorController extends Controller
     public function testAllEndpoints(Request $request)
     {
         $allResults = [];
-        
+
         // Test AI Models API
         $aiModelTestController = new AIModelEndpointTestController();
         $aiModelResults = $aiModelTestController->testAIModelEndpoints($request)->original;
         $allResults['ai_models'] = $aiModelResults;
-        
+
         // Test Widgets API
         $widgetTestController = new WidgetTestController();
         $widgetResults = $widgetTestController->testWidgetEndpoints($request)->original;
         $allResults['widgets'] = $widgetResults;
-        
+
         // Overall success
-        $overallSuccess = 
-            ($aiModelResults['success'] ?? false) && 
+        $overallSuccess =
+            ($aiModelResults['success'] ?? false) &&
             ($widgetResults['success'] ?? false);
-        
+
         return response()->json([
             'success' => $overallSuccess,
             'results' => $allResults,

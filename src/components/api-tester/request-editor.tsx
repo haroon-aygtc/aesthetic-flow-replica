@@ -1,4 +1,4 @@
-
+// Import necessary libraries and components
 import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -14,20 +14,20 @@ interface RequestEditorProps {
   isLoading: boolean;
 }
 
-export function RequestEditor({ 
-  selectedRoute, 
-  selectedMethod, 
-  onExecute, 
-  isLoading 
+export function RequestEditor({
+  selectedRoute,
+  selectedMethod,
+  onExecute,
+  isLoading
 }: RequestEditorProps) {
   const [url, setUrl] = useState<string>("");
   const [requestData, setRequestData] = useState<string>("");
-  
+
   // Update the form when selected route changes
   useEffect(() => {
     if (selectedRoute && selectedMethod) {
-      setUrl(`/api${selectedRoute.uri.replace(/\{([^}]+)\}/g, ':$1')}`);
-      
+      setUrl(`${selectedRoute.uri.replace(/\{([^}]+)\}/g, ':$1')}`);
+
       // Generate example data
       const exampleData = apiTestService.generateExampleData(
         selectedRoute.uri,
@@ -76,7 +76,7 @@ export function RequestEditor({
             <Input
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="/api/endpoint"
+              placeholder="/endpoint"
               className="font-mono text-sm flex-1"
             />
           </div>
@@ -86,9 +86,9 @@ export function RequestEditor({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="request-body">Request Body</Label>
-              <Button 
-                size="sm" 
-                variant="ghost" 
+              <Button
+                size="sm"
+                variant="ghost"
                 onClick={formatJson}
                 type="button"
               >
@@ -105,9 +105,9 @@ export function RequestEditor({
           </div>
         )}
 
-        <Button 
-          className="w-full" 
-          onClick={handleExecute} 
+        <Button
+          className="w-full"
+          onClick={handleExecute}
           disabled={isLoading || !url || !selectedMethod}
         >
           {isLoading ? (

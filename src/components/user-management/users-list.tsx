@@ -1,34 +1,34 @@
 
 import { useState, useEffect } from "react";
-import { 
-  Table, 
-  TableHeader, 
-  TableRow, 
-  TableHead, 
-  TableBody, 
-  TableCell 
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogFooter,
   DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import { Pencil, Trash, UserPlus } from "lucide-react";
-import { userService, roleService } from "@/utils/api";
+import { userService, roleService } from "@/utils/api-service";
 
 interface User {
   id: number;
@@ -119,13 +119,13 @@ export function UsersList() {
 
   const handleEditUser = async () => {
     if (!editingUser) return;
-    
+
     const userUpdate = {
       name: editingUser.name,
       email: editingUser.email,
       status: editingUser.status,
     };
-    
+
     try {
       await userService.updateUser(editingUser.id, userUpdate);
       setIsEditDialogOpen(false);
@@ -145,7 +145,7 @@ export function UsersList() {
 
   const handleDeleteUser = async () => {
     if (!editingUser) return;
-    
+
     try {
       await userService.deleteUser(editingUser.id);
       setIsDeleteDialogOpen(false);
@@ -165,7 +165,7 @@ export function UsersList() {
 
   const handleAssignRoles = async () => {
     if (!editingUser) return;
-    
+
     try {
       await userService.assignRoles(editingUser.id, selectedRoles);
       setIsAssignRolesDialogOpen(false);
@@ -183,7 +183,7 @@ export function UsersList() {
   };
 
   const handleRoleToggle = (roleId: number) => {
-    setSelectedRoles(prevRoles => 
+    setSelectedRoles(prevRoles =>
       prevRoles.includes(roleId)
         ? prevRoles.filter(id => id !== roleId)
         : [...prevRoles, roleId]
@@ -227,34 +227,34 @@ export function UsersList() {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
-                <Input 
-                  id="name" 
-                  value={newUser.name} 
-                  onChange={(e) => setNewUser({...newUser, name: e.target.value})} 
+                <Input
+                  id="name"
+                  value={newUser.name}
+                  onChange={(e) => setNewUser({...newUser, name: e.target.value})}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  value={newUser.email} 
-                  onChange={(e) => setNewUser({...newUser, email: e.target.value})} 
+                <Input
+                  id="email"
+                  type="email"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  value={newUser.password} 
-                  onChange={(e) => setNewUser({...newUser, password: e.target.value})} 
+                <Input
+                  id="password"
+                  type="password"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({...newUser, password: e.target.value})}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
-                <Select 
-                  value={newUser.status} 
+                <Select
+                  value={newUser.status}
                   onValueChange={(value) => setNewUser({...newUser, status: value})}
                 >
                   <SelectTrigger id="status">
@@ -327,25 +327,25 @@ export function UsersList() {
                             <div className="space-y-4 py-4">
                               <div className="space-y-2">
                                 <Label htmlFor="edit-name">Name</Label>
-                                <Input 
-                                  id="edit-name" 
-                                  value={editingUser.name} 
-                                  onChange={(e) => setEditingUser({...editingUser, name: e.target.value})} 
+                                <Input
+                                  id="edit-name"
+                                  value={editingUser.name}
+                                  onChange={(e) => setEditingUser({...editingUser, name: e.target.value})}
                                 />
                               </div>
                               <div className="space-y-2">
                                 <Label htmlFor="edit-email">Email</Label>
-                                <Input 
-                                  id="edit-email" 
-                                  type="email" 
-                                  value={editingUser.email} 
-                                  onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} 
+                                <Input
+                                  id="edit-email"
+                                  type="email"
+                                  value={editingUser.email}
+                                  onChange={(e) => setEditingUser({...editingUser, email: e.target.value})}
                                 />
                               </div>
                               <div className="space-y-2">
                                 <Label htmlFor="edit-status">Status</Label>
-                                <Select 
-                                  value={editingUser.status} 
+                                <Select
+                                  value={editingUser.status}
                                   onValueChange={(value) => setEditingUser({...editingUser, status: value})}
                                 >
                                   <SelectTrigger id="edit-status">
@@ -365,10 +365,10 @@ export function UsersList() {
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
-                      
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => {
                           setEditingUser(user);
                           fetchUserRoles(user.id);
@@ -377,7 +377,7 @@ export function UsersList() {
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
                       </Button>
-                      
+
                       <Dialog open={isDeleteDialogOpen && editingUser?.id === user.id} onOpenChange={(open) => {
                         setIsDeleteDialogOpen(open);
                         if (open) setEditingUser(user);

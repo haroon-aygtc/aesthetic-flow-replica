@@ -1,4 +1,3 @@
-
 <?php
 
 namespace App\Models;
@@ -10,6 +9,13 @@ use Illuminate\Support\Facades\Crypt;
 class AIModel extends Model
 {
     use HasFactory;
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'a_i_models';
 
     /**
      * The attributes that are mass assignable.
@@ -26,6 +32,7 @@ class AIModel extends Model
         'active',
         'fallback_model_id',
         'confidence_threshold',
+        'template_id',
     ];
 
     /**
@@ -53,7 +60,7 @@ class AIModel extends Model
      */
     public function fallbackModel()
     {
-        return $this->belongsTo(AIModel::class, 'fallback_model_id');
+        return $this->belongsTo(self::class, 'fallback_model_id');
     }
 
     /**
@@ -97,5 +104,21 @@ class AIModel extends Model
             return Crypt::decryptString($value);
         }
         return null;
+    }
+
+    /**
+     * Models that use this as a fallback.
+     */
+    public function fallbackFor()
+    {
+        return $this->hasMany(self::class, 'fallback_model_id');
+    }
+
+    /**
+     * Get the template associated with this model.
+     */
+    public function template()
+    {
+        return $this->belongsTo(Template::class);
     }
 }

@@ -1,5 +1,5 @@
-
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -74,7 +74,7 @@ class Widget extends Model
     {
         return $this->hasMany(ChatSession::class);
     }
-    
+
     /**
      * Get the guest users for this widget.
      */

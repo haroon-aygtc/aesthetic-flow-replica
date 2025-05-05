@@ -1,4 +1,3 @@
-
 <?php
 
 namespace App\Http\Controllers\ApiTest;
@@ -25,7 +24,7 @@ class WidgetTestController extends Controller
         try {
             // Get first user for testing
             $user = User::first();
-            
+
             if (!$user) {
                 return response()->json([
                     'success' => false,
@@ -40,7 +39,7 @@ class WidgetTestController extends Controller
                 'widget_id' => 'test_' . time(),
                 'is_active' => true
             ]);
-            
+
             $results['create'] = [
                 'status' => 'success',
                 'widget_id' => $testWidget->id

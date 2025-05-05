@@ -1,38 +1,23 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { permissionService } from "@/utils/api";
+import { permissionService, type Permission } from "@/utils/permissionService";
 import { PermissionForm } from "./permissions/permission-form";
 import { PermissionsTable } from "./permissions/permissions-table";
-
-interface Permission {
-  id: number;
-  name: string;
-  description: string | null;
-  category: string;
-  type: string;
-  created_at: string;
-}
 
 export function PermissionsList() {
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [newPermission, setNewPermission] = useState({
-    name: "",
-    description: "",
-    category: "",
-    type: "read",
-  });
   const { toast } = useToast();
 
   // Fetch permissions on component mount
@@ -62,7 +47,6 @@ export function PermissionsList() {
     try {
       await permissionService.createPermission(formData);
       setIsAddDialogOpen(false);
-      setNewPermission({ name: "", description: "", category: "", type: "read" });
       toast({
         title: "Success",
         description: "Permission created successfully",
@@ -142,8 +126,8 @@ export function PermissionsList() {
       {isLoading ? (
         <div className="text-center py-4">Loading permissions...</div>
       ) : (
-        <PermissionsTable 
-          permissions={permissions} 
+        <PermissionsTable
+          permissions={permissions}
           onEdit={handleEditPermission}
           onDelete={handleDeletePermission}
           isLoading={isLoading}

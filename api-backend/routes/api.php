@@ -1,4 +1,3 @@
-
 <?php
 
 use Illuminate\Support\Facades\Route;
@@ -15,6 +14,7 @@ use App\Http\Controllers\GuestUserController;
 use App\Http\Controllers\GuestUserAdminController;
 use App\Http\Controllers\FollowUpController;
 use App\Http\Controllers\BrandingController;
+use App\Http\Controllers\TemplateController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,6 +25,11 @@ use App\Http\Controllers\BrandingController;
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+// CORS test route
+Route::options('/register', function() {
+    return response()->json(['message' => 'CORS preflight request successful'], 200);
+});
 
 // Widget public routes (for embeddable widget)
 Route::get('/widgets/public/{widgetId}', [WidgetController::class, 'getByWidgetId']);
@@ -41,7 +46,7 @@ Route::post('/guest/details', [GuestUserController::class, 'getDetails']);
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user', [AuthController::class, 'user']);
+    Route::get('/user', [AuthController::class, 'getCurrentUser']);
 
     // User management routes
     Route::apiResource('users', App\Http\Controllers\UserController::class);
@@ -55,7 +60,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/ai-models/{id}/test', [AIModelController::class, 'testConnection']);
     Route::get('/ai-models/{id}/fallback-options', [AIModelController::class, 'getFallbackOptions']);
     Route::post('/ai-models/{id}/toggle-activation', [AIModelController::class, 'toggleActivation']);
-    
+
+    // Template routes
+    Route::apiResource('templates', TemplateController::class);
+    Route::get('/ai-models/{modelId}/templates', [TemplateController::class, 'getModelTemplates']);
+    Route::post('/ai-models/{modelId}/templates', [TemplateController::class, 'assignTemplateToModel']);
+
     // Model activation rules routes
     Route::get('/ai-models/{modelId}/rules', [ModelActivationRuleController::class, 'index']);
     Route::post('/ai-models/{modelId}/rules', [ModelActivationRuleController::class, 'store']);
@@ -85,7 +95,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Analytics routes
     Route::get('/widgets/{widget_id}/analytics', [WidgetAnalyticsController::class, 'getAnalytics']);
     Route::get('/widgets/{widget_id}/analytics/summary', [WidgetAnalyticsController::class, 'getSummary']);
-    
+
     // API Testing routes - should be disabled in production
     Route::prefix('test')->group(function () {
         Route::get('/routes', [ApiTestController::class, 'listRoutes']);
@@ -102,7 +112,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/widgets/{widgetId}/suggestions/{suggestionId}', [FollowUpController::class, 'updateSuggestion']);
     Route::delete('/widgets/{widgetId}/suggestions/{suggestionId}', [FollowUpController::class, 'deleteSuggestion']);
     Route::get('/widgets/{widgetId}/follow-up/stats', [FollowUpController::class, 'getStats']);
-    
+
     // Branding Engine routes
     Route::get('/widgets/{widgetId}/branding', [BrandingController::class, 'getBrandingSettings']);
     Route::put('/widgets/{widgetId}/branding', [BrandingController::class, 'updateBrandingSettings']);

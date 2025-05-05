@@ -53,85 +53,85 @@ export interface AnalyticsSummary {
 // Widget services
 export const widgetService = {
   getAllWidgets: async () => {
-    return api.get('/api/widgets');
+    return api.get('widgets');
   },
-  
+
   getWidget: async (id: number) => {
-    return api.get(`/api/widgets/${id}`);
+    return api.get(`widgets/${id}`);
   },
-  
+
   createWidget: async (widgetData: Widget) => {
-    return api.post('/api/widgets', widgetData);
+    return api.post('widgets', widgetData);
   },
-  
+
   updateWidget: async (id: number, widgetData: Partial<Widget>) => {
-    return api.put(`/api/widgets/${id}`, widgetData);
+    return api.put(`widgets/${id}`, widgetData);
   },
-  
+
   deleteWidget: async (id: number) => {
-    return api.delete(`/api/widgets/${id}`);
+    return api.delete(`widgets/${id}`);
   },
-  
+
   getWidgetByPublicId: async (widgetId: string) => {
-    return api.get(`/api/widgets/public/${widgetId}`);
+    return api.get(`widgets/public/${widgetId}`);
   },
-  
+
   generateEmbedCode: async (widgetId: string, options: {
     embedType: 'standard' | 'iframe' | 'web-component';
     customizations?: Record<string, any>;
   }) => {
-    return api.post('/api/embed-code/generate', {
+    return api.post('embed-code/generate', {
       widget_id: widgetId,
       embed_type: options.embedType,
       customizations: options.customizations
     });
   },
-  
+
   // Analytics methods
   getAnalyticsSummary: async (widgetId: number, period: 'day' | 'week' | 'month' | 'all' = 'month') => {
-    return api.get<AnalyticsSummary>(`/api/widgets/${widgetId}/analytics/summary?period=${period}`);
+    return api.get<AnalyticsSummary>(`widgets/${widgetId}/analytics/summary?period=${period}`);
   },
-  
+
   getAnalytics: async (widgetId: number, options: {
     fromDate?: string;
     toDate?: string;
     groupBy?: 'day' | 'week' | 'month' | 'event_type' | 'url';
   } = {}) => {
     const params = new URLSearchParams();
-    
+
     if (options.fromDate) {
       params.append('from_date', options.fromDate);
     }
-    
+
     if (options.toDate) {
       params.append('to_date', options.toDate);
     }
-    
+
     if (options.groupBy) {
       params.append('group_by', options.groupBy);
     }
-    
-    return api.get(`/api/widgets/${widgetId}/analytics?${params.toString()}`);
+
+    return api.get(`widgets/${widgetId}/analytics?${params.toString()}`);
   },
-  
+
   // Additional widget configuration methods
   updateWidgetSettings: async (widgetId: number, settings: WidgetSettings) => {
-    return api.put(`/api/widgets/${widgetId}`, {
+    return api.put(`widgets/${widgetId}`, {
       settings: settings
     });
   },
-  
+
   // Widget activation/deactivation
   setWidgetActive: async (widgetId: number, isActive: boolean) => {
-    return api.put(`/api/widgets/${widgetId}`, {
+    return api.put(`widgets/${widgetId}`, {
       is_active: isActive
     });
   },
-  
+
   // Guest settings
   updateGuestSettings: async (widgetId: number, requireGuestInfo: boolean, guestFields?: string[]) => {
-    return api.put(`/api/widgets/${widgetId}`, {
-      settings: { 
+    return api.put(`widgets/${widgetId}`, {
+      settings: {
         requireGuestInfo: requireGuestInfo,
         guestFields: guestFields
       }

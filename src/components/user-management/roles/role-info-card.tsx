@@ -1,12 +1,12 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { Edit, Users, ShieldCheck } from "lucide-react";
 
@@ -14,8 +14,8 @@ interface Role {
   id: number;
   name: string;
   description: string | null;
-  users_count: number;
-  permissions: any[];
+  users_count?: number;
+  permissions?: any[];
 }
 
 interface RoleInfoCardProps {

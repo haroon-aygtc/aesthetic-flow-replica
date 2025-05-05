@@ -1,4 +1,3 @@
-
 <?php
 
 namespace App\Http\Middleware;
@@ -14,7 +13,7 @@ class RedirectIfAuthenticated
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(\Illuminate\Http\Request): (Response)  $next
      * @param  string|null  ...$guards
      */
     public function handle(Request $request, Closure $next, string ...$guards): Response
@@ -26,6 +25,7 @@ class RedirectIfAuthenticated
                 if ($request->expectsJson()) {
                     return response()->json(['error' => 'Already authenticated.'], 200);
                 }
+
                 return redirect(RouteServiceProvider::HOME);
             }
         }

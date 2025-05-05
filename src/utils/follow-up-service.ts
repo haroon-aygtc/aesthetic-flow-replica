@@ -1,5 +1,5 @@
-
-import api from "./api-service";
+// Import the API service and toast utility
+import api from "./api";
 import { Suggestion } from "@/components/ai-configuration/follow-up/follow-up-schema";
 import { toast } from "@/hooks/use-toast";
 
@@ -35,7 +35,7 @@ export const followUpService = {
   // Get follow-up settings for a widget
   getFollowUpSettings: async (widgetId: number): Promise<FollowUpSettings> => {
     try {
-      const response = await api.get(`/api/widgets/${widgetId}/follow-up`);
+      const response = await api.get(`widgets/${widgetId}/follow-up`);
       return response.data;
     } catch (error) {
       console.error("Error fetching follow-up settings:", error);
@@ -51,7 +51,9 @@ export const followUpService = {
   // Update follow-up settings for a widget
   updateFollowUpSettings: async (settings: FollowUpSettings): Promise<FollowUpSettings> => {
     try {
-      const response = await api.put(`/api/widgets/${settings.widgetId}/follow-up`, settings);
+      console.log("Sending settings to API:", settings);
+      const response = await api.put(`widgets/${settings.widgetId}/follow-up`, settings);
+      console.log("API response:", response.data);
       toast({
         title: "Settings updated",
         description: "Follow-up settings have been saved",
@@ -71,7 +73,7 @@ export const followUpService = {
   // Get suggestions for a widget
   getSuggestions: async (widgetId: number): Promise<Suggestion[]> => {
     try {
-      const response = await api.get(`/api/widgets/${widgetId}/suggestions`);
+      const response = await api.get(`/widgets/${widgetId}/suggestions`);
       return response.data;
     } catch (error) {
       console.error("Error fetching suggestions:", error);
@@ -87,7 +89,15 @@ export const followUpService = {
   // Add a suggestion
   addSuggestion: async (widgetId: number, suggestion: Omit<Suggestion, 'id'>): Promise<Suggestion> => {
     try {
-      const response = await api.post(`/api/widgets/${widgetId}/suggestions`, suggestion);
+      // Make sure we're using the correct widgetId from the parameter
+      const suggestionData = {
+        ...suggestion,
+        widget_id: widgetId // Ensure widget_id matches the parameter
+      };
+
+      console.log("Sending suggestion to API:", suggestionData);
+      const response = await api.post(`/widgets/${widgetId}/suggestions`, suggestionData);
+      console.log("API response:", response.data);
       toast({
         title: "Suggestion added",
         description: "New follow-up suggestion has been added",
@@ -105,9 +115,9 @@ export const followUpService = {
   },
 
   // Update a suggestion
-  updateSuggestion: async (widgetId: number, suggestionId: string, suggestion: Partial<Suggestion>): Promise<Suggestion> => {
+  updateSuggestion: async (widgetId: number, suggestionId: number, suggestion: Partial<Suggestion>): Promise<Suggestion> => {
     try {
-      const response = await api.put(`/api/widgets/${widgetId}/suggestions/${suggestionId}`, suggestion);
+      const response = await api.put(`/widgets/${widgetId}/suggestions/${suggestionId}`, suggestion);
       toast({
         title: "Suggestion updated",
         description: "Follow-up suggestion has been updated",
@@ -125,9 +135,9 @@ export const followUpService = {
   },
 
   // Delete a suggestion
-  deleteSuggestion: async (widgetId: number, suggestionId: string): Promise<void> => {
+  deleteSuggestion: async (widgetId: number, suggestionId: number): Promise<void> => {
     try {
-      await api.delete(`/api/widgets/${widgetId}/suggestions/${suggestionId}`);
+      await api.delete(`/widgets/${widgetId}/suggestions/${suggestionId}`);
       toast({
         title: "Suggestion deleted",
         description: "Follow-up suggestion has been removed",
@@ -146,7 +156,7 @@ export const followUpService = {
   // Get analytics for follow-ups
   getFollowUpStats: async (widgetId: number, period: string = "30d"): Promise<FollowUpStats> => {
     try {
-      const response = await api.get(`/api/widgets/${widgetId}/follow-up/stats?period=${period}`);
+      const response = await api.get(`/widgets/${widgetId}/follow-up/stats?period=${period}`);
       return response.data;
     } catch (error) {
       console.error("Error fetching follow-up stats:", error);

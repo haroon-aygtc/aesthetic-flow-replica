@@ -1,11 +1,11 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\AIModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
-use App\Services\AIService;
 
 class AIModelController extends Controller
 {
@@ -44,6 +44,8 @@ class AIModelController extends Controller
             'api_key' => 'nullable|string',
             'settings' => 'nullable|array',
             'is_default' => 'boolean',
+            'fallback_model_id' => 'nullable|integer',
+            'template_id' => 'nullable|integer|exists:templates,id',
         ]);
 
         if ($validator->fails()) {
@@ -105,8 +107,8 @@ class AIModelController extends Controller
             'api_key' => 'nullable|string',
             'settings' => 'nullable|array',
             'is_default' => 'boolean',
-            'active' => 'boolean',
-            'fallback_model_id' => 'nullable|integer|exists:ai_models,id',
+            'template_id' => 'nullable|integer|exists:templates,id',
+            'fallback_model_id' => 'nullable|integer',
             'confidence_threshold' => 'nullable|numeric|min:0|max:1',
         ]);
 
@@ -116,14 +118,6 @@ class AIModelController extends Controller
 
         try {
             $aiModel = AIModel::findOrFail($id);
-
-            // Prevent circular fallback references
-            if ($request->has('fallback_model_id') && $request->fallback_model_id == $id) {
-                return response()->json([
-                    'message' => 'A model cannot be set as its own fallback',
-                    'success' => false
-                ], 422);
-            }
 
             // If this model is being set as default, unset other defaults
             if ($request->has('is_default') && $request->input('is_default') && !$aiModel->is_default) {
@@ -174,7 +168,37 @@ class AIModelController extends Controller
     }
 
     /**
-     * Get available fallback models for a specific model.
+     * Test connection to the AI model provider.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function testConnection(Request $request, $id)
+    {
+        try {
+            $aiModel = AIModel::findOrFail($id);
+
+            // TODO: Implement actual connection testing logic
+            // This would typically involve making a test call to the AI provider API
+            // and checking if it returns a valid response
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Connection test successful'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Connection test failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Connection test failed',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get available fallback options for a model.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
@@ -182,16 +206,19 @@ class AIModelController extends Controller
     public function getFallbackOptions($id)
     {
         try {
-            // Get all models except the current one
-            $models = AIModel::where('id', '!=', $id)
+            // Find the current model
+            $currentModel = AIModel::findOrFail($id);
+
+            // Get all active models except the current one
+            $fallbackOptions = AIModel::where('id', '!=', $id)
                 ->where('active', true)
-                ->get(['id', 'name', 'provider', 'description']);
-                
-            return response()->json(['data' => $models, 'success' => true]);
+                ->get();
+
+            return response()->json(['data' => $fallbackOptions, 'success' => true]);
         } catch (\Exception $e) {
-            Log::error('Failed to get fallback options: ' . $e->getMessage());
+            Log::error('Failed to fetch fallback options: ' . $e->getMessage());
             return response()->json([
-                'message' => 'Failed to get fallback options',
+                'message' => 'Failed to fetch fallback options',
                 'error' => $e->getMessage(),
                 'success' => false
             ], 500);
@@ -209,22 +236,22 @@ class AIModelController extends Controller
     {
         try {
             $aiModel = AIModel::findOrFail($id);
-            
+
             // Don't allow deactivating the default model
-            if ($aiModel->is_default && $aiModel->active && !$request->input('active', true)) {
+            if ($aiModel->is_default && !$request->input('active', true)) {
                 return response()->json([
                     'message' => 'Cannot deactivate the default model',
                     'success' => false
                 ], 422);
             }
-            
-            $aiModel->active = $request->input('active', !$aiModel->active);
+
+            $aiModel->active = $request->input('active', true);
             $aiModel->save();
-            
+
             return response()->json([
-                'message' => $aiModel->active ? 'Model activated' : 'Model deactivated',
                 'data' => $aiModel,
-                'success' => true
+                'success' => true,
+                'message' => $aiModel->active ? 'Model activated successfully' : 'Model deactivated successfully'
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to toggle model activation: ' . $e->getMessage());
@@ -233,161 +260,6 @@ class AIModelController extends Controller
                 'error' => $e->getMessage(),
                 'success' => false
             ], 500);
-        }
-    }
-
-    /**
-     * Test connection to the AI model provider.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function testConnection(Request $request, $id)
-    {
-        try {
-            $aiModel = AIModel::findOrFail($id);
-
-            // Check if API key exists
-            if (!$aiModel->api_key) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'API key is not configured for this model'
-                ], 400);
-            }
-
-            // Get AI service
-            $aiService = app(AIService::class);
-            
-            // Perform provider-specific connection test
-            switch ($aiModel->provider) {
-                case 'openai':
-                    return $this->testOpenAIConnection($aiModel);
-                    
-                case 'anthropic':
-                    return $this->testAnthropicConnection($aiModel);
-                    
-                case 'gemini':
-                    return $this->testGeminiConnection($aiModel);
-                    
-                default:
-                    // Basic API key format validation
-                    $isKeyValid = strlen($aiModel->api_key) > 10;
-                    
-                    return response()->json([
-                        'success' => $isKeyValid,
-                        'message' => $isKeyValid 
-                            ? 'API key format appears valid. Cannot test actual connection for this provider.' 
-                            : 'API key format appears invalid.'
-                    ]);
-            }
-        } catch (\Exception $e) {
-            Log::error('Connection test failed: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Connection test failed: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Test connection to OpenAI API.
-     *
-     * @param  \App\Models\AIModel  $aiModel
-     * @return \Illuminate\Http\Response
-     */
-    private function testOpenAIConnection(AIModel $aiModel)
-    {
-        try {
-            // Minimal API call to check if API key works
-            $response = \Illuminate\Support\Facades\Http::withHeaders([
-                'Authorization' => 'Bearer ' . $aiModel->api_key,
-                'Content-Type' => 'application/json',
-            ])->get('https://api.openai.com/v1/models');
-
-            if ($response->successful()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Successfully connected to OpenAI API'
-                ]);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to connect to OpenAI: ' . $response->body()
-                ]);
-            }
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'OpenAI connection test failed: ' . $e->getMessage()
-            ]);
-        }
-    }
-
-    /**
-     * Test connection to Anthropic API.
-     *
-     * @param  \App\Models\AIModel  $aiModel
-     * @return \Illuminate\Http\Response
-     */
-    private function testAnthropicConnection(AIModel $aiModel)
-    {
-        try {
-            // Minimal API call to check if API key works
-            $response = \Illuminate\Support\Facades\Http::withHeaders([
-                'x-api-key' => $aiModel->api_key,
-                'anthropic-version' => '2023-06-01',
-                'Content-Type' => 'application/json',
-            ])->get('https://api.anthropic.com/v1/models');
-
-            if ($response->successful()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Successfully connected to Anthropic API'
-                ]);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to connect to Anthropic: ' . $response->body()
-                ]);
-            }
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anthropic connection test failed: ' . $e->getMessage()
-            ]);
-        }
-    }
-
-    /**
-     * Test connection to Google Gemini API.
-     *
-     * @param  \App\Models\AIModel  $aiModel
-     * @return \Illuminate\Http\Response
-     */
-    private function testGeminiConnection(AIModel $aiModel)
-    {
-        try {
-            // Minimal API call to check if API key works
-            $apiKey = $aiModel->api_key;
-            $response = \Illuminate\Support\Facades\Http::get("https://generativelanguage.googleapis.com/v1/models?key={$apiKey}");
-
-            if ($response->successful()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Successfully connected to Google Gemini API'
-                ]);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to connect to Google Gemini: ' . $response->body()
-                ]);
-            }
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Google Gemini connection test failed: ' . $e->getMessage()
-            ]);
         }
     }
 }

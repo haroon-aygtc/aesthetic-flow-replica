@@ -1,4 +1,3 @@
-
 <?php
 
 namespace App\Http\Controllers\ApiTest;
@@ -29,7 +28,7 @@ class AIModelTestController extends Controller
                 'description' => 'Created by automated API test',
                 'is_default' => false
             ]);
-            
+
             $results['create'] = [
                 'status' => 'success',
                 'model_id' => $testModel->id

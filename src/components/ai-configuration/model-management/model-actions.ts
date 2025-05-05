@@ -7,7 +7,7 @@ export const useModelActions = () => {
   // Handle model selection
   const handleModelSelect = (
     modelId: string,
-    models: AIModelData[],
+    models: AIModelData[] | null | undefined,
     setSelectedModelId: (id: number) => void,
     setSelectedModel: (model: AIModelData | null) => void,
     setTemperature: (temp: number[]) => void,
@@ -17,11 +17,22 @@ export const useModelActions = () => {
   ) => {
     const id = Number(modelId);
     setSelectedModelId(id);
-    
+
+    // Check if models is an array before using find
+    if (!models || !Array.isArray(models)) {
+      console.error("Models is not an array:", models);
+      toast({
+        title: "Error",
+        description: "Cannot select model: Invalid models data",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const model = models.find(m => m.id === id);
     if (model) {
       setSelectedModel(model);
-      
+
       // Update UI state based on model settings
       if (model.settings) {
         if (model.settings.temperature !== undefined) {
@@ -29,14 +40,14 @@ export const useModelActions = () => {
         } else {
           setTemperature([0.7]); // Default value
         }
-        
+
         if (model.settings.max_tokens !== undefined) {
           setMaxTokens([model.settings.max_tokens]);
         } else {
           setMaxTokens([2048]); // Default value
         }
       }
-      
+
       // Update API key field
       if (model.api_key) {
         setApiKey("••••••••••••••••");
@@ -64,7 +75,7 @@ export const useModelActions = () => {
       });
       return;
     }
-    
+
     setIsSaving(true);
     try {
       await aiModelService.updateModel(selectedModelId, { api_key: apiKey });
@@ -92,7 +103,7 @@ export const useModelActions = () => {
     temperature: number[],
     maxTokens: number[],
     setModels: (models: AIModelData[]) => void,
-    models: AIModelData[],
+    models: AIModelData[] | null | undefined,
     setIsSaving: (saving: boolean) => void
   ) => {
     if (!selectedModel || !selectedModelId) {
@@ -103,7 +114,7 @@ export const useModelActions = () => {
       });
       return;
     }
-    
+
     setIsSaving(true);
     try {
       const settings = {
@@ -111,20 +122,28 @@ export const useModelActions = () => {
         temperature: temperature[0],
         max_tokens: maxTokens[0]
       };
-      
+
       await aiModelService.updateModel(selectedModelId, { settings });
       toast({
         title: "Configuration Saved",
         description: "Model settings have been updated successfully."
       });
-      
-      // Update local state
-      const updatedModels = models.map(model => 
-        model.id === selectedModelId 
-          ? { ...model, settings } 
-          : model
-      );
-      setModels(updatedModels);
+
+      // Update local state if models is an array
+      if (models && Array.isArray(models)) {
+        const updatedModels = models.map(model =>
+          model.id === selectedModelId
+            ? { ...model, settings }
+            : model
+        );
+        setModels(updatedModels);
+      } else {
+        // Refresh models from API if local state is invalid
+        const refreshedModels = await aiModelService.getModels();
+        if (refreshedModels && Array.isArray(refreshedModels)) {
+          setModels(refreshedModels);
+        }
+      }
     } catch (error: any) {
       toast({
         title: "Failed to Save Configuration",
@@ -150,7 +169,7 @@ export const useModelActions = () => {
       });
       return;
     }
-    
+
     setIsTesting(true);
     try {
       const result = await aiModelService.testConnection(selectedModelId);
@@ -192,11 +211,11 @@ export const useModelActions = () => {
       });
       return;
     }
-    
+
     try {
       // In a real implementation, this would call an API to associate the template with the model
       console.log(`Associating template ${templateId} with model ${selectedModelId}`);
-      
+
       // For now, we'll just update the local state to simulate the change
       const updatedModels = models.map(model => {
         if (model.id === selectedModelId) {
@@ -210,13 +229,13 @@ export const useModelActions = () => {
         }
         return model;
       });
-      
+
       setModels(updatedModels);
-      
+
       toast({
         title: templateId ? "Template Associated" : "Template Removed",
-        description: templateId 
-          ? "The prompt template has been associated with this model." 
+        description: templateId
+          ? "The prompt template has been associated with this model."
           : "The prompt template has been removed from this model."
       });
     } catch (error: any) {
@@ -227,7 +246,7 @@ export const useModelActions = () => {
       });
     }
   };
-  
+
   // Handle creating a new template
   const handleCreateTemplate = () => {
     // This would typically open a dialog or navigate to a template creation page
@@ -259,7 +278,7 @@ export const useModelActions = () => {
           description: "New AI model was created successfully."
         });
       }
-      
+
       // Refresh models and close dialog
       await fetchModels();
       setIsDialogOpen(false);

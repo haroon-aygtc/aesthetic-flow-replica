@@ -6,21 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 import { PermissionCheckboxList } from "./permission-checkbox-list";
-import { roleService, permissionService } from "@/utils/api";
-
-interface Role {
-  id: number;
-  name: string;
-  description: string | null;
-}
-
-interface Permission {
-  id: number;
-  name: string;
-  description: string | null;
-  category: string;
-  type: string;
-}
+import { roleService, type Role } from "@/utils/roleService";
+import { permissionService, type Permission } from "@/utils/permissionService";
 
 export function RolePermissionAssignment() {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -79,7 +66,7 @@ export function RolePermissionAssignment() {
   useEffect(() => {
     const fetchRolePermissions = async () => {
       if (!selectedRoleId) return;
-      
+
       setIsLoading(true);
       try {
         const response = await roleService.getRole(selectedRoleId);
@@ -105,16 +92,16 @@ export function RolePermissionAssignment() {
   };
 
   const handlePermissionToggle = (permissionId: number, isChecked: boolean) => {
-    setSelectedPermissionIds(prev => 
-      isChecked 
-        ? [...prev, permissionId] 
+    setSelectedPermissionIds(prev =>
+      isChecked
+        ? [...prev, permissionId]
         : prev.filter(id => id !== permissionId)
     );
   };
 
   const handleSavePermissions = async () => {
     if (!selectedRoleId) return;
-    
+
     setIsSaving(true);
     try {
       await roleService.assignPermissions(selectedRoleId, selectedPermissionIds);
@@ -149,8 +136,8 @@ export function RolePermissionAssignment() {
               <label htmlFor="role-select" className="text-sm font-medium">
                 Select Role
               </label>
-              <Select 
-                value={selectedRoleId?.toString() || ""} 
+              <Select
+                value={selectedRoleId?.toString() || ""}
                 onValueChange={handleRoleChange}
                 disabled={isLoading || roles.length === 0}
               >
@@ -194,8 +181,8 @@ export function RolePermissionAssignment() {
                 </div>
 
                 <div className="flex justify-end">
-                  <Button 
-                    onClick={handleSavePermissions} 
+                  <Button
+                    onClick={handleSavePermissions}
                     disabled={isSaving}
                   >
                     {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

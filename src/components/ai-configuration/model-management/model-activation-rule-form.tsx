@@ -36,7 +36,7 @@ export function ModelActivationRuleForm({
         <DialogHeader>
           <DialogTitle>{isEditing ? "Edit Activation Rule" : "Create Activation Rule"}</DialogTitle>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
@@ -52,7 +52,7 @@ export function ModelActivationRuleForm({
                 </FormItem>
               )}
             />
-            
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -61,15 +61,15 @@ export function ModelActivationRuleForm({
                   <FormItem>
                     <FormLabel>Query Type</FormLabel>
                     <FormControl>
-                      <Select 
-                        value={field.value || ""} 
-                        onValueChange={(value) => field.onChange(value || null)}
+                      <Select
+                        value={field.value || "any"}
+                        onValueChange={(value) => field.onChange(value === "any" ? null : value)}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Any query type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Any query type</SelectItem>
+                          <SelectItem value="any">Any query type</SelectItem>
                           {queryTypes.map((type) => (
                             <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
                           ))}
@@ -80,7 +80,7 @@ export function ModelActivationRuleForm({
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="use_case"
@@ -88,15 +88,15 @@ export function ModelActivationRuleForm({
                   <FormItem>
                     <FormLabel>Use Case</FormLabel>
                     <FormControl>
-                      <Select 
-                        value={field.value || ""} 
-                        onValueChange={(value) => field.onChange(value || null)}
+                      <Select
+                        value={field.value || "any"}
+                        onValueChange={(value) => field.onChange(value === "any" ? null : value)}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Any use case" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Any use case</SelectItem>
+                          <SelectItem value="any">Any use case</SelectItem>
                           {useCases.map((useCase) => (
                             <SelectItem key={useCase.value} value={useCase.value}>{useCase.label}</SelectItem>
                           ))}
@@ -108,7 +108,7 @@ export function ModelActivationRuleForm({
                 )}
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -117,15 +117,15 @@ export function ModelActivationRuleForm({
                   <FormItem>
                     <FormLabel>Tenant</FormLabel>
                     <FormControl>
-                      <Select 
-                        value={field.value || ""} 
-                        onValueChange={(value) => field.onChange(value || null)}
+                      <Select
+                        value={field.value || "any"}
+                        onValueChange={(value) => field.onChange(value === "any" ? null : value)}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Any tenant" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Any tenant</SelectItem>
+                          <SelectItem value="any">Any tenant</SelectItem>
                           {tenants.map((tenant) => (
                             <SelectItem key={tenant.id} value={tenant.id.toString()}>{tenant.name}</SelectItem>
                           ))}
@@ -136,7 +136,7 @@ export function ModelActivationRuleForm({
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="priority"
@@ -151,7 +151,7 @@ export function ModelActivationRuleForm({
                 )}
               />
             </div>
-            
+
             <FormField
               control={form.control}
               name="active"
@@ -168,7 +168,7 @@ export function ModelActivationRuleForm({
                       <Label htmlFor="rule-active" className="sr-only">Active</Label>
                       <Input
                         id="rule-active"
-                        type="checkbox" 
+                        type="checkbox"
                         className="toggle"
                         checked={field.value}
                         onChange={field.onChange}
@@ -178,7 +178,7 @@ export function ModelActivationRuleForm({
                 </FormItem>
               )}
             />
-            
+
             <RuleConditions form={form} />
 
             <DialogFooter>

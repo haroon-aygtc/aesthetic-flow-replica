@@ -1,19 +1,19 @@
 
 import { useState, useEffect } from "react";
-import { 
-  Table, 
-  TableHeader, 
-  TableRow, 
-  TableHead, 
-  TableBody, 
-  TableCell 
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogFooter,
   DialogTrigger
 } from "@/components/ui/dialog";
@@ -22,20 +22,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { Pencil, Trash } from "lucide-react";
-import { roleService } from "@/utils/api";
+import { roleService, type Role } from "@/utils/roleService";
 
-interface Role {
-  id: number;
-  name: string;
-  description: string | null;
+interface RoleWithUserCount extends Role {
   users_count?: number;
-  created_at: string;
 }
 
 export function RolesList() {
-  const [roles, setRoles] = useState<Role[]>([]);
+  const [roles, setRoles] = useState<RoleWithUserCount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [editingRole, setEditingRole] = useState<RoleWithUserCount | null>(null);
   const [newRole, setNewRole] = useState({
     name: "",
     description: "",
@@ -88,12 +84,12 @@ export function RolesList() {
 
   const handleEditRole = async () => {
     if (!editingRole) return;
-    
+
     const roleUpdate = {
       name: editingRole.name,
       description: editingRole.description,
     };
-    
+
     try {
       await roleService.updateRole(editingRole.id, roleUpdate);
       setIsEditDialogOpen(false);
@@ -113,7 +109,7 @@ export function RolesList() {
 
   const handleDeleteRole = async () => {
     if (!editingRole) return;
-    
+
     try {
       await roleService.deleteRole(editingRole.id);
       setIsDeleteDialogOpen(false);
@@ -150,18 +146,18 @@ export function RolesList() {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
-                <Input 
-                  id="name" 
-                  value={newRole.name} 
-                  onChange={(e) => setNewRole({...newRole, name: e.target.value})} 
+                <Input
+                  id="name"
+                  value={newRole.name}
+                  onChange={(e) => setNewRole({ ...newRole, name: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
-                <Textarea 
-                  id="description" 
-                  value={newRole.description || ""} 
-                  onChange={(e) => setNewRole({...newRole, description: e.target.value})} 
+                <Textarea
+                  id="description"
+                  value={newRole.description || ""}
+                  onChange={(e) => setNewRole({ ...newRole, description: e.target.value })}
                 />
               </div>
             </div>
@@ -219,18 +215,18 @@ export function RolesList() {
                             <div className="space-y-4 py-4">
                               <div className="space-y-2">
                                 <Label htmlFor="edit-name">Name</Label>
-                                <Input 
-                                  id="edit-name" 
-                                  value={editingRole.name} 
-                                  onChange={(e) => setEditingRole({...editingRole, name: e.target.value})} 
+                                <Input
+                                  id="edit-name"
+                                  value={editingRole.name}
+                                  onChange={(e) => setEditingRole({ ...editingRole, name: e.target.value })}
                                 />
                               </div>
                               <div className="space-y-2">
                                 <Label htmlFor="edit-description">Description</Label>
-                                <Textarea 
-                                  id="edit-description" 
-                                  value={editingRole.description || ""} 
-                                  onChange={(e) => setEditingRole({...editingRole, description: e.target.value})} 
+                                <Textarea
+                                  id="edit-description"
+                                  value={editingRole.description || ""}
+                                  onChange={(e) => setEditingRole({ ...editingRole, description: e.target.value })}
                                 />
                               </div>
                             </div>
@@ -241,7 +237,7 @@ export function RolesList() {
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
-                      
+
                       <Dialog open={isDeleteDialogOpen && editingRole?.id === role.id} onOpenChange={(open) => {
                         setIsDeleteDialogOpen(open);
                         if (open) setEditingRole(role);

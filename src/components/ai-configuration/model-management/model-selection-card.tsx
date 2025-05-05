@@ -46,6 +46,13 @@ export function ModelSelectionCard({
           <div className="flex justify-center py-8">
             <Spinner size="lg" />
           </div>
+        ) : !models || !Array.isArray(models) ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground mb-4">Error loading AI models</p>
+            <Button onClick={onAddNewModel}>
+              <Plus className="mr-2 h-4 w-4" /> Add New Model
+            </Button>
+          </div>
         ) : models.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground mb-4">No AI models configured yet</p>
@@ -54,7 +61,7 @@ export function ModelSelectionCard({
             </Button>
           </div>
         ) : (
-          <RadioGroup 
+          <RadioGroup
             value={selectedModelId ? String(selectedModelId) : ""}
             onValueChange={onModelSelect}
             className="grid gap-4 md:grid-cols-2"

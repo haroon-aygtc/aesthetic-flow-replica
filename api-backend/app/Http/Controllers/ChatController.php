@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\ChatSession;
@@ -34,7 +35,7 @@ class ChatController extends Controller
         // Generate session ID and visitor ID if not provided
         $sessionId = Str::uuid()->toString();
         $visitorId = $request->visitor_id ?? ('visitor_' . Str::random(12));
-        
+
         // Create a new session
         $session = new ChatSession();
         $session->widget_id = $widget->id;
@@ -42,7 +43,7 @@ class ChatController extends Controller
         $session->visitor_id = $visitorId;
         $session->metadata = $request->metadata;
         $session->last_activity_at = now();
-        
+
         // If a guest session ID is provided, link it to this chat session
         if ($request->has('guest_session_id')) {
             $guestUser = GuestUser::where('session_id', $request->guest_session_id)->first();
@@ -54,7 +55,7 @@ class ChatController extends Controller
                 ]);
             }
         }
-        
+
         $session->save();
 
         return response()->json([

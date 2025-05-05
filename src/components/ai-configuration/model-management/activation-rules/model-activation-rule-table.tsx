@@ -14,12 +14,15 @@ interface ModelActivationRuleTableProps {
   onDelete: (ruleId: number) => void;
 }
 
-export function ModelActivationRuleTable({ 
-  rules, 
-  onToggleActive, 
-  onEdit, 
-  onDelete 
+export function ModelActivationRuleTable({
+  rules,
+  onToggleActive,
+  onEdit,
+  onDelete
 }: ModelActivationRuleTableProps) {
+  // Safety check to ensure rules is always an array
+  const safeRules = Array.isArray(rules) ? rules : [];
+
   return (
     <Table>
       <TableHeader>
@@ -32,7 +35,7 @@ export function ModelActivationRuleTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {rules.map((rule) => (
+        {safeRules.map((rule) => (
           <TableRow key={rule.id}>
             <TableCell className="font-medium">{rule.name}</TableCell>
             <TableCell>
@@ -73,17 +76,17 @@ export function ModelActivationRuleTable({
             </TableCell>
             <TableCell className="text-right">
               <div className="flex justify-end gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => onEdit(rule)}
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="icon"
-                  className="text-destructive" 
+                  className="text-destructive"
                   onClick={() => onDelete(rule.id)}
                 >
                   <Trash2 className="h-4 w-4" />

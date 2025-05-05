@@ -1,4 +1,3 @@
-
 <?php
 
 namespace App\Http\Controllers;
@@ -19,7 +18,7 @@ class GuestUserAdminController extends Controller
     public function index()
     {
         $guestUsers = GuestUser::with('widget:id,name')->latest()->get();
-        
+
         $formattedUsers = $guestUsers->map(function ($user) {
             return [
                 'id' => $user->id,
@@ -32,13 +31,13 @@ class GuestUserAdminController extends Controller
                 'created_at' => $user->created_at,
             ];
         });
-        
+
         return response()->json([
             'success' => true,
             'data' => $formattedUsers
         ]);
     }
-    
+
     /**
      * Display the specified guest user
      *
@@ -48,13 +47,13 @@ class GuestUserAdminController extends Controller
     public function show($id)
     {
         $guestUser = GuestUser::with('widget:id,name')->findOrFail($id);
-        
+
         return response()->json([
             'success' => true,
             'data' => $guestUser
         ]);
     }
-    
+
     /**
      * Remove the specified guest user from storage
      *
@@ -64,22 +63,22 @@ class GuestUserAdminController extends Controller
     public function destroy($id)
     {
         $guestUser = GuestUser::findOrFail($id);
-        
+
         // Delete associated chat sessions and messages
         $chatSessions = ChatSession::where('session_id', $guestUser->session_id)->get();
         foreach ($chatSessions as $session) {
             ChatMessage::where('chat_session_id', $session->id)->delete();
             $session->delete();
         }
-        
+
         $guestUser->delete();
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Guest user deleted successfully'
         ]);
     }
-    
+
     /**
      * Get chat history for a guest user session
      *
@@ -91,7 +90,7 @@ class GuestUserAdminController extends Controller
         $validator = Validator::make($request->all(), [
             'session_id' => 'required|string'
         ]);
-        
+
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
@@ -99,21 +98,21 @@ class GuestUserAdminController extends Controller
                 'errors' => $validator->errors()
             ], 422);
         }
-        
+
         $sessionId = $request->input('session_id');
         $chatSession = ChatSession::where('session_id', $sessionId)->first();
-        
+
         if (!$chatSession) {
             return response()->json([
                 'success' => false,
                 'message' => 'Chat session not found'
             ], 404);
         }
-        
+
         $messages = ChatMessage::where('chat_session_id', $chatSession->id)
             ->orderBy('created_at', 'asc')
             ->get(['role', 'content', 'created_at']);
-        
+
         return response()->json($messages);
     }
 }

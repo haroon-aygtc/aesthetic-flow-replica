@@ -1,4 +1,4 @@
-
+// Import necessary libraries and components
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,28 +8,22 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-
-interface Template {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-}
+import { TemplateData, templateService } from "@/utils/template-service";
 
 interface TemplateSelectorProps {
   selectedModelId: number | null;
-  onTemplateSelect: (templateId: string | null) => void;
+  onTemplateSelect: (templateId: number | null) => void;
   onCreateTemplate: () => void;
-  selectedTemplateId: string | null;
+  selectedTemplateId: number | null;
 }
 
-export function TemplateSelector({ 
-  selectedModelId, 
+export function TemplateSelector({
+  selectedModelId,
   onTemplateSelect,
   onCreateTemplate,
-  selectedTemplateId 
+  selectedTemplateId
 }: TemplateSelectorProps) {
-  const [templates, setTemplates] = useState<Template[]>([]);
+  const [templates, setTemplates] = useState<TemplateData[]>([]);
   const [useTemplate, setUseTemplate] = useState(!!selectedTemplateId);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -37,22 +31,16 @@ export function TemplateSelector({
   // Fetch templates when the selected model changes
   useEffect(() => {
     if (!selectedModelId) return;
-    
+
     fetchTemplates(selectedModelId);
   }, [selectedModelId]);
 
   const fetchTemplates = async (modelId: number) => {
     setIsLoading(true);
-    
+
     try {
-      const response = await fetch(`/api/models/${modelId}/templates`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch templates');
-      }
-      
-      const data = await response.json();
-      setTemplates(data);
+      const templates = await templateService.getModelTemplates(modelId);
+      setTemplates(templates);
     } catch (error) {
       console.error('Error fetching templates:', error);
       toast({
@@ -76,7 +64,7 @@ export function TemplateSelector({
   };
 
   const handleTemplateChange = (templateId: string) => {
-    onTemplateSelect(templateId);
+    onTemplateSelect(templateId === "none" ? null : parseInt(templateId));
   };
 
   if (!selectedModelId) return null;
@@ -95,21 +83,21 @@ export function TemplateSelector({
       <CardContent>
         <div className="space-y-6">
           <div className="flex items-center space-x-2">
-            <Switch 
-              checked={useTemplate} 
-              onCheckedChange={handleToggleTemplate} 
+            <Switch
+              checked={useTemplate}
+              onCheckedChange={handleToggleTemplate}
               id="use-template"
             />
             <Label htmlFor="use-template">Use prompt template</Label>
           </div>
-          
+
           {useTemplate && (
             <div className="space-y-4">
               <div className="grid gap-2">
                 <Label htmlFor="template-select">Select template</Label>
-                <Select 
-                  disabled={isLoading || templates.length === 0} 
-                  value={selectedTemplateId || ""} 
+                <Select
+                  disabled={isLoading || templates.length === 0}
+                  value={selectedTemplateId ? selectedTemplateId.toString() : "none"}
                   onValueChange={handleTemplateChange}
                 >
                   <SelectTrigger id="template-select">
@@ -119,28 +107,31 @@ export function TemplateSelector({
                     {templates.length === 0 && !isLoading ? (
                       <SelectItem value="no-templates" disabled>No templates available</SelectItem>
                     ) : (
-                      templates.map(template => (
-                        <SelectItem key={template.id} value={template.id}>
-                          <div className="flex justify-between items-center">
-                            <span>{template.name}</span>
-                            <Badge variant="outline" className="ml-2">{template.category}</Badge>
-                          </div>
-                        </SelectItem>
-                      ))
+                      <>
+                        <SelectItem value="none">None</SelectItem>
+                        {templates.map(template => (
+                          <SelectItem key={template.id} value={template.id.toString()}>
+                            <div className="flex justify-between items-center">
+                              <span>{template.name}</span>
+                              <Badge variant="outline" className="ml-2">{template.category}</Badge>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </>
                     )}
                   </SelectContent>
                 </Select>
               </div>
-              
+
               {selectedTemplateId && templates.find(t => t.id === selectedTemplateId) && (
                 <div className="bg-muted/50 p-3 rounded text-sm">
                   {templates.find(t => t.id === selectedTemplateId)?.description}
                 </div>
               )}
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
+
+              <Button
+                variant="outline"
+                size="sm"
                 className="gap-1 w-full"
                 onClick={onCreateTemplate}
               >

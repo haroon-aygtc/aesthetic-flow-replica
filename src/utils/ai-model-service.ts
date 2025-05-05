@@ -1,5 +1,5 @@
-
-import api from "@/utils/api-service";
+// Import the API service
+import api from "./api";
 
 export interface AIModelData {
   id?: number;
@@ -12,6 +12,7 @@ export interface AIModelData {
   active?: boolean;
   fallback_model_id?: number | null;
   confidence_threshold?: number;
+  template_id?: number | null;
 }
 
 // Analytics data interfaces
@@ -32,89 +33,210 @@ export interface ModelAnalytics {
 export const aiModelService = {
   // Get all models
   getModels: async (): Promise<AIModelData[]> => {
-    const response = await api.get('/api/ai-models');
-    return response.data;
+    try {
+      const response = await api.get('ai-models');
+
+      // Check if response.data has a 'data' property (backend wraps models in a 'data' property)
+      if (response.data && response.data.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+
+      // If response.data is already an array, return it
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+
+      // If we can't find an array, log the error and return an empty array
+      console.error('Unexpected response format from AI models API:', response.data);
+      return [];
+    } catch (error) {
+      console.error('Error fetching AI models:', error);
+      return [];
+    }
   },
 
   // Get model by ID
   getModel: async (id: number): Promise<AIModelData> => {
-    const response = await api.get(`/api/ai-models/${id}`);
-    return response.data;
+    try {
+      const response = await api.get(`ai-models/${id}`);
+
+      // Check if response.data has a 'data' property
+      if (response.data && response.data.data) {
+        return response.data.data;
+      }
+
+      // If response.data is already the model object, return it
+      if (response.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
+        return response.data;
+      }
+
+      // If we can't find a valid model, log the error and return a default model
+      console.error('Unexpected response format from AI model API:', response.data);
+      throw new Error('Failed to retrieve AI model data');
+    } catch (error) {
+      console.error(`Error fetching AI model with ID ${id}:`, error);
+      throw error;
+    }
   },
 
   // Create a new model
   createModel: async (model: AIModelData): Promise<AIModelData> => {
-    const response = await api.post('/api/ai-models', model);
-    return response.data;
+    try {
+      const response = await api.post('ai-models', model);
+      return response.data && response.data.data ? response.data.data : response.data;
+    } catch (error) {
+      console.error('Error creating AI model:', error);
+      throw error;
+    }
   },
 
   // Update a model
   updateModel: async (id: number, data: Partial<AIModelData>): Promise<AIModelData> => {
-    const response = await api.put(`/api/ai-models/${id}`, data);
-    return response.data;
+    try {
+      const response = await api.put(`ai-models/${id}`, data);
+      return response.data && response.data.data ? response.data.data : response.data;
+    } catch (error) {
+      console.error(`Error updating AI model with ID ${id}:`, error);
+      throw error;
+    }
   },
 
   // Delete a model
   deleteModel: async (id: number): Promise<void> => {
-    await api.delete(`/api/ai-models/${id}`);
+    try {
+      await api.delete(`ai-models/${id}`);
+    } catch (error) {
+      console.error(`Error deleting AI model with ID ${id}:`, error);
+      throw error;
+    }
   },
 
   // Toggle model activation
   toggleModelActivation: async (id: number, active: boolean): Promise<AIModelData> => {
-    const response = await api.post(`/api/ai-models/${id}/toggle-activation`, { active });
-    return response.data;
+    try {
+      const response = await api.post(`ai-models/${id}/toggle-activation`, { active });
+      return response.data && response.data.data ? response.data.data : response.data;
+    } catch (error) {
+      console.error(`Error toggling activation for AI model with ID ${id}:`, error);
+      throw error;
+    }
   },
 
   // Test a model connection
   testConnection: async (id: number): Promise<{ success: boolean; message: string }> => {
-    const response = await api.post(`/api/ai-models/${id}/test`);
-    return response.data;
+    try {
+      const response = await api.post(`ai-models/${id}/test`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error testing connection for AI model with ID ${id}:`, error);
+      throw error;
+    }
   },
 
   // Get fallback options for a model
   getFallbackOptions: async (id: number): Promise<AIModelData[]> => {
-    const response = await api.get(`/api/ai-models/${id}/fallback-options`);
-    return response.data;
+    try {
+      const response = await api.get(`ai-models/${id}/fallback-options`);
+
+      if (response.data && response.data.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+
+      console.error('Unexpected response format from fallback options API:', response.data);
+      return [];
+    } catch (error) {
+      console.error(`Error fetching fallback options for AI model with ID ${id}:`, error);
+      return [];
+    }
   },
 
   // Get model activation rules
   getModelRules: async (modelId: number): Promise<any[]> => {
-    const response = await api.get(`/api/ai-models/${modelId}/rules`);
-    return response.data;
+    try {
+      const response = await api.get(`ai-models/${modelId}/rules`);
+
+      if (response.data && response.data.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+
+      console.error('Unexpected response format from model rules API:', response.data);
+      return [];
+    } catch (error) {
+      console.error(`Error fetching rules for AI model with ID ${modelId}:`, error);
+      return [];
+    }
   },
 
   // Create a new activation rule
   createModelRule: async (modelId: number, rule: any): Promise<any> => {
-    const response = await api.post(`/api/ai-models/${modelId}/rules`, rule);
-    return response.data;
+    try {
+      const response = await api.post(`ai-models/${modelId}/rules`, rule);
+      return response.data && response.data.data ? response.data.data : response.data;
+    } catch (error) {
+      console.error(`Error creating rule for AI model with ID ${modelId}:`, error);
+      throw error;
+    }
   },
 
   // Update an activation rule
   updateModelRule: async (modelId: number, ruleId: number, rule: any): Promise<any> => {
-    const response = await api.put(`/api/ai-models/${modelId}/rules/${ruleId}`, rule);
-    return response.data;
+    try {
+      const response = await api.put(`ai-models/${modelId}/rules/${ruleId}`, rule);
+      return response.data && response.data.data ? response.data.data : response.data;
+    } catch (error) {
+      console.error(`Error updating rule ${ruleId} for AI model with ID ${modelId}:`, error);
+      throw error;
+    }
   },
 
   // Delete an activation rule
   deleteModelRule: async (modelId: number, ruleId: number): Promise<void> => {
-    await api.delete(`/api/ai-models/${modelId}/rules/${ruleId}`);
+    try {
+      await api.delete(`ai-models/${modelId}/rules/${ruleId}`);
+    } catch (error) {
+      console.error(`Error deleting rule ${ruleId} for AI model with ID ${modelId}:`, error);
+      throw error;
+    }
   },
 
   // Get model analytics
   getModelAnalytics: async (modelId: number, period: string = '7d'): Promise<any> => {
-    const response = await api.get(`/api/analytics/models/${modelId}?period=${period}`);
-    return response.data;
+    try {
+      const response = await api.get(`analytics/models/${modelId}?period=${period}`);
+      return response.data && response.data.data ? response.data.data : response.data;
+    } catch (error) {
+      console.error(`Error fetching analytics for AI model with ID ${modelId}:`, error);
+      return {};
+    }
   },
 
   // Get model error logs
   getModelErrorLogs: async (modelId: number, period: string = '7d'): Promise<any> => {
-    const response = await api.get(`/api/analytics/models/${modelId}/errors?period=${period}`);
-    return response.data;
+    try {
+      const response = await api.get(`analytics/models/${modelId}/errors?period=${period}`);
+      return response.data && response.data.data ? response.data.data : response.data;
+    } catch (error) {
+      console.error(`Error fetching error logs for AI model with ID ${modelId}:`, error);
+      return [];
+    }
   },
 
   // Get detailed analytics for a model
   getModelDetailedAnalytics: async (modelId: number, period: string = 'month', groupBy: string = 'day'): Promise<any> => {
-    const response = await api.get(`/api/analytics/models/${modelId}/detailed?period=${period}&group_by=${groupBy}`);
-    return response.data;
+    try {
+      const response = await api.get(`analytics/models/${modelId}/detailed?period=${period}&group_by=${groupBy}`);
+      return response.data && response.data.data ? response.data.data : response.data;
+    } catch (error) {
+      console.error(`Error fetching detailed analytics for AI model with ID ${modelId}:`, error);
+      return {};
+    }
   }
 };

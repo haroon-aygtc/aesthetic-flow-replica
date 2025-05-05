@@ -31,22 +31,27 @@ export const suggestionSchema = z.object({
   context: z.string().min(1, {
     message: "Please select a context."
   }),
+  position: z.string().default("end"),
   format: z.string().default("button"),
   url: z.string().optional(),
-  tooltipText: z.string().optional(),
+  tooltipText: z.string().optional(), // This will be mapped to tooltip_text in the API
 });
 
 export type SuggestionValues = z.infer<typeof suggestionSchema>;
 
 export interface Suggestion {
-  id: string;
+  id: number;
+  widget_id: number;
   text: string;
   category: string;
   context: string;
-  active: boolean;
-  format?: string;
+  position: string;
+  format: string;
   url?: string;
-  tooltipText?: string;
+  tooltip_text?: string;
+  active: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Format options for follow-up answers

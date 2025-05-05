@@ -1,13 +1,12 @@
-
 <?php
 
 namespace Tests\Feature;
 
+use App\Models\AIModel;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
-use App\Models\User;
-use App\Models\AIModel;
 use Laravel\Sanctum\Sanctum;
 
 class AIModelControllerTest extends TestCase
@@ -34,7 +33,7 @@ class AIModelControllerTest extends TestCase
                      'data',
                      'success'
                  ]);
-        
+
         $this->assertTrue($response['success']);
     }
 
@@ -44,7 +43,8 @@ class AIModelControllerTest extends TestCase
             'name' => $this->faker->name,
             'provider' => $this->faker->company,
             'description' => $this->faker->sentence,
-            'is_default' => false
+            'is_default' => false,
+            'fallback_model_id' => null,
         ];
 
         $response = $this->postJson('/api/ai-models', $data);
@@ -59,9 +59,9 @@ class AIModelControllerTest extends TestCase
                      ],
                      'success'
                  ]);
-        
+
         $this->assertTrue($response['success']);
-        $this->assertDatabaseHas('ai_models', ['name' => $data['name']]);
+        $this->assertDatabaseHas('a_i_models', ['name' => $data['name']]);
     }
 
     public function test_can_get_single_ai_model()
@@ -79,7 +79,7 @@ class AIModelControllerTest extends TestCase
                      ],
                      'success'
                  ]);
-        
+
         $this->assertTrue($response['success']);
     }
 
@@ -97,10 +97,10 @@ class AIModelControllerTest extends TestCase
                      'data',
                      'success'
                  ]);
-        
+
         $this->assertTrue($response['success']);
         $this->assertEquals($newName, $response['data']['name']);
-        $this->assertDatabaseHas('ai_models', ['id' => $model->id, 'name' => $newName]);
+        $this->assertDatabaseHas('a_i_models', ['id' => $model->id, 'name' => $newName]);
     }
 
     public function test_can_delete_ai_model()
@@ -110,7 +110,7 @@ class AIModelControllerTest extends TestCase
         $response = $this->deleteJson("/api/ai-models/{$model->id}");
 
         $response->assertStatus(200);
-        $this->assertDatabaseMissing('ai_models', ['id' => $model->id]);
+        $this->assertDatabaseMissing('a_i_models', ['id' => $model->id]);
     }
 
     public function test_validation_works_for_create()
@@ -124,7 +124,7 @@ class AIModelControllerTest extends TestCase
                      'errors',
                      'success'
                  ]);
-        
+
         $this->assertFalse($response['success']);
     }
 
@@ -139,7 +139,7 @@ class AIModelControllerTest extends TestCase
                      'success',
                      'message'
                  ]);
-        
+
         $this->assertTrue($response['success']);
     }
 }

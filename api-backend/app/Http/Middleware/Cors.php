@@ -1,4 +1,3 @@
-
 <?php
 
 namespace App\Http\Middleware;
@@ -12,28 +11,29 @@ class Cors
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(\Illuminate\Http\Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $response = $next($request);
-        
-        // Get the allowed origins from env or use a default value
-        $allowedOrigins = env('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:5173');
-        $origins = explode(',', $allowedOrigins);
-        
-        $origin = $request->header('Origin');
-        if (in_array($origin, $origins)) {
-            $response->headers->set('Access-Control-Allow-Origin', $origin);
+        // Handle preflight OPTIONS request
+        if ($request->isMethod('OPTIONS')) {
+            $response = response('', 204);
         } else {
-            // For development, you might want to allow any origin
-            $response->headers->set('Access-Control-Allow-Origin', '*');
+            $response = $next($request);
         }
-        
-        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With, Accept');
-        $response->headers->set('Access-Control-Allow-Credentials', 'true');
-        
+
+        // Get the allowed origins from config or env
+        $allowedOrigins = config('cors.allowed_origins', ['http://localhost:8080', 'http://localhost:8081']);
+
+        $origin = $request->header('Origin');
+        if (in_array($origin, $allowedOrigins)) {
+            $response->headers->set('Access-Control-Allow-Origin', $origin);
+            $response->headers->set('Access-Control-Allow-Credentials', 'true');
+            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+            $response->headers->set('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, X-Token-Auth, Authorization, X-CSRF-TOKEN, X-XSRF-TOKEN');
+            $response->headers->set('Access-Control-Expose-Headers', 'Authorization');
+        }
+
         return $response;
     }
 }

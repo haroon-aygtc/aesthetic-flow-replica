@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface Role {
@@ -14,10 +13,10 @@ interface RoleCheckboxListProps {
   onRoleToggle: (roleId: number) => void;
 }
 
-export function RoleCheckboxList({ 
-  roles, 
-  selectedRoles, 
-  onRoleToggle 
+export function RoleCheckboxList({
+  roles,
+  selectedRoles,
+  onRoleToggle
 }: RoleCheckboxListProps) {
   return (
     <div className="border rounded-md p-4 space-y-2">
@@ -26,12 +25,12 @@ export function RoleCheckboxList({
       ) : (
         roles.map((role) => (
           <div key={role.id} className="flex items-center space-x-2">
-            <Checkbox 
+            <Checkbox
               id={`role-${role.id}`}
               checked={selectedRoles.includes(role.id)}
               onCheckedChange={() => onRoleToggle(role.id)}
             />
-            <label 
+            <label
               htmlFor={`role-${role.id}`}
               className="text-sm font-medium cursor-pointer"
             >

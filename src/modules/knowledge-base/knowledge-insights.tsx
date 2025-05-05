@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { knowledgeBaseService } from "@/utils/knowledge-base-service";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,8 +11,8 @@ import { BarChart4 as BarChartIcon, BarChart as BarChartIcon2, FileText, Message
 
 interface KnowledgeDocument {
   id: string;
-  filename: string;
-  filetype: string;
+  name: string;
+  type: string;
   size: number;
   status: string;
   created_at: string;
@@ -32,81 +32,44 @@ interface KnowledgeInsightsProps {
   qaPairs: QAPair[];
 }
 
-export function KnowledgeInsights({ documents, qaPairs }: KnowledgeInsightsProps) {
+export function KnowledgeInsights(_props: KnowledgeInsightsProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [insightsData, setInsightsData] = useState<any>(null);
   const [timeframe, setTimeframe] = useState("30days");
   const { toast } = useToast();
-  
+
+  const fetchInsights = async () => {
+    try {
+      setIsLoading(true);
+      const response = await knowledgeBaseService.getInsights(timeframe);
+      setInsightsData(response.data);
+    } catch (error) {
+      console.error("Error fetching insights data:", error);
+      toast({
+        title: "Error fetching insights",
+        description: "Could not load knowledge base insights",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchInsights = async () => {
-      try {
-        setIsLoading(true);
-        const response = await knowledgeBaseService.getInsights(timeframe);
-        setInsightsData(response.data);
-      } catch (error) {
-        console.error("Error fetching insights data:", error);
-        toast({
-          title: "Error fetching insights",
-          description: "Could not load knowledge base insights",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     fetchInsights();
   }, [timeframe, toast]);
 
-  // Generate sample data if not available
-  const generateSampleData = () => {
-    if (!insightsData) {
-      // Sample usage data by document
-      const topDocumentsData = documents.slice(0, 5).map((doc, index) => ({
-        name: doc.filename.length > 20 ? doc.filename.substring(0, 20) + '...' : doc.filename,
-        value: Math.floor(Math.random() * 100) + 10,
-      }));
+  // If no insights data is available, show a message
+  if (!insightsData && !isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <p className="text-muted-foreground">No insights data available.</p>
+        <Button onClick={() => fetchInsights()}>Refresh Data</Button>
+      </div>
+    );
+  }
 
-      // Sample category distribution
-      const categoryData = Array.from(
-        new Set([
-          ...documents.map(d => d.category),
-          ...qaPairs.map(q => q.category)
-        ])
-      ).map(cat => ({
-        name: cat,
-        documents: documents.filter(d => d.category === cat).length,
-        qaPairs: qaPairs.filter(q => q.category === cat).length,
-      }));
-
-      // Sample queries data
-      const queriesData = Array(7).fill(0).map((_, i) => {
-        const date = new Date();
-        date.setDate(date.getDate() - (6 - i));
-        return {
-          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          queries: Math.floor(Math.random() * 50) + 5,
-        };
-      });
-
-      return {
-        topDocuments: topDocumentsData,
-        categoryDistribution: categoryData,
-        queriesOverTime: queriesData,
-        summary: {
-          totalDocuments: documents.length,
-          totalQaPairs: qaPairs.length,
-          totalQueries: 347,
-          averageResponseTime: "1.2s",
-        }
-      };
-    }
-    
-    return insightsData;
-  };
-  
-  const data = generateSampleData();
+  const data = insightsData;
 
   if (isLoading) {
     return (
@@ -146,7 +109,7 @@ export function KnowledgeInsights({ documents, qaPairs }: KnowledgeInsightsProps
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col items-center justify-center space-y-2">
@@ -156,7 +119,7 @@ export function KnowledgeInsights({ documents, qaPairs }: KnowledgeInsightsProps
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col items-center justify-center space-y-2">
@@ -166,7 +129,7 @@ export function KnowledgeInsights({ documents, qaPairs }: KnowledgeInsightsProps
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col items-center justify-center space-y-2">
@@ -243,7 +206,7 @@ export function KnowledgeInsights({ documents, qaPairs }: KnowledgeInsightsProps
           </div>
         </CardContent>
       </Card>
-      
+
       <div className="flex justify-center">
         <Button variant="outline" onClick={() => window.print()}>
           Export Report

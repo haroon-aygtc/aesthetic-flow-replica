@@ -20,7 +20,7 @@ export function useWidgetPreview(settings: WidgetSettings = {}, widgetId: string
   const initialMessage = settings?.initialMessage || "Hello! How can I help you today?";
   const inputPlaceholder = settings?.inputPlaceholder || "Type your message...";
   const sendButtonText = settings?.sendButtonText || "Send";
-  
+
   // Avatar settings
   const avatar = settings?.avatar || {
     enabled: false,
@@ -42,7 +42,10 @@ export function useWidgetPreview(settings: WidgetSettings = {}, widgetId: string
     initialMessage,
     inputPlaceholder,
     sendButtonText,
-    avatar
+    // Use individual avatar properties instead of the entire object
+    avatar?.enabled,
+    avatar?.imageUrl,
+    avatar?.fallbackInitial
   ]);
 
   // Position styles
@@ -77,7 +80,7 @@ export function useWidgetPreview(settings: WidgetSettings = {}, widgetId: string
   // Create iframe parameters
   const createIframeParams = () => {
     if (!isOpen) return "";
-    
+
     const params = new URLSearchParams({
       widget_id: widgetId,
       primary_color: encodeURIComponent(primaryColor),
@@ -93,7 +96,7 @@ export function useWidgetPreview(settings: WidgetSettings = {}, widgetId: string
       avatar_image_url: avatar?.imageUrl || "",
       avatar_fallback: avatar?.fallbackInitial || "A"
     });
-    
+
     return `/widget/v1/iframe.html?${params}&_=${refreshKey}`;
   };
 

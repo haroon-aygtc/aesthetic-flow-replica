@@ -1,5 +1,5 @@
-
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\AIModel;
@@ -21,7 +21,7 @@ class ModelActivationRuleController extends Controller
         try {
             $aiModel = AIModel::findOrFail($modelId);
             $rules = $aiModel->activationRules()->orderBy('priority')->get();
-            
+
             return response()->json(['data' => $rules, 'success' => true]);
         } catch (\Exception $e) {
             Log::error('Failed to fetch model rules: ' . $e->getMessage());
@@ -58,9 +58,9 @@ class ModelActivationRuleController extends Controller
 
         try {
             $aiModel = AIModel::findOrFail($modelId);
-            
+
             $rule = $aiModel->activationRules()->create($request->all());
-            
+
             return response()->json(['data' => $rule, 'success' => true], 201);
         } catch (\Exception $e) {
             Log::error('Failed to create rule: ' . $e->getMessage());
@@ -99,9 +99,9 @@ class ModelActivationRuleController extends Controller
         try {
             $aiModel = AIModel::findOrFail($modelId);
             $rule = $aiModel->activationRules()->findOrFail($ruleId);
-            
+
             $rule->update($request->all());
-            
+
             return response()->json(['data' => $rule, 'success' => true]);
         } catch (\Exception $e) {
             Log::error('Failed to update rule: ' . $e->getMessage());
@@ -125,9 +125,9 @@ class ModelActivationRuleController extends Controller
         try {
             $aiModel = AIModel::findOrFail($modelId);
             $rule = $aiModel->activationRules()->findOrFail($ruleId);
-            
+
             $rule->delete();
-            
+
             return response()->json(['message' => 'Rule deleted', 'success' => true]);
         } catch (\Exception $e) {
             Log::error('Failed to delete rule: ' . $e->getMessage());

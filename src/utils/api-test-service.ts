@@ -1,5 +1,5 @@
 
-import api from "./api-service";
+import api from "./api";
 import { toast } from "@/hooks/use-toast";
 
 export interface ApiRoute {
@@ -27,8 +27,8 @@ export const apiTestService = {
   // Get all available API routes
   getApiRoutes: async (): Promise<ApiRoute[]> => {
     try {
-      const response = await api.get('/api/test/routes');
-      
+      const response = await api.get('test/routes');
+
       // Group routes by category (based on first segment of URI)
       const routes = response.data.data.map((route: ApiRoute) => {
         const segments = route.uri.split('/');
@@ -36,7 +36,7 @@ export const apiTestService = {
         const category = segments.length > 1 ? (segments[1] || 'other') : 'other';
         return { ...route, category };
       });
-      
+
       return routes;
     } catch (error) {
       console.error('Failed to fetch API routes:', error);
@@ -52,10 +52,10 @@ export const apiTestService = {
   // Execute a test request to an API endpoint
   executeTest: async (request: ApiTestRequest): Promise<ApiTestResponse> => {
     const startTime = performance.now();
-    
+
     try {
       let response;
-      const url = request.url.startsWith('/') ? request.url : `/${request.url}`;
+      const url = request.url.startsWith('/') ? request.url.substring(1) : request.url;
 
       switch (request.method.toLowerCase()) {
         case 'get':
@@ -75,7 +75,7 @@ export const apiTestService = {
       }
 
       const duration = performance.now() - startTime;
-      
+
       return {
         status: response.status,
         data: response.data,
@@ -84,7 +84,7 @@ export const apiTestService = {
       };
     } catch (error: any) {
       const duration = performance.now() - startTime;
-      
+
       return {
         status: error.response?.status || 500,
         data: error.response?.data || { error: error.message },
@@ -121,7 +121,7 @@ export const apiTestService = {
         };
       }
     }
-    
+
     // AI Model examples
     if (endpoint.includes('ai-models')) {
       if (method.toLowerCase() === 'post') {
@@ -149,7 +149,7 @@ export const apiTestService = {
         };
       }
     }
-    
+
     // Guest user examples
     if (endpoint.includes('guest')) {
       if (method.toLowerCase() === 'post' && endpoint.includes('register')) {
@@ -166,7 +166,7 @@ export const apiTestService = {
         };
       }
     }
-    
+
     // Chat examples
     if (endpoint.includes('chat')) {
       if (endpoint.includes('session/init')) {
@@ -186,7 +186,7 @@ export const apiTestService = {
         };
       }
     }
-    
+
     // Default empty object for other endpoints
     return {};
   }

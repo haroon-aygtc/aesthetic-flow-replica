@@ -6,7 +6,7 @@ import { KnowledgeDocumentList } from "./knowledge-document-list";
 import { KnowledgeQAPairs } from "./knowledge-qa-pairs";
 import { KnowledgeInsights } from "./knowledge-insights";
 import { knowledgeBaseService } from "@/utils/knowledge-base-service";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { Spinner } from "@/components/ui/spinner";
 
 export function KnowledgeBaseModule() {
@@ -15,7 +15,7 @@ export function KnowledgeBaseModule() {
   const [documents, setDocuments] = useState([]);
   const [qaPairs, setQaPairs] = useState([]);
   const { toast } = useToast();
-  
+
   useEffect(() => {
     const fetchKnowledgeBaseData = async () => {
       try {
@@ -24,7 +24,7 @@ export function KnowledgeBaseModule() {
           knowledgeBaseService.getDocuments(),
           knowledgeBaseService.getQAPairs()
         ]);
-        
+
         setDocuments(docsResponse.data || []);
         setQaPairs(qaResponse.data || []);
       } catch (error) {
@@ -38,10 +38,10 @@ export function KnowledgeBaseModule() {
         setIsLoading(false);
       }
     };
-    
+
     fetchKnowledgeBaseData();
   }, [toast]);
-  
+
   return (
     <div className="space-y-6">
       <Card>
@@ -55,7 +55,7 @@ export function KnowledgeBaseModule() {
               <TabsTrigger value="qa">Q&A Pairs</TabsTrigger>
               <TabsTrigger value="insights">Insights</TabsTrigger>
             </TabsList>
-            
+
             {isLoading ? (
               <div className="flex justify-center py-12">
                 <Spinner />
@@ -65,11 +65,11 @@ export function KnowledgeBaseModule() {
                 <TabsContent value="documents">
                   <KnowledgeDocumentList documents={documents} onDocumentsChange={setDocuments} />
                 </TabsContent>
-                
+
                 <TabsContent value="qa">
                   <KnowledgeQAPairs qaPairs={qaPairs} onQAPairsChange={setQaPairs} />
                 </TabsContent>
-                
+
                 <TabsContent value="insights">
                   <KnowledgeInsights documents={documents} qaPairs={qaPairs} />
                 </TabsContent>

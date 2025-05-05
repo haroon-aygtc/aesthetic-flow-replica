@@ -1,4 +1,3 @@
-
 <?php
 
 namespace App\Http\Middleware;
@@ -16,7 +15,7 @@ class Authenticate extends Middleware
         if ($request->expectsJson()) {
             return null; // Return null for API requests, which will result in a 401 Unauthorized response
         }
-        
+
         // For web requests, redirect to the frontend login page
         return env('FRONTEND_URL', 'http://localhost:3000') . '/login';
     }

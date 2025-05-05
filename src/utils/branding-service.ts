@@ -1,5 +1,5 @@
-
-import api from "./api-service";
+// Import the API service and toast utility
+import api from "./api";
 import { toast } from "@/hooks/use-toast";
 
 export interface BrandingSettings {
@@ -19,7 +19,7 @@ export const brandingService = {
   // Get branding settings for a widget
   getBrandingSettings: async (widgetId: number): Promise<BrandingSettings> => {
     try {
-      const response = await api.get(`/api/widgets/${widgetId}/branding`);
+      const response = await api.get(`/widgets/${widgetId}/branding`);
       return response.data;
     } catch (error) {
       console.error("Error fetching branding settings:", error);
@@ -35,7 +35,7 @@ export const brandingService = {
   // Update branding settings for a widget
   updateBrandingSettings: async (settings: BrandingSettings): Promise<BrandingSettings> => {
     try {
-      const response = await api.put(`/api/widgets/${settings.widgetId}/branding`, settings);
+      const response = await api.put(`/widgets/${settings.widgetId}/branding`, settings);
       toast({
         title: "Settings updated",
         description: "Branding settings have been saved",
@@ -55,7 +55,7 @@ export const brandingService = {
   // Generate branding preview message
   generateBrandingPreview: async (widgetId: number, prompt: string): Promise<string> => {
     try {
-      const response = await api.post(`/api/widgets/${widgetId}/branding/preview`, { prompt });
+      const response = await api.post(`/widgets/${widgetId}/branding/preview`, { prompt });
       return response.data.message;
     } catch (error) {
       console.error("Error generating branding preview:", error);
@@ -71,7 +71,7 @@ export const brandingService = {
   // Get branding templates
   getBrandingTemplates: async (): Promise<any[]> => {
     try {
-      const response = await api.get(`/api/branding-templates`);
+      const response = await api.get(`branding-templates`);
       return response.data;
     } catch (error) {
       console.error("Error fetching branding templates:", error);

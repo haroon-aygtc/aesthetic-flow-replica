@@ -1,5 +1,5 @@
-
 <?php
+
 namespace App\Services\Providers;
 
 use App\Models\AIModel;
@@ -23,10 +23,10 @@ class AnthropicProvider extends AIProvider
         try {
             // Apply system prompt from widget settings if available
             $messages = $this->applySystemPrompt($messages, $widgetSettings);
-            
+
             // Apply template if configured
             $messages = $this->applyTemplateIfConfigured($messages, $aiModel);
-            
+
             // Convert messages to Anthropic format
             $formattedMessages = [];
             foreach ($messages as $message) {
@@ -75,7 +75,7 @@ class AnthropicProvider extends AIProvider
             return $this->handleError($e, 'Anthropic');
         }
     }
-    
+
     /**
      * Test the connection to Anthropic.
      *

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "./use-toast";
-import api from "@/utils/api-service";
+import api from "@/utils/api";
 import { z } from "zod";
 import { BrandingFormSchema } from "@/components/ai-configuration/branding/branding-schema";
 
@@ -12,10 +12,10 @@ export function useBranding({ widgetId }: { widgetId: number }) {
   const queryClient = useQueryClient();
 
   // Query for branding settings
-  const { 
-    data: brandingSettings, 
+  const {
+    data: brandingSettings,
     isLoading,
-    error 
+    error
   } = useQuery({
     queryKey: ['branding-settings', widgetId],
     queryFn: async () => {
@@ -40,7 +40,7 @@ export function useBranding({ widgetId }: { widgetId: number }) {
       targetAudience: "general",
     }
   });
-  
+
   // Mutation for updating settings
   const updateSettingsMutation = useMutation({
     mutationFn: async (newSettings: BrandingSettings) => {
@@ -62,7 +62,7 @@ export function useBranding({ widgetId }: { widgetId: number }) {
       });
     }
   });
-  
+
   return {
     brandingSettings,
     isLoading,

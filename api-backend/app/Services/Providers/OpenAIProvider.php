@@ -1,5 +1,5 @@
-
 <?php
+
 namespace App\Services\Providers;
 
 use App\Models\AIModel;
@@ -23,10 +23,10 @@ class OpenAIProvider extends AIProvider
         try {
             // Apply system prompt from widget settings if available
             $messages = $this->applySystemPrompt($messages, $widgetSettings);
-            
+
             // Apply template if configured
             $messages = $this->applyTemplateIfConfigured($messages, $aiModel);
-            
+
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $aiModel->api_key,
                 'Content-Type' => 'application/json',
@@ -58,7 +58,7 @@ class OpenAIProvider extends AIProvider
             return $this->handleError($e, 'OpenAI');
         }
     }
-    
+
     /**
      * Test the connection to OpenAI.
      *

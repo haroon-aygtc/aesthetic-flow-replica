@@ -1,4 +1,3 @@
-
 <?php
 
 namespace App\Http\Controllers\ApiTest;
@@ -110,13 +109,13 @@ class AIModelEndpointTestController extends Controller
                 'max_tokens' => 2048
             ]
         ];
-        
+
         $testModel = AIModel::create($testData);
-        
+
         if (!$testModel || !$testModel->id) {
             throw new \Exception('Failed to create test AI model');
         }
-        
+
         return $testModel;
     }
 
@@ -128,11 +127,11 @@ class AIModelEndpointTestController extends Controller
     private function testGetAllModels()
     {
         $models = AIModel::all();
-        
+
         if ($models->isEmpty()) {
             throw new \Exception('No AI models found after creating test model');
         }
-        
+
         return $models;
     }
 
@@ -145,11 +144,11 @@ class AIModelEndpointTestController extends Controller
     private function testGetSingleModel($id)
     {
         $model = AIModel::find($id);
-        
+
         if (!$model) {
             throw new \Exception('Could not retrieve the created test model');
         }
-        
+
         return $model;
     }
 
@@ -162,17 +161,17 @@ class AIModelEndpointTestController extends Controller
     private function testUpdateModel($id)
     {
         $model = AIModel::findOrFail($id);
-        
+
         $model->name = 'Updated Test Model';
         $model->save();
-        
+
         // Refresh from database
         $model = AIModel::find($id);
-        
+
         if ($model->name !== 'Updated Test Model') {
             throw new \Exception('Model update failed');
         }
-        
+
         return $model;
     }
 
@@ -185,21 +184,21 @@ class AIModelEndpointTestController extends Controller
     private function testSetDefault($id)
     {
         $model = AIModel::findOrFail($id);
-        
+
         // First reset any existing default
         AIModel::where('is_default', true)->update(['is_default' => false]);
-        
+
         // Set this one as default
         $model->is_default = true;
         $model->save();
-        
+
         // Check if it's now the default
         $refreshedModel = AIModel::find($id);
-        
+
         if (!$refreshedModel->is_default) {
             throw new \Exception('Failed to set model as default');
         }
-        
+
         return true;
     }
 
@@ -215,11 +214,11 @@ class AIModelEndpointTestController extends Controller
         // since we don't have a real API key for testing
         try {
             $model = AIModel::findOrFail($id);
-            
+
             // Set a dummy API key for testing
             $model->api_key = 'test_api_key_' . time();
             $model->save();
-            
+
             return true;
         } catch (\Exception $e) {
             throw new \Exception('Connection test endpoint failed: ' . $e->getMessage());
@@ -236,13 +235,13 @@ class AIModelEndpointTestController extends Controller
     {
         $model = AIModel::findOrFail($id);
         $model->delete();
-        
+
         $deletedModel = AIModel::find($id);
-        
+
         if ($deletedModel) {
             throw new \Exception('Model deletion failed');
         }
-        
+
         return true;
     }
 

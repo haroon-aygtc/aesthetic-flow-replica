@@ -1,4 +1,3 @@
-
 <?php
 
 namespace App\Http\Controllers\ApiTest;
@@ -47,7 +46,7 @@ class GuestUserTestController extends Controller
                 'status' => 'error'
             ];
         }
-        
+
         // Return test results
         return response()->json([
             'success' => true,
@@ -85,7 +84,7 @@ class GuestUserTestController extends Controller
 
     /**
      * Get all guest users (admin function)
-     * 
+     *
      * @return \Illuminate\Http\Response
      */
     public function getAllGuestUsers()

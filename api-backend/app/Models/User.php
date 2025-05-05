@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,6 +21,15 @@ class User extends Authenticatable
         'email',
         'password',
         'status',
+        'last_active',
+        'profile_image',
+        'phone',
+        'job_title',
+        'company',
+        'bio',
+        'preferences',
+        'timezone',
+        'language',
     ];
 
     /**
@@ -40,6 +50,8 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'last_active' => 'datetime',
+        'preferences' => 'array',
     ];
 
     /**

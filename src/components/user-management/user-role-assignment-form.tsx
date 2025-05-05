@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { RoleCheckboxList } from "./user-role-checkbox-list";
-import { userService } from "@/utils/api";
+import { userService } from "@/utils/api-service";
 
 interface User {
   id: number;
@@ -32,11 +32,11 @@ interface UserRoleAssignmentFormProps {
   onSuccess: () => void;
 }
 
-export function UserRoleAssignmentForm({ 
-  users, 
-  roles, 
-  isLoading, 
-  onSuccess 
+export function UserRoleAssignmentForm({
+  users,
+  roles,
+  isLoading,
+  onSuccess
 }: UserRoleAssignmentFormProps) {
   const [selectedUser, setSelectedUser] = useState<number | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<number[]>([]);
@@ -62,7 +62,7 @@ export function UserRoleAssignmentForm({
   };
 
   const handleRoleToggle = (roleId: number) => {
-    setSelectedRoles(prev => 
+    setSelectedRoles(prev =>
       prev.includes(roleId)
         ? prev.filter(id => id !== roleId)
         : [...prev, roleId]
@@ -86,7 +86,7 @@ export function UserRoleAssignmentForm({
         title: "Success",
         description: "Roles assigned successfully",
       });
-      
+
       onSuccess();
     } catch (error: any) {
       toast({
@@ -107,8 +107,8 @@ export function UserRoleAssignmentForm({
     <div className="space-y-6">
       <div className="space-y-2">
         <label htmlFor="user-select" className="text-sm font-medium">Select User</label>
-        <Select 
-          value={selectedUser?.toString() || ""} 
+        <Select
+          value={selectedUser?.toString() || ""}
           onValueChange={handleUserChange}
         >
           <SelectTrigger className="w-full">
@@ -123,7 +123,7 @@ export function UserRoleAssignmentForm({
           </SelectContent>
         </Select>
       </div>
-      
+
       {selectedUser && (
         <>
           <div className="space-y-2">
@@ -134,9 +134,9 @@ export function UserRoleAssignmentForm({
               onRoleToggle={handleRoleToggle}
             />
           </div>
-          
-          <Button 
-            onClick={handleSubmit} 
+
+          <Button
+            onClick={handleSubmit}
             disabled={isSaving}
             className="w-full"
           >

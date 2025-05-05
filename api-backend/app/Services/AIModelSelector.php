@@ -1,5 +1,5 @@
-
 <?php
+
 namespace App\Services;
 
 use App\Models\AIModel;
@@ -21,7 +21,7 @@ class AIModelSelector
             $queryType = $context['query_type'] ?? null;
             $useCase = $context['use_case'] ?? null;
             $tenantId = $context['tenant_id'] ?? null;
-            
+
             // Find matching rules ordered by priority
             $rules = ModelActivationRule::where('active', true)
                 ->when($queryType, function ($query) use ($queryType) {
@@ -51,7 +51,7 @@ class AIModelSelector
                     $model = AIModel::where('id', $rule->model_id)
                         ->where('active', true)
                         ->first();
-                    
+
                     if ($model) {
                         return $model;
                     }
@@ -83,12 +83,12 @@ class AIModelSelector
             return true;
         }
 
-        // Simple condition evaluation 
+        // Simple condition evaluation
         foreach ($conditions as $condition) {
             $field = $condition['field'] ?? null;
             $operator = $condition['operator'] ?? 'equals';
             $value = $condition['value'] ?? null;
-            
+
             if (!$field || !isset($context[$field])) {
                 continue;
             }
@@ -137,11 +137,11 @@ class AIModelSelector
             $fallbackModel = AIModel::where('id', $currentModel->fallback_model_id)
                 ->where('active', true)
                 ->first();
-            
+
             if (!$fallbackModel || isset($chain[$fallbackModel->id])) {
                 break;
             }
-            
+
             $chain[$fallbackModel->id] = $fallbackModel;
             $currentModel = $fallbackModel;
             $depth++;

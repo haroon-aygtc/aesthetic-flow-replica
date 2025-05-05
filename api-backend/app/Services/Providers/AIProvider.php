@@ -1,5 +1,5 @@
-
 <?php
+
 namespace App\Services\Providers;
 
 use App\Models\AIModel;
@@ -18,7 +18,7 @@ abstract class AIProvider
      * @return array
      */
     abstract public function processMessage(AIModel $aiModel, array $messages, float $temperature, int $maxTokens, ?array $widgetSettings = null);
-    
+
     /**
      * Test the connection to this provider.
      *
@@ -26,7 +26,7 @@ abstract class AIProvider
      * @return array
      */
     abstract public function testConnection(AIModel $aiModel): array;
-    
+
     /**
      * Handle error logging and response generation.
      *
@@ -37,7 +37,7 @@ abstract class AIProvider
     protected function handleError(\Exception $e, string $providerName): array
     {
         Log::error("$providerName API error: " . $e->getMessage());
-        
+
         return [
             'content' => "Sorry, I encountered an error while processing your request. Please try again later.",
             'metadata' => [
@@ -46,7 +46,7 @@ abstract class AIProvider
             ],
         ];
     }
-    
+
     /**
      * Apply system prompt from widget settings if available.
      *
@@ -68,7 +68,7 @@ abstract class AIProvider
                 'content' => $widgetSettings['systemPrompt'],
             ]);
         }
-        
+
         return $messages;
     }
 
@@ -86,13 +86,13 @@ abstract class AIProvider
             // Fetch template content - would typically come from database
             // This is placeholder logic that would be replaced with actual template fetching
             $templateContent = $this->getTemplateContent($aiModel->settings['template_id']);
-            
+
             if ($templateContent) {
                 // Add template as system message if none exists
                 $hasSystemMessage = collect($messages)->contains(function ($message) {
                     return $message['role'] === 'system';
                 });
-                
+
                 if (!$hasSystemMessage) {
                     array_unshift($messages, [
                         'role' => 'system',
@@ -109,10 +109,10 @@ abstract class AIProvider
                 }
             }
         }
-        
+
         return $messages;
     }
-    
+
     /**
      * Get template content by ID - stub method to be replaced with actual implementation.
      *
@@ -127,7 +127,7 @@ abstract class AIProvider
             'template2' => "You are a sales assistant helping customers find the right products. Be friendly, highlight benefits, and ask follow-up questions.",
             'template3' => "You are a technical support assistant. Provide clear step-by-step instructions and focus on troubleshooting technical issues."
         ];
-        
+
         return $templates[$templateId] ?? null;
     }
 }

@@ -1,5 +1,5 @@
-
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\AIModel;
@@ -21,7 +21,7 @@ class ModelAnalyticsController extends Controller
         try {
             $period = $request->input('period', 'month');
             $startDate = $this->getStartDateForPeriod($period);
-            
+
             $analytics = ModelUsageLog::select(
                 'model_id',
                 DB::raw('COUNT(*) as total_requests'),
@@ -37,10 +37,10 @@ class ModelAnalyticsController extends Controller
             })
             ->groupBy('model_id')
             ->get();
-            
+
             // Fetch model information to include names
             $models = AIModel::whereIn('id', $analytics->pluck('model_id'))->get()->keyBy('id');
-            
+
             $formattedData = $analytics->map(function($item) use ($models) {
                 $model = $models[$item->model_id] ?? null;
                 return [
@@ -52,15 +52,15 @@ class ModelAnalyticsController extends Controller
                     'total_output_tokens' => $item->total_output_tokens,
                     'avg_response_time' => round($item->avg_response_time, 3),
                     'avg_confidence_score' => round($item->avg_confidence_score, 2),
-                    'success_rate' => $item->total_requests > 0 
-                        ? round(($item->successful_requests / $item->total_requests) * 100, 2) 
+                    'success_rate' => $item->total_requests > 0
+                        ? round(($item->successful_requests / $item->total_requests) * 100, 2)
                         : 0,
-                    'fallback_rate' => $item->total_requests > 0 
-                        ? round(($item->fallback_requests / $item->total_requests) * 100, 2) 
+                    'fallback_rate' => $item->total_requests > 0
+                        ? round(($item->fallback_requests / $item->total_requests) * 100, 2)
                         : 0,
                 ];
             });
-            
+
             return response()->json([
                 'data' => $formattedData,
                 'period' => $period,
@@ -90,7 +90,7 @@ class ModelAnalyticsController extends Controller
             $period = $request->input('period', 'month');
             $startDate = $this->getStartDateForPeriod($period);
             $groupBy = $request->input('group_by', 'day');
-            
+
             $query = ModelUsageLog::where('model_id', $modelId)
                 ->when($startDate, function($query) use ($startDate) {
                     return $query->where('created_at', '>=', $startDate);
@@ -151,9 +151,9 @@ class ModelAnalyticsController extends Controller
                 ->groupBy('hour')
                 ->orderBy('hour');
             }
-            
+
             $analytics = $query->get();
-            
+
             return response()->json([
                 'model' => [
                     'id' => $model->id,
@@ -189,7 +189,7 @@ class ModelAnalyticsController extends Controller
             $period = $request->input('period', 'month');
             $startDate = $this->getStartDateForPeriod($period);
             $limit = $request->input('limit', 100);
-            
+
             $logs = ModelUsageLog::where('model_id', $modelId)
                 ->where('success', false)
                 ->when($startDate, function($query) use ($startDate) {
@@ -198,7 +198,7 @@ class ModelAnalyticsController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->limit($limit)
                 ->get();
-            
+
             return response()->json([
                 'model' => [
                     'id' => $model->id,

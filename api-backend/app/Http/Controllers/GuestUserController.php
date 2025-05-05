@@ -1,5 +1,5 @@
-
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\GuestUser;
@@ -77,7 +77,7 @@ class GuestUserController extends Controller
         }
 
         $guestUser = GuestUser::where('session_id', $request->session_id)->first();
-        
+
         if (!$guestUser) {
             return response()->json(['valid' => false], 200);
         }

@@ -4,6 +4,7 @@ import { SelectTrigger, SelectValue, SelectContent, SelectItem, Select } from "@
 interface Role {
   id: number;
   name: string;
+  description?: string;
 }
 
 interface RoleSelectorProps {
@@ -19,8 +20,8 @@ export function RoleSelector({ roles, selectedRoleId, onRoleChange, isLoading }:
       <label htmlFor="role-select" className="text-sm font-medium">
         Select Role
       </label>
-      <Select 
-        value={selectedRoleId?.toString() || ""} 
+      <Select
+        value={selectedRoleId?.toString() || ""}
         onValueChange={onRoleChange}
         disabled={isLoading || roles.length === 0}
       >

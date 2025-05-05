@@ -1,27 +1,27 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { knowledgeBaseService, KnowledgeDocument } from "@/utils/knowledge-base-service";
 import { DocumentUploadDialog } from "./document-upload-dialog";
 import { cn } from "@/lib/utils";
-import { 
-  FileText, 
-  MoreVertical, 
-  Trash2, 
-  Download, 
-  Search, 
-  Plus, 
+import {
+  FileText,
+  MoreVertical,
+  Trash2,
+  Download,
+  Search,
+  Plus,
   Check,
   AlertCircle,
-  Clock 
+  Clock
 } from "lucide-react";
 
 interface KnowledgeDocumentListProps {
@@ -38,7 +38,7 @@ export function KnowledgeDocumentList({ documents, onDocumentsChange }: Knowledg
   const categories = ["all", ...Array.from(new Set(documents.map(doc => doc.category)))];
 
   const filteredDocuments = documents.filter(doc => {
-    const matchesSearch = doc.filename.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === "all" || doc.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -60,19 +60,19 @@ export function KnowledgeDocumentList({ documents, onDocumentsChange }: Knowledg
       });
     }
   };
-  
+
   const handleDownloadDocument = async (doc: KnowledgeDocument) => {
     try {
       const response = await knowledgeBaseService.downloadDocument(doc.id);
-      
+
       // Create blob URL from the response data
       const url = window.URL.createObjectURL(new Blob([response.data]));
-      
+
       // Use the global document object, not the KnowledgeDocument parameter
       const link = window.document.createElement('a');
       link.href = url;
-      link.setAttribute('download', doc.filename);
-      
+      link.setAttribute('download', doc.name);
+
       // Append to the global document body
       window.document.body.appendChild(link);
       link.click();
@@ -101,7 +101,7 @@ export function KnowledgeDocumentList({ documents, onDocumentsChange }: Knowledg
     else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
     else return (bytes / 1048576).toFixed(1) + " MB";
   };
-  
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "processed":
@@ -114,7 +114,7 @@ export function KnowledgeDocumentList({ documents, onDocumentsChange }: Knowledg
         return null;
     }
   };
-  
+
   const getStatusClass = (status: string) => {
     switch (status) {
       case "processed":
@@ -127,7 +127,7 @@ export function KnowledgeDocumentList({ documents, onDocumentsChange }: Knowledg
         return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
     }
   };
-  
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2 sm:flex-nowrap">
@@ -146,7 +146,7 @@ export function KnowledgeDocumentList({ documents, onDocumentsChange }: Knowledg
 
       <div className="flex flex-wrap gap-2 mb-4">
         {categories.map((category) => (
-          <Badge 
+          <Badge
             key={category}
             variant={selectedCategory === category ? "default" : "outline"}
             className="cursor-pointer"
@@ -172,10 +172,10 @@ export function KnowledgeDocumentList({ documents, onDocumentsChange }: Knowledg
                 <div className="col-span-5 flex items-center gap-2 overflow-hidden">
                   <FileText className="h-5 w-5 text-blue-500 flex-shrink-0" />
                   <div className="truncate">
-                    {doc.filename}
+                    {doc.name}
                   </div>
                 </div>
-                <div className="col-span-2 capitalize">{doc.filetype}</div>
+                <div className="col-span-2 capitalize">{doc.type}</div>
                 <div className="col-span-2">{formatFileSize(doc.size)}</div>
                 <div className="col-span-2">
                   <div className={cn("px-2 py-1 rounded-full text-xs inline-flex items-center gap-1", getStatusClass(doc.status))}>

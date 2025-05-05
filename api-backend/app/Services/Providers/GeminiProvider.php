@@ -1,10 +1,11 @@
-
 <?php
+
 namespace App\Services\Providers;
 
 use App\Models\AIModel;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class GeminiProvider extends AIProvider
 {
@@ -23,10 +24,10 @@ class GeminiProvider extends AIProvider
         try {
             // Apply system prompt from widget settings if available
             $messages = $this->applySystemPrompt($messages, $widgetSettings);
-            
+
             // Apply template if configured
             $messages = $this->applyTemplateIfConfigured($messages, $aiModel);
-            
+
             // Convert messages to Gemini format
             $contents = [];
             $systemPrompt = null;
@@ -58,12 +59,11 @@ class GeminiProvider extends AIProvider
             }
 
             $modelName = $aiModel->settings['model_name'] ?? 'gemini-1.0-pro';
-            $apiUrl = "https://generativelanguage.googleapis.com/v1/models/{$modelName}:generateContent";
+            $apiUrl = "https://generativelanguage.googleapis.com/v1/models/{$modelName}:generateContent?key={$aiModel->api_key}";
 
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
-            ])->withToken($aiModel->api_key)
-                ->post($apiUrl, $payload);
+            ])->post($apiUrl, $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -85,7 +85,7 @@ class GeminiProvider extends AIProvider
             return $this->handleError($e, 'Gemini');
         }
     }
-    
+
     /**
      * Test the connection to Google Gemini.
      *

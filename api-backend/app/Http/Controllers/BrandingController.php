@@ -1,5 +1,5 @@
-
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Widget;
@@ -111,16 +111,16 @@ class BrandingController extends Controller
         $widget = Widget::where('id', $widgetId)
                      ->where('user_id', $request->user()->id)
                      ->firstOrFail();
-                     
+
         // Get the branding settings
         $brandingSettings = $widget->settings['branding'] ?? [];
-        
+
         // In a real implementation, this would call the AI model with the branding context
         // For now, we'll return a simulated response based on the branding settings
         $brandVoice = $brandingSettings['brandVoice'] ?? 'friendly';
         $responseTone = $brandingSettings['responseTone'] ?? 'helpful';
         $brandName = $brandingSettings['brandName'] ?? 'Our Brand';
-        
+
         // Create a response based on the prompt and branding
         $responses = [
             'friendly' => "Hi there! 😊 Thanks for reaching out to {$brandName}. {$request->prompt}",
@@ -129,9 +129,9 @@ class BrandingController extends Controller
             'formal' => "Dear valued customer, we at {$brandName} thank you for your correspondence. {$request->prompt}",
             'technical' => "Greetings from {$brandName}. According to our technical assessment: {$request->prompt}"
         ];
-        
+
         $message = $responses[$brandVoice] ?? $responses['friendly'];
-        
+
         return response()->json([
             'message' => $message,
             'appliedSettings' => [
@@ -140,7 +140,7 @@ class BrandingController extends Controller
             ]
         ]);
     }
-    
+
     /**
      * Get branding templates.
      *

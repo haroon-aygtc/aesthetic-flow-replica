@@ -1,4 +1,3 @@
-
 <?php
 
 namespace Database\Factories;
@@ -32,6 +31,7 @@ class AIModelFactory extends Factory
                 'temperature' => $this->faker->randomFloat(1, 0, 1),
             ],
             'is_default' => false,
+            'fallback_model_id' => null,
         ];
     }
 

@@ -59,7 +59,7 @@ export function ModelFallbackCard({
   };
 
   const handleFallbackChange = (value: string) => {
-    setFallbackModelId(value ? Number(value) : null);
+    setFallbackModelId(value && value !== 'none' ? Number(value) : null);
   };
 
   const handleConfidenceThresholdChange = (values: number[]) => {
@@ -72,12 +72,12 @@ export function ModelFallbackCard({
     setIsSaving(true);
     try {
       const updatedModel = await aiModelService.toggleModelActivation(
-        selectedModel.id, 
+        selectedModel.id,
         active
       );
       setIsActive(updatedModel.active !== false);
       onUpdateModel(updatedModel);
-      
+
       toast({
         title: active ? "Model Activated" : "Model Deactivated",
         description: `${selectedModel.name} has been ${active ? 'activated' : 'deactivated'}.`
@@ -104,9 +104,9 @@ export function ModelFallbackCard({
         fallback_model_id: fallbackModelId,
         confidence_threshold: confidenceThreshold[0]
       });
-      
+
       onUpdateModel(updatedModel);
-      
+
       toast({
         title: "Settings Saved",
         description: "Model fallback settings have been updated successfully."
@@ -168,7 +168,7 @@ export function ModelFallbackCard({
             <div className="space-y-1.5">
               <Label htmlFor="fallback-model">Fallback Model</Label>
               <Select
-                value={fallbackModelId?.toString() || ""}
+                value={fallbackModelId?.toString() || "none"}
                 onValueChange={handleFallbackChange}
                 disabled={isLoading || isLoadingOptions || isSaving}
               >
@@ -176,7 +176,7 @@ export function ModelFallbackCard({
                   <SelectValue placeholder="Select a fallback model" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {fallbackOptions.map((model) => (
                     <SelectItem key={model.id} value={model.id!.toString()}>
                       {model.name} ({model.provider})
@@ -210,7 +210,7 @@ export function ModelFallbackCard({
             </div>
 
             {/* Save Button */}
-            <Button 
+            <Button
               onClick={handleSaveSettings}
               disabled={isLoading || isSaving}
               className="w-full mt-2"

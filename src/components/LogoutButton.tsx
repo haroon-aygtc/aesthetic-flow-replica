@@ -13,9 +13,9 @@ interface LogoutButtonProps {
   className?: string;
 }
 
-export function LogoutButton({ 
-  variant = "ghost", 
-  showIcon = true, 
+export function LogoutButton({
+  variant = "ghost",
+  showIcon = true,
   showText = true,
   className = ""
 }: LogoutButtonProps) {
@@ -27,15 +27,15 @@ export function LogoutButton({
     setIsLoggingOut(true);
     try {
       await authService.logout();
-      
+
       // Clear the token from localStorage
       localStorage.removeItem("token");
-      
+
       toast({
         title: "Logged out",
         description: "You have been successfully logged out",
       });
-      
+
       // Redirect to the login page
       navigate("/login");
     } catch (error: any) {
@@ -45,7 +45,7 @@ export function LogoutButton({
         description: error.response?.data?.message || "Failed to logout",
         variant: "destructive",
       });
-      
+
       // Even if the API call fails, we should still clear the token and redirect
       localStorage.removeItem("token");
       navigate("/login");
@@ -55,9 +55,9 @@ export function LogoutButton({
   };
 
   return (
-    <Button 
-      variant={variant} 
-      onClick={handleLogout} 
+    <Button
+      variant={variant}
+      onClick={handleLogout}
       disabled={isLoggingOut}
       className={`${className} ${!showText && !showIcon ? 'p-0' : ''}`}
     >
