@@ -7,7 +7,7 @@ export interface AIModelData {
   provider: string;
   description?: string;
   api_key?: string;
-  settings?: Record<string, any>;
+  settings?: ModelSettings;
   is_default?: boolean;
   active?: boolean;
   fallback_model_id?: number | null;
@@ -28,6 +28,24 @@ export interface ModelAnalytics {
   date?: string;
   query_type?: string;
   use_case?: string;
+}
+
+export interface ModelActivationRule {
+  id?: number;
+  model_id: number;
+  name: string;
+  query_type?: string;
+  use_case?: string;
+  tenant_id?: number;
+  active: boolean;
+  priority: number;
+  conditions?: RuleCondition[];
+}
+
+export interface RuleCondition {
+  field: string;
+  operator: string;
+  value: string | number | boolean;
 }
 
 export const aiModelService = {

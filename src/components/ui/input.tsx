@@ -4,12 +4,10 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 export interface InputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'prefix'> {
-  prefix?: React.ReactNode;
-}
+  extends React.InputHTMLAttributes<HTMLInputElement> {}
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, prefix, ...props }, ref) => {
+  ({ className, type, ...props }, ref) => {
     return (
       <div className="relative">
         {prefix && (
