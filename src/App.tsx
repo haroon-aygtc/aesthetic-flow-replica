@@ -2,6 +2,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Templates from "./pages/Templates";
 import ModelManagement from "./pages/ModelManagement";
 import AIConfiguration from "./pages/AIConfiguration";
@@ -17,34 +18,41 @@ import Branding from "./pages/Branding";
 import FollowUp from "./pages/FollowUp";
 import Analytics from "./pages/Analytics";
 import { AuthProvider } from "./hooks/use-auth";
+import Index from "./pages/Index";
+
+// Create a client
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <AuthProvider>
-      <ThemeProvider defaultTheme="system" storageKey="ui-theme">
-        <BrowserRouter>
-          <Routes>
-            <Route path="/dashboard" element={<Templates />} />
-            <Route path="/dashboard/templates" element={<Templates />} />
-            <Route path="/dashboard/prompts" element={<PromptTemplatesModule />} />
-            <Route path="/dashboard/model-management" element={<ModelManagement />} />
-            <Route path="/dashboard/ai-configuration" element={<AIConfiguration />} />
-            <Route path="/dashboard/context-rules" element={<ContextRules />} />
-            <Route path="/dashboard/user-management" element={<UserManagement />} />
-            <Route path="/dashboard/api-tester" element={<ApiTester />} />
-            <Route path="/dashboard/widget-config" element={<WidgetConfig />} />
-            <Route path="/dashboard/embed-code" element={<EmbedCode />} />
-            <Route path="/dashboard/knowledge-base" element={<KnowledgeBase />} />
-            <Route path="/dashboard/response-formatter" element={<ResponseFormatter />} />
-            <Route path="/dashboard/branding" element={<Branding />} />
-            <Route path="/dashboard/follow-up" element={<FollowUp />} />
-            <Route path="/dashboard/analytics" element={<Analytics />} />
-            <Route path="*" element={<Templates />} />
-          </Routes>
-        </BrowserRouter>
-        <Toaster />
-      </ThemeProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/dashboard" element={<Templates />} />
+              <Route path="/dashboard/templates" element={<Templates />} />
+              <Route path="/dashboard/prompts" element={<PromptTemplatesModule />} />
+              <Route path="/dashboard/model-management" element={<ModelManagement />} />
+              <Route path="/dashboard/ai-configuration" element={<AIConfiguration />} />
+              <Route path="/dashboard/context-rules" element={<ContextRules />} />
+              <Route path="/dashboard/user-management" element={<UserManagement />} />
+              <Route path="/dashboard/api-tester" element={<ApiTester />} />
+              <Route path="/dashboard/widget-config" element={<WidgetConfig />} />
+              <Route path="/dashboard/embed-code" element={<EmbedCode />} />
+              <Route path="/dashboard/knowledge-base" element={<KnowledgeBase />} />
+              <Route path="/dashboard/response-formatter" element={<ResponseFormatter />} />
+              <Route path="/dashboard/branding" element={<Branding />} />
+              <Route path="/dashboard/follow-up" element={<FollowUp />} />
+              <Route path="/dashboard/analytics" element={<Analytics />} />
+              <Route path="*" element={<Templates />} />
+            </Routes>
+            <Toaster />
+          </BrowserRouter>
+        </ThemeProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
