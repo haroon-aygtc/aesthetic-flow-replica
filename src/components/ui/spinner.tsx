@@ -2,24 +2,28 @@
 import { cn } from "@/lib/utils";
 
 interface SpinnerProps {
-  className?: string;
   size?: "sm" | "md" | "lg";
+  className?: string;
 }
 
-export function Spinner({ className, size = "md" }: SpinnerProps) {
-  const sizeClass = {
+export function Spinner({ size = "md", className }: SpinnerProps) {
+  const sizeClasses = {
     sm: "h-4 w-4",
-    md: "h-6 w-6",
-    lg: "h-8 w-8"
-  }[size];
-  
+    md: "h-8 w-8",
+    lg: "h-12 w-12"
+  };
+
   return (
-    <div className={cn("animate-spin", sizeClass, className)}>
+    <div className="flex justify-center items-center">
       <svg
+        className={cn(
+          "animate-spin text-muted-foreground",
+          sizeClasses[size],
+          className
+        )}
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
-        className="opacity-25"
       >
         <circle
           className="opacity-25"

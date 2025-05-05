@@ -83,4 +83,3 @@ class Widget extends Model
         return $this->hasMany(GuestUser::class);
     }
 }
->>>>>>>> 132f84f5d9bb38e18b1b6f65aed9f37ca6daabb9:api-backend/app/Models/Widget.php

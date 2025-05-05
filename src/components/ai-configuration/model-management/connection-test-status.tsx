@@ -1,12 +1,10 @@
 
-import { CheckCircle, AlertCircle, Clock } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Spinner } from "@/components/ui/spinner";
-
-export type ConnectionTestStatus = "idle" | "pending" | "success" | "error";
+import { AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { formatDistanceToNow } from "date-fns";
 
 export interface ConnectionTestResult {
-  status: ConnectionTestStatus;
+  status: "success" | "error" | "pending" | "idle";
   message?: string;
   timestamp?: Date;
   latency?: number;
@@ -21,46 +19,46 @@ export function ConnectionTestStatus({ testResult }: ConnectionTestStatusProps) 
     return null;
   }
 
-  if (testResult.status === "pending") {
-    return (
-      <Alert className="bg-muted/50 flex items-center">
-        <Spinner className="mr-2" size="sm" />
-        <AlertDescription>
-          {testResult.message || "Testing connection..."}
-        </AlertDescription>
-      </Alert>
-    );
+  let icon;
+  let alertClass;
+  
+  switch (testResult.status) {
+    case "success":
+      icon = <CheckCircle className="h-4 w-4 text-green-500" />;
+      alertClass = "bg-green-50 border-green-200 text-green-700";
+      break;
+    case "error":
+      icon = <AlertCircle className="h-4 w-4 text-red-500" />;
+      alertClass = "bg-red-50 border-red-200 text-red-700";
+      break;
+    case "pending":
+    default:
+      icon = <Clock className="h-4 w-4 text-amber-500" />;
+      alertClass = "bg-amber-50 border-amber-200 text-amber-700";
   }
 
-  if (testResult.status === "success") {
-    return (
-      <Alert className="bg-success/10 border-success/30">
-        <CheckCircle className="h-4 w-4 text-success" />
-        <AlertTitle className="text-success">Connection Successful</AlertTitle>
-        <AlertDescription className="flex flex-col">
-          <span>{testResult.message || "Successfully connected to the API."}</span>
-          {testResult.latency && (
-            <span className="text-xs flex items-center mt-1.5 text-muted-foreground">
-              <Clock className="h-3 w-3 mr-1" /> 
-              Latency: {testResult.latency}ms
-            </span>
+  return (
+    <Alert className={`mt-4 ${alertClass}`}>
+      <div className="flex items-start gap-2">
+        {icon}
+        <div className="space-y-1">
+          <AlertDescription className="text-sm font-medium">
+            {testResult.message}
+          </AlertDescription>
+          
+          {testResult.timestamp && (
+            <p className="text-xs">
+              Tested {formatDistanceToNow(testResult.timestamp)} ago
+            </p>
           )}
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  if (testResult.status === "error") {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Connection Failed</AlertTitle>
-        <AlertDescription>
-          {testResult.message || "Failed to connect to the API."}
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  return null;
+          
+          {testResult.latency !== undefined && (
+            <p className="text-xs">
+              Latency: {testResult.latency}ms
+            </p>
+          )}
+        </div>
+      </div>
+    </Alert>
+  );
 }

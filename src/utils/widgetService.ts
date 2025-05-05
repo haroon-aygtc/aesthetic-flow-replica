@@ -56,31 +56,25 @@ export const widgetService = {
     return api.get('widgets');
   },
 
-
   getWidget: async (id: number) => {
     return api.get(`widgets/${id}`);
   },
-
 
   createWidget: async (widgetData: Widget) => {
     return api.post('widgets', widgetData);
   },
 
-
   updateWidget: async (id: number, widgetData: Partial<Widget>) => {
     return api.put(`widgets/${id}`, widgetData);
   },
-
 
   deleteWidget: async (id: number) => {
     return api.delete(`widgets/${id}`);
   },
 
-
   getWidgetByPublicId: async (widgetId: string) => {
     return api.get(`widgets/public/${widgetId}`);
   },
-
 
   generateEmbedCode: async (widgetId: string, options: {
     embedType: 'standard' | 'iframe' | 'web-component';
@@ -93,12 +87,10 @@ export const widgetService = {
     });
   },
 
-
   // Analytics methods
   getAnalyticsSummary: async (widgetId: number, period: 'day' | 'week' | 'month' | 'all' = 'month') => {
     return api.get<AnalyticsSummary>(`widgets/${widgetId}/analytics/summary?period=${period}`);
   },
-
 
   getAnalytics: async (widgetId: number, options: {
     fromDate?: string;
@@ -107,26 +99,20 @@ export const widgetService = {
   } = {}) => {
     const params = new URLSearchParams();
 
-
     if (options.fromDate) {
       params.append('from_date', options.fromDate);
     }
-
 
     if (options.toDate) {
       params.append('to_date', options.toDate);
     }
 
-
     if (options.groupBy) {
       params.append('group_by', options.groupBy);
     }
 
-    return api.get(`/api/widgets/${widgetId}/analytics?${params.toString()}`);
-
     return api.get(`widgets/${widgetId}/analytics?${params.toString()}`);
   },
-
 
   // Additional widget configuration methods
   updateWidgetSettings: async (widgetId: number, settings: WidgetSettings) => {
@@ -135,7 +121,6 @@ export const widgetService = {
     });
   },
 
-
   // Widget activation/deactivation
   setWidgetActive: async (widgetId: number, isActive: boolean) => {
     return api.put(`widgets/${widgetId}`, {
@@ -143,11 +128,8 @@ export const widgetService = {
     });
   },
 
-
   // Guest settings
   updateGuestSettings: async (widgetId: number, requireGuestInfo: boolean, guestFields?: string[]) => {
-    return api.put(`/api/widgets/${widgetId}`, {
-      settings: {
     return api.put(`widgets/${widgetId}`, {
       settings: {
         requireGuestInfo: requireGuestInfo,
