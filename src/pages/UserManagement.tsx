@@ -1,24 +1,22 @@
 
-import { useState } from "react";
 import { AdminLayout } from "@/components/admin-layout";
-import UserManagementTabs from "@/components/user-management/user-management-tabs";
-import { Card } from "@/components/ui/card";
+import { UserManagementModule } from "@/modules/user-management";
 
-export default function UserManagement() {
+const UserManagement = () => {
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">User Management</h2>
-          <p className="text-muted-foreground mt-2">
-            Manage users, roles, and permissions for your application. Control access levels and security.
+      <div className="flex flex-col">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold">User Management</h1>
+          <p className="text-muted-foreground">
+            Manage users, roles, and permissions
           </p>
         </div>
         
-        <Card className="p-6">
-          <UserManagementTabs />
-        </Card>
+        <UserManagementModule />
       </div>
     </AdminLayout>
   );
-}
+};
+
+export default UserManagement;

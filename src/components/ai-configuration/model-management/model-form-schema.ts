@@ -7,6 +7,9 @@ export const modelFormSchema = z.object({
   description: z.string().optional(),
   api_key: z.string().optional(),
   is_default: z.boolean().default(false),
+  active: z.boolean().default(true),
+  fallback_model_id: z.number().nullable().optional(),
+  confidence_threshold: z.number().min(0).max(1).default(0.7),
   settings: z.object({
     model_name: z.string().optional(),
     temperature: z.number().min(0).max(1).default(0.7),
