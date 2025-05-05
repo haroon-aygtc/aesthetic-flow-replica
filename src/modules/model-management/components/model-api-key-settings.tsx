@@ -1,12 +1,12 @@
 
-import { useState, useEffect } from "react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
-import { AIModelData } from "@/utils/ai-model-service";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { AIModelData } from '@/utils/ai-model-service';
+import { Spinner } from '@/components/ui/spinner';
+import { CheckCircle, XCircle } from 'lucide-react';
 
 interface ModelApiKeySettingsProps {
   model: AIModelData;
@@ -16,96 +16,150 @@ interface ModelApiKeySettingsProps {
   isTesting: boolean;
 }
 
-export function ModelApiKeySettings({ 
-  model, 
-  onSave, 
+export function ModelApiKeySettings({
+  model,
+  onSave,
   onTest,
   isSaving,
   isTesting
 }: ModelApiKeySettingsProps) {
-  const [apiKey, setApiKey] = useState("");
-  const [hasExistingKey, setHasExistingKey] = useState(false);
+  const [apiKey, setApiKey] = useState<string>('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [testStatus, setTestStatus] = useState<'idle' | 'success' | 'error'>('idle');
   
-  useEffect(() => {
-    // Check if model has an API key set
-    if (model.api_key) {
-      setHasExistingKey(true);
-      setApiKey(model.api_key.startsWith("••••") ? "" : model.api_key);
-    } else {
-      setHasExistingKey(false);
-      setApiKey("");
-    }
-  }, [model]);
-
-  const handleSave = () => {
-    onSave(apiKey);
+  const handleSave = async () => {
+    if (!apiKey.trim()) return;
+    
+    await onSave(apiKey);
+    setApiKey('');
+    setIsEditing(false);
   };
-
+  
+  const handleTest = async () => {
+    setTestStatus('idle');
+    try {
+      await onTest();
+      setTestStatus('success');
+    } catch (error) {
+      setTestStatus('error');
+    }
+  };
+  
   return (
-    <div className="space-y-4">
-      <div>
-        <div className="flex justify-between items-center mb-1.5">
-          <Label htmlFor="api-key">API Key for {model.provider}</Label>
-          {hasExistingKey && (
-            <span className="text-xs text-muted-foreground">
-              API key already configured
-            </span>
-          )}
+    <Card>
+      <CardContent className="pt-6">
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="api-key">API Key for {model.provider}</Label>
+            <div className="mt-2">
+              {isEditing ? (
+                <div className="space-y-2">
+                  <Input
+                    id="api-key"
+                    type="password"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    placeholder={model.api_key ? "Enter new API key" : "Enter API key"}
+                    autoComplete="off"
+                  />
+                  <div className="flex space-x-2">
+                    <Button
+                      onClick={handleSave}
+                      disabled={!apiKey.trim() || isSaving}
+                      className="flex items-center"
+                    >
+                      {isSaving && <Spinner className="mr-2 h-4 w-4" />}
+                      Save Key
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsEditing(false);
+                        setApiKey('');
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Input
+                      type="password"
+                      value={model.api_key ? "••••••••••••••••" : ""}
+                      disabled
+                      className="w-60"
+                      placeholder="No API key set"
+                    />
+                    
+                    {testStatus === 'success' && (
+                      <div className="ml-3 text-green-500 flex items-center">
+                        <CheckCircle className="h-5 w-5 mr-1" />
+                        <span>Valid</span>
+                      </div>
+                    )}
+                    
+                    {testStatus === 'error' && (
+                      <div className="ml-3 text-red-500 flex items-center">
+                        <XCircle className="h-5 w-5 mr-1" />
+                        <span>Invalid</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setIsEditing(true)}
+                    >
+                      {model.api_key ? "Change" : "Add Key"}
+                    </Button>
+                    
+                    {model.api_key && (
+                      <Button 
+                        variant="secondary" 
+                        onClick={handleTest}
+                        disabled={isTesting}
+                      >
+                        {isTesting ? (
+                          <>
+                            <Spinner className="mr-2 h-4 w-4" />
+                            Testing...
+                          </>
+                        ) : (
+                          "Test Connection"
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="bg-muted p-4 rounded-md text-sm">
+            <h4 className="font-medium">API Key Security</h4>
+            <p className="text-muted-foreground mt-1">
+              Your API key is encrypted before storage and never exposed in responses.
+              To update, provide a new key.
+            </p>
+          </div>
+          
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-md text-sm">
+            <h4 className="font-medium">Model Information</h4>
+            <p className="text-muted-foreground mt-1">
+              Provider: <span className="font-medium">{model.provider}</span>
+              {model.settings?.model_name && (
+                <>
+                  <br />
+                  Model Name: <span className="font-medium">{model.settings.model_name}</span>
+                </>
+              )}
+            </p>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Input
-            id="api-key"
-            type="password"
-            placeholder={hasExistingKey ? "••••••••••••••••" : "Enter your API key"}
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            className="flex-1"
-            disabled={isSaving}
-          />
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? <Spinner size="sm" className="mr-2" /> : null}
-            Save
-          </Button>
-        </div>
-        
-        <p className="text-sm text-muted-foreground mt-1.5">
-          {getProviderInfoText(model.provider)}
-        </p>
-      </div>
-      
-      <Button 
-        variant="outline" 
-        className="w-full"
-        onClick={onTest}
-        disabled={isTesting || (!hasExistingKey && !apiKey)}
-      >
-        {isTesting ? (
-          <Spinner size="sm" className="mr-2" />
-        ) : (
-          <RefreshCw className="mr-2 h-4 w-4" />
-        )}
-        Test Connection
-      </Button>
-      
-      <Alert className="bg-accent">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Your API key is securely encrypted in the database and never shared with third parties.
-        </AlertDescription>
-      </Alert>
-    </div>
+      </CardContent>
+    </Card>
   );
-}
-
-function getProviderInfoText(provider: string): string {
-  switch (provider.toLowerCase()) {
-    case 'openai':
-      return 'Enter your OpenAI API key. You can get this from your OpenAI dashboard.';
-    case 'anthropic':
-      return 'Enter your Anthropic API key. You can get this from your Anthropic console.';
-    case 'gemini':
-      return 'Enter your Google API key with Gemini access. You can get this from Google AI Studio.';
-    default:
-      return `Enter your ${provider} API key.`;
-  }
 }

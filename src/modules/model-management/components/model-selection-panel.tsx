@@ -1,8 +1,6 @@
 
-import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { AIModelData } from "@/utils/ai-model-service";
 import { Edit, Trash } from "lucide-react";
 
@@ -62,20 +60,22 @@ export function ModelSelectionPanel({
             )}
           </div>
           
-          {selectedModelId === model.id && onEdit && onDelete && (
+          {selectedModelId === model.id && onDelete && (
             <div className="flex justify-end gap-2 mt-2 pt-2 border-t">
-              <Button 
-                size="sm" 
-                variant="ghost" 
-                className="h-7 px-2"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(model);
-                }}
-              >
-                <Edit className="h-3.5 w-3.5 mr-1" />
-                Edit
-              </Button>
+              {onEdit && (
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="h-7 px-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(model);
+                  }}
+                >
+                  <Edit className="h-3.5 w-3.5 mr-1" />
+                  Edit
+                </Button>
+              )}
               <Button 
                 size="sm" 
                 variant="ghost" 
