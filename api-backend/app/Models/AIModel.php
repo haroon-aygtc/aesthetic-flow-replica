@@ -15,7 +15,7 @@ class AIModel extends Model
      *
      * @var string
      */
-    protected $table = 'a_i_models';
+    protected $table = 'ai_models';
 
     /**
      * The attributes that are mass assignable.

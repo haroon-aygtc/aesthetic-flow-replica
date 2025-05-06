@@ -4,19 +4,19 @@ namespace App\Services;
 
 use App\Models\AIModel;
 use App\Models\ModelUsageLog;
-use App\Services\Providers\AIProvider;
-use App\Services\Providers\OpenAIProvider;
-use App\Services\Providers\AnthropicProvider;
-use App\Services\Providers\GeminiProvider;
+use App\Services\AI\ProviderInterface;
+use App\Services\AI\ProviderRegistry;
 use Illuminate\Support\Facades\Log;
 
 class AIService
 {
     protected $modelSelector;
+    protected $providerRegistry;
 
-    public function __construct(AIModelSelector $modelSelector)
+    public function __construct(AIModelSelector $modelSelector, ProviderRegistry $providerRegistry)
     {
         $this->modelSelector = $modelSelector;
+        $this->providerRegistry = $providerRegistry;
     }
 
     /**
@@ -68,7 +68,11 @@ class AIService
                 $provider = $this->getProviderForModel($model);
 
                 // Process the message with the provider
-                $response = $provider->processMessage($model, $messages, $temperature, $maxTokens, $widgetSettings);
+                $response = $provider->processMessage($model, $messages, [
+                    'temperature' => $temperature,
+                    'max_tokens' => $maxTokens,
+                    'widget_settings' => $widgetSettings
+                ]);
 
                 // Estimate token count for output
                 $tokensOutput = $this->countTokens([$response['content']]);
@@ -136,24 +140,18 @@ class AIService
      * Get the appropriate AI provider for the given model.
      *
      * @param  \App\Models\AIModel  $aiModel
-     * @return \App\Services\Providers\AIProvider
+     * @return \App\Services\AI\ProviderInterface
      * @throws \Exception
      */
-    private function getProviderForModel(AIModel $aiModel): AIProvider
+    private function getProviderForModel(AIModel $aiModel): ProviderInterface
     {
-        switch ($aiModel->provider) {
-            case 'openai':
-                return new OpenAIProvider();
+        $provider = $this->providerRegistry->getProvider($aiModel->provider);
 
-            case 'anthropic':
-                return new AnthropicProvider();
-
-            case 'gemini':
-                return new GeminiProvider();
-
-            default:
-                throw new \Exception("Unsupported AI provider: {$aiModel->provider}");
+        if (!$provider) {
+            throw new \Exception("Unsupported AI provider: {$aiModel->provider}");
         }
+
+        return $provider;
     }
 
     /**
@@ -216,7 +214,7 @@ class AIService
      * @param array $messages
      * @return int
      */
-    private function countTokens(array $messages): int
+    public function countTokens(array $messages): int
     {
         $text = '';
 

@@ -1,23 +1,31 @@
 
-import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useEffect, ChangeEvent } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/hooks/use-toast";
 import { AIModelData, aiModelService } from "@/utils/ai-model-service";
-import { templateService } from "@/utils/template-service";
 import { ModelFallbackCard } from "@/components/ai-configuration/model-management/model-fallback-card";
 import { ModelActivationRules } from "@/components/ai-configuration/model-management/activation-rules/model-activation-rules";
 import { ModelAnalytics } from "@/components/ai-configuration/model-management/model-analytics";
-import { TemplateSelector } from "@/components/ai-configuration/model-management/template-selector";
+import { ModelTestingInterface } from "@/components/ai-configuration/model-management/model-testing-interface";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export function ModelManagementModule() {
   const [models, setModels] = useState<AIModelData[]>([]);
   const [selectedModelId, setSelectedModelId] = useState<number | null>(null);
   const [selectedModel, setSelectedModel] = useState<AIModelData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("configuration");
-  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState("basic");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -28,11 +36,8 @@ export function ModelManagementModule() {
     if (selectedModelId && models.length) {
       const model = models.find(m => m.id === selectedModelId) || null;
       setSelectedModel(model);
-      // You can load template ID here if implementing that feature
-      setSelectedTemplateId(null);
     } else {
       setSelectedModel(null);
-      setSelectedTemplateId(null);
     }
   }, [selectedModelId, models]);
 
@@ -77,49 +82,9 @@ export function ModelManagementModule() {
     try {
       const model = await aiModelService.getModel(modelId);
       handleUpdateModel(model);
-
-      // Set the selected template ID if the model has one
-      setSelectedTemplateId(model.template_id || null);
     } catch (error) {
       console.error("Failed to load model details:", error);
     }
-  };
-
-  const handleTemplateSelect = async (templateId: number | null) => {
-    setSelectedTemplateId(templateId);
-
-    if (selectedModelId) {
-      try {
-        // Update the model to use this template
-        await templateService.assignTemplateToModel(selectedModelId, templateId);
-
-        // Reload the model details to get the updated model
-        await loadModelDetails(selectedModelId);
-
-        toast({
-          title: templateId ? "Template Assigned" : "Template Removed",
-          description: templateId
-            ? "The template has been assigned to this model."
-            : "The template has been removed from this model."
-        });
-      } catch (error) {
-        console.error("Failed to assign template to model:", error);
-        toast({
-          title: "Error",
-          description: "Failed to assign template to model. Please try again.",
-          variant: "destructive"
-        });
-      }
-    }
-  };
-
-  const handleCreateTemplate = () => {
-    // Navigate to template creation or open modal
-    // For now just show a toast since we'd need to implement that UI separately
-    toast({
-      title: "Create Template",
-      description: "Template creation interface would open here."
-    });
   };
 
   return (
@@ -175,34 +140,148 @@ export function ModelManagementModule() {
           ) : (
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="mb-4">
-                <TabsTrigger value="configuration">Configuration</TabsTrigger>
+                <TabsTrigger value="basic">Basic Settings</TabsTrigger>
+                <TabsTrigger value="fallback">Fallback Settings</TabsTrigger>
                 <TabsTrigger value="rules">Activation Rules</TabsTrigger>
+                <TabsTrigger value="testing">Testing</TabsTrigger>
                 <TabsTrigger value="analytics">Analytics</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="configuration" className="space-y-6">
-                <ModelFallbackCard
-                  selectedModel={selectedModel}
-                  onUpdateModel={handleUpdateModel}
-                />
+              <TabsContent value="basic" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Basic Model Settings</CardTitle>
+                    <CardDescription>
+                      Configure the basic settings for this AI model
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-6">
+                      <div className="grid gap-3">
+                        <Label htmlFor="api-key">API Key</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="api-key"
+                            type="password"
+                            value={selectedModel?.api_key ? "••••••••••••••••" : ""}
+                            placeholder="Enter API key"
+                            onChange={(e) => {
+                              if (selectedModel) {
+                                const updatedModel = {
+                                  ...selectedModel,
+                                  api_key: e.target.value
+                                };
+                                handleUpdateModel(updatedModel);
+                              }
+                            }}
+                            className="flex-1"
+                          />
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              if (selectedModel?.id) {
+                                aiModelService.testConnection(selectedModel.id)
+                                  .then(result => {
+                                    toast({
+                                      title: result.success ? "Connection Successful" : "Connection Failed",
+                                      description: result.message,
+                                      variant: result.success ? "default" : "destructive"
+                                    });
+                                  })
+                                  .catch(error => {
+                                    toast({
+                                      title: "Connection Failed",
+                                      description: error.message,
+                                      variant: "destructive"
+                                    });
+                                  });
+                              }
+                            }}
+                          >
+                            Test Connection
+                          </Button>
+                        </div>
+                      </div>
 
-                <TemplateSelector
-                  selectedModelId={selectedModelId}
-                  onTemplateSelect={handleTemplateSelect}
-                  onCreateTemplate={handleCreateTemplate}
-                  selectedTemplateId={selectedTemplateId}
+                      <div className="grid gap-3">
+                        <Label htmlFor="model-name">Model Name</Label>
+                        <Input
+                          id="model-name"
+                          value={selectedModel?.settings?.model_name || ""}
+                          placeholder="e.g., gpt-4, gemini-pro"
+                          onChange={(e) => {
+                            if (selectedModel) {
+                              const updatedModel = {
+                                ...selectedModel,
+                                settings: {
+                                  ...selectedModel.settings,
+                                  model_name: e.target.value
+                                }
+                              };
+                              handleUpdateModel(updatedModel);
+                            }
+                          }}
+                        />
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="is-default"
+                          checked={selectedModel?.is_default || false}
+                          onCheckedChange={(checked) => {
+                            if (selectedModel) {
+                              const updatedModel = {
+                                ...selectedModel,
+                                is_default: !!checked
+                              };
+                              handleUpdateModel(updatedModel);
+                            }
+                          }}
+                        />
+                        <Label htmlFor="is-default">Set as default model</Label>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="is-active"
+                          checked={selectedModel?.active !== false}
+                          onCheckedChange={(checked) => {
+                            if (selectedModel) {
+                              const updatedModel = {
+                                ...selectedModel,
+                                active: !!checked
+                              };
+                              handleUpdateModel(updatedModel);
+                            }
+                          }}
+                        />
+                        <Label htmlFor="is-active">Active</Label>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="fallback" className="space-y-6">
+                <ModelFallbackCard
+                  selectedModel={selectedModel!}
+                  onUpdateModel={handleUpdateModel}
                 />
               </TabsContent>
 
               <TabsContent value="rules">
                 <ModelActivationRules
-                  selectedModel={selectedModel}
+                  selectedModel={selectedModel!}
                   onRuleUpdate={handleRuleUpdate}
                 />
               </TabsContent>
 
+              <TabsContent value="testing">
+                <ModelTestingInterface selectedModel={selectedModel!} />
+              </TabsContent>
+
               <TabsContent value="analytics">
-                <ModelAnalytics selectedModel={selectedModel} />
+                <ModelAnalytics selectedModel={selectedModel!} />
               </TabsContent>
             </Tabs>
           )}

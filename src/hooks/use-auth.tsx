@@ -1,41 +1,90 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { authService } from '@/utils/api-service';
+
+// Define user interface
+interface User {
+  id?: number;
+  name?: string;
+  email?: string;
+  [key: string]: any; // For any additional user properties
+}
 
 // Define the auth context's value type
 interface AuthContextType {
-  user: {
-    name?: string;
-    email?: string;
-  } | null;
+  user: User | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  isLoading: boolean;
 }
 
 // Create the context with a default value
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  login: async () => {},
-  logout: async () => {},
+  login: async () => { },
+  logout: async () => { },
+  isLoading: false,
 });
 
 // Create a provider component for the auth context
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<{ name?: string; email?: string; } | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock implementation for login
+  // Check for existing authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const userData = await authService.getCurrentUser();
+          setUser(userData);
+        } catch (error) {
+          console.error('Failed to get user data:', error);
+          // Clear invalid token
+          localStorage.removeItem('token');
+        }
+      }
+      setIsLoading(false);
+    };
+
+    checkAuth();
+  }, []);
+
+  // Real implementation for login
   const login = async (email: string, password: string) => {
-    // In a real app, you would validate credentials with your API
-    // For now, we'll simulate a successful login
-    setUser({
-      name: 'Demo User',
-      email: email,
-    });
+    setIsLoading(true);
+    try {
+      const response = await authService.login(email, password);
+
+      // Store token
+      if (response.token) {
+        localStorage.setItem('token', response.token);
+      }
+
+      // Set user data
+      setUser(response);
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Mock implementation for logout
+  // Real implementation for logout
   const logout = async () => {
-    // In a real app, you would call your API to invalidate the session
-    setUser(null);
+    setIsLoading(true);
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // Always clear local user data regardless of API success
+      localStorage.removeItem('token');
+      setUser(null);
+      setIsLoading(false);
+    }
   };
 
   // Create the value object that will be provided by the context
@@ -43,6 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     user,
     login,
     logout,
+    isLoading,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

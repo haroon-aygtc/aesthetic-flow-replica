@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadioGroup } from "@/components/ui/radio-group";
@@ -30,8 +29,7 @@ export function ModelSelectionCard({
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <div>
           <CardTitle className="text-xl flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            AI Model Selection
+            AI Models
           </CardTitle>
           <CardDescription>
             Choose which AI model powers your application
@@ -62,10 +60,13 @@ export function ModelSelectionCard({
           </div>
         ) : (
           <RadioGroup
-            value={selectedModelId ? String(selectedModelId) : ""}
+            value={selectedModelId ? String(selectedModelId) : "none"}
             onValueChange={onModelSelect}
             className="grid gap-4 md:grid-cols-2"
           >
+            <ModelSelectionItem key="none" model={{ id: null, name: "None", provider: "None" }} isSelected={selectedModelId === null} onEdit={function (): void {
+                    throw new Error("Function not implemented.");
+                  } } />
             {models.map((model) => (
               <ModelSelectionItem
                 key={model.id}

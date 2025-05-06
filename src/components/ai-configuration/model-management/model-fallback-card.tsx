@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AIModelData, aiModelService } from "@/utils/ai-model-service";
 
 interface ModelFallbackCardProps {
-  selectedModel: AIModelData | null;
+  selectedModel: AIModelData;
   onUpdateModel: (updatedModel: AIModelData) => void;
   isLoading?: boolean;
 }
@@ -123,14 +123,11 @@ export function ModelFallbackCard({
     }
   };
 
-  if (!selectedModel) return null;
-
   return (
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-xl flex items-center gap-2">
-          <History className="h-5 w-5" />
-          Model Fallback & Activation
+          Fallback Settings
         </CardTitle>
         <CardDescription>
           Configure model fallback hierarchy and activation settings

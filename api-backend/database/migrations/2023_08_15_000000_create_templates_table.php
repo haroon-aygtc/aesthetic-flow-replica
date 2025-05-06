@@ -14,12 +14,17 @@ return new class extends Migration
         Schema::create('templates', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('slug')->unique();
             $table->text('description')->nullable();
             $table->string('category');
             $table->text('content');
             $table->float('version')->default(1.0);
             $table->boolean('is_default')->default(false);
             $table->json('variables')->nullable();
+            $table->json('metadata')->nullable();
+            $table->string('status')->default('active'); // active, inactive, draft
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
 
@@ -38,7 +43,7 @@ return new class extends Migration
             $table->dropForeign(['template_id']);
             $table->dropColumn('template_id');
         });
-        
+
         Schema::dropIfExists('templates');
     }
 };

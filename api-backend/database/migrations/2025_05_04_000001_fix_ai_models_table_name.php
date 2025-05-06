@@ -8,14 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Rename table if exists
-        if (Schema::hasTable('ai_models')) {
-            Schema::rename('ai_models', 'a_i_models');
-        }
 
         // Create the table if it doesn't exist
-        if (!Schema::hasTable('a_i_models')) {
-            Schema::create('a_i_models', function (Blueprint $table) {
+        if (!Schema::hasTable('ai_models')) {
+            Schema::create('ai_models', function (Blueprint $table) {
                 $table->id();
                 $table->string('name');
                 $table->string('provider');
@@ -30,7 +26,7 @@ return new class extends Migration
 
                 $table->foreign('fallback_model_id')
                     ->references('id')
-                    ->on('a_i_models')
+                    ->on('ai_models')
                     ->nullOnDelete();
             });
         }
@@ -39,13 +35,13 @@ return new class extends Migration
         if (Schema::hasTable('widgets') && Schema::hasColumn('widgets', 'ai_model_id')) {
             Schema::table('widgets', function (Blueprint $table) {
                 $table->dropForeign(['ai_model_id']);
-                $table->renameColumn('ai_model_id', 'a_i_model_id');
+                $table->renameColumn('ai_model_id', 'ai_model_id');
             });
 
             Schema::table('widgets', function (Blueprint $table) {
-                $table->foreign('a_i_model_id')
+                $table->foreign('ai_model_id')
                     ->references('id')
-                    ->on('a_i_models')
+                    ->on('ai_models')
                     ->nullOnDelete();
             });
         }
@@ -56,7 +52,7 @@ return new class extends Migration
                 $table->dropForeign(['model_id']);
                 $table->foreign('model_id')
                     ->references('id')
-                    ->on('a_i_models')
+                    ->on('ai_models')
                     ->onDelete('cascade');
             });
         }
@@ -67,7 +63,7 @@ return new class extends Migration
                 $table->dropForeign(['model_id']);
                 $table->foreign('model_id')
                     ->references('id')
-                    ->on('a_i_models')
+                    ->on('ai_models')
                     ->onDelete('cascade');
             });
         }
@@ -76,15 +72,15 @@ return new class extends Migration
     public function down(): void
     {
         // Rename back
-        if (Schema::hasTable('a_i_models')) {
-            Schema::rename('a_i_models', 'ai_models');
+        if (Schema::hasTable('ai_models')) {
+            Schema::rename('ai_models', 'ai_models');
         }
 
         // Revert widgets table
-        if (Schema::hasTable('widgets') && Schema::hasColumn('widgets', 'a_i_model_id')) {
+        if (Schema::hasTable('widgets') && Schema::hasColumn('widgets', 'ai_model_id')) {
             Schema::table('widgets', function (Blueprint $table) {
-                $table->dropForeign(['a_i_model_id']);
-                $table->renameColumn('a_i_model_id', 'ai_model_id');
+                $table->dropForeign(['ai_model_id']);
+                $table->renameColumn('ai_model_id', 'ai_model_id');
             });
 
             Schema::table('widgets', function (Blueprint $table) {

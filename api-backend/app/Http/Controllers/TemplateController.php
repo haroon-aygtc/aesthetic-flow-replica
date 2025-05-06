@@ -7,6 +7,7 @@ use App\Models\AIModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class TemplateController extends Controller
 {
@@ -47,6 +48,7 @@ class TemplateController extends Controller
                 'version' => 'nullable|numeric',
                 'is_default' => 'nullable|boolean',
                 'variables' => 'nullable|array',
+                'status' => 'nullable|string|in:active,inactive,draft',
             ]);
 
             if ($validator->fails()) {
@@ -62,7 +64,12 @@ class TemplateController extends Controller
                 Template::where('is_default', true)->update(['is_default' => false]);
             }
 
-            $template = Template::create($request->all());
+            // Add user ID to created_by and updated_by
+            $data = $request->all();
+            $data['created_by'] = Auth::id();
+            $data['updated_by'] = Auth::id();
+
+            $template = Template::create($data);
             return response()->json([
                 'data' => $template,
                 'message' => 'Template created successfully',
@@ -119,6 +126,7 @@ class TemplateController extends Controller
                 'version' => 'nullable|numeric',
                 'is_default' => 'nullable|boolean',
                 'variables' => 'nullable|array',
+                'status' => 'nullable|string|in:active,inactive,draft',
             ]);
 
             if ($validator->fails()) {
@@ -134,7 +142,11 @@ class TemplateController extends Controller
                 Template::where('is_default', true)->update(['is_default' => false]);
             }
 
-            $template->update($request->all());
+            // Add updated_by field
+            $data = $request->all();
+            $data['updated_by'] = Auth::id();
+
+            $template->update($data);
             return response()->json([
                 'data' => $template,
                 'message' => 'Template updated successfully',
@@ -160,7 +172,7 @@ class TemplateController extends Controller
     {
         try {
             $template = Template::findOrFail($id);
-            
+
             // Check if any models are using this template
             $modelsUsingTemplate = AIModel::where('template_id', $id)->count();
             if ($modelsUsingTemplate > 0) {
@@ -169,7 +181,7 @@ class TemplateController extends Controller
                     'success' => false
                 ], 422);
             }
-            
+
             $template->delete();
             return response()->json([
                 'message' => 'Template deleted successfully',
@@ -196,10 +208,10 @@ class TemplateController extends Controller
         try {
             // Verify the model exists
             $model = AIModel::findOrFail($modelId);
-            
+
             // Get all templates
             $templates = Template::orderBy('name')->get();
-            
+
             return response()->json(['data' => $templates, 'success' => true]);
         } catch (\Exception $e) {
             Log::error('Failed to fetch model templates: ' . $e->getMessage());

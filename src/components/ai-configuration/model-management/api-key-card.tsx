@@ -18,7 +18,7 @@ interface ApiKeyCardProps {
   isTesting: boolean;
   onApiKeyChange: (value: string) => void;
   onApiKeySave: () => void;
-  onTestConnection: () => Promise<void>;
+  onTestConnection: () => Promise<{ data: { message: string } }>;
 }
 
 export function ApiKeyCard({
@@ -48,19 +48,19 @@ export function ApiKeyCard({
         message: "Testing connection...",
         timestamp: new Date()
       });
-      
+
       // Measure latency
       const startTime = Date.now();
-      
+
       // Call the provided test connection function
-      await onTestConnection();
-      
+      const testResult = await onTestConnection();
+
       const latency = Date.now() - startTime;
-      
+
       // Update test result to success
       setTestResult({
         status: "success",
-        message: "Connection successful! The API key is valid.",
+        message: testResult.data?.message || "Connection successful! The API key is valid.",
         timestamp: new Date(),
         latency
       });
@@ -101,8 +101,8 @@ export function ApiKeyCard({
                 className={isAPIKeyValid === false ? "border-red-500" : ""}
                 disabled={isSaving}
               />
-              <Button 
-                onClick={onApiKeySave} 
+              <Button
+                onClick={onApiKeySave}
                 className="ml-2"
                 disabled={isSaving}
               >
@@ -115,9 +115,9 @@ export function ApiKeyCard({
               </p>
             )}
           </div>
-          
-          <Button 
-            variant="outline" 
+
+          <Button
+            variant="outline"
             className="w-full"
             onClick={handleTestConnection}
             disabled={isTesting || !isAPIKeyValid}
@@ -125,9 +125,9 @@ export function ApiKeyCard({
             {isTesting ? <Spinner size="sm" className="mr-2" /> : <RefreshCw className="mr-2 h-4 w-4" />}
             Test Connection
           </Button>
-          
+
           <ConnectionTestStatus testResult={testResult} />
-          
+
           <Alert className="bg-muted/50">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>

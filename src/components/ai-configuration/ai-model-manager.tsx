@@ -8,10 +8,18 @@ import { ApiKeyCard } from "./model-management/api-key-card";
 import { ConfigParametersCard } from "./model-management/config-parameters-card";
 import { ModelFallbackCard } from "./model-management/model-fallback-card";
 import { ModelAnalyticsCard } from "./model-management/model-analytics-card";
+import { ModelTestChatDialog } from "./model-management/model-test-chat-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { MessageSquare } from "lucide-react";
 import { Settings, History, BarChart } from "lucide-react";
 
-export function AIModelManager() {
+interface AIModelManagerProps {
+  initialTab?: string;
+  onTabChange?: (tab: string) => void;
+}
+
+export function AIModelManager({ initialTab = "basic", onTabChange }: AIModelManagerProps = {}) {
   const {
     selectedModelId,
     setSelectedModelId,
@@ -34,6 +42,8 @@ export function AIModelManager() {
     setSelectedModel,
     isDialogOpen,
     setIsDialogOpen,
+    isTestChatOpen,
+    setIsTestChatOpen,
     editingModel,
     setEditingModel,
     fetchModels
@@ -44,7 +54,8 @@ export function AIModelManager() {
     handleAPIKeySave,
     handleSaveConfiguration,
     handleTestConnection,
-    handleModelDialogSubmit
+    handleModelDialogSubmit,
+    handleOpenTestChat
   } = useModelActions();
 
   // Handle model selection
@@ -85,12 +96,52 @@ export function AIModelManager() {
     );
   };
 
+  // Handle model name change
+  const onModelNameChange = (modelName: string) => {
+    if (!selectedModel) return;
+
+    // Update the model settings with the new model name
+    const updatedSettings = {
+      ...selectedModel.settings,
+      model_name: modelName
+    };
+
+    // Update the selected model
+    const updatedModel = {
+      ...selectedModel,
+      settings: updatedSettings
+    };
+
+    setSelectedModel(updatedModel);
+  };
+
   // Handle connection test
   const onTestConnection = async () => {
-    await handleTestConnection(
+    try {
+      await handleTestConnection(
+        selectedModel,
+        selectedModelId,
+        setIsTesting
+      );
+
+      // Return the expected format for ApiKeyCard
+      return {
+        data: {
+          message: "Connection successful"
+        }
+      };
+    } catch (error: any) {
+      // Re-throw the error so ApiKeyCard can handle it
+      throw error;
+    }
+  };
+
+  // Handle opening test chat dialog
+  const onOpenTestChat = () => {
+    handleOpenTestChat(
       selectedModel,
       selectedModelId,
-      setIsTesting
+      setIsTestChatOpen
     );
   };
 
@@ -131,18 +182,43 @@ export function AIModelManager() {
   return (
     <div className="space-y-6">
       {/* Model Selection Card */}
-      <ModelSelectionCard
-        models={models}
-        selectedModelId={selectedModelId}
-        onModelSelect={onModelSelect}
-        onAddNewModel={onAddNewModel}
-        onEditModel={onEditModel}
-        isLoading={isLoading}
-      />
+      <div className="flex flex-col md:flex-row md:items-center gap-4">
+        <div className="flex-1">
+          <ModelSelectionCard
+            models={models}
+            selectedModelId={selectedModelId}
+            onModelSelect={onModelSelect}
+            onAddNewModel={onAddNewModel}
+            onEditModel={onEditModel}
+            isLoading={isLoading}
+          />
+        </div>
+        {selectedModel && (
+          <Button
+            variant="outline"
+            className="flex items-center gap-2 self-end"
+            onClick={onOpenTestChat}
+          >
+            <MessageSquare className="h-4 w-4" />
+            Test Chat
+          </Button>
+        )}
+      </div>
 
       {/* Only show configuration cards if a model is selected */}
       {selectedModel && (
-        <Tabs defaultValue="basic" className="w-full">
+        <Tabs
+          defaultValue="basic"
+          value={initialTab}
+          onValueChange={(value) => {
+            // Refresh data when tab changes
+            if (value === "analytics" && selectedModelId) {
+              // You could add analytics refresh logic here if needed
+            }
+            onTabChange?.(value);
+          }}
+          className="w-full"
+        >
           <TabsList className="mb-4">
             <TabsTrigger value="basic" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -172,13 +248,14 @@ export function AIModelManager() {
               />
 
               <ConfigParametersCard
-                selectedModel={selectedModel}
                 temperature={temperature}
                 maxTokens={maxTokens}
                 isSaving={isSaving}
+                selectedModel={selectedModel}
                 onTemperatureChange={setTemperature}
                 onMaxTokensChange={setMaxTokens}
                 onSaveConfiguration={onSaveConfiguration}
+                onModelNameChange={onModelNameChange}
               />
             </div>
           </TabsContent>
@@ -208,6 +285,13 @@ export function AIModelManager() {
         onOpenChange={setIsDialogOpen}
         onSubmit={onModelDialogSubmit}
         isLoading={isSaving}
+      />
+
+      {/* Test Chat Dialog */}
+      <ModelTestChatDialog
+        model={selectedModel}
+        open={isTestChatOpen}
+        onOpenChange={setIsTestChatOpen}
       />
     </div>
   );

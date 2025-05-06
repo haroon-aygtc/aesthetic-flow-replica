@@ -16,6 +16,7 @@ export function useAIModelManagement() {
   const [models, setModels] = useState<AIModelData[]>([]);
   const [selectedModel, setSelectedModel] = useState<AIModelData | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+  const [isTestChatOpen, setIsTestChatOpen] = useState<boolean>(false);
   const [editingModel, setEditingModel] = useState<AIModelData | null>(null);
 
   // Fetch models on mount
@@ -102,6 +103,8 @@ export function useAIModelManagement() {
     setSelectedModel,
     isDialogOpen,
     setIsDialogOpen,
+    isTestChatOpen,
+    setIsTestChatOpen,
     editingModel,
     setEditingModel,
     fetchModels

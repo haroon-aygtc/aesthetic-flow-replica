@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ModelActivationRule } from "@/types/model-activation-rules";
 import { AIModelData } from "@/utils/ai-model-service";
 
-export function useActivationRules(selectedModel: AIModelData | null, onRuleUpdate: () => void) {
+export function useActivationRules(selectedModel: AIModelData, onRuleUpdate: () => void) {
   const [rules, setRules] = useState<ModelActivationRule[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -15,8 +15,6 @@ export function useActivationRules(selectedModel: AIModelData | null, onRuleUpda
   useEffect(() => {
     if (selectedModel?.id) {
       loadRules(selectedModel.id);
-    } else {
-      setRules([]);
     }
   }, [selectedModel]);
 

@@ -1,6 +1,6 @@
 
 import { AdminLayout } from "@/components/admin-layout";
-import { ModelManagementModule } from "@/modules/model-management";
+import { AIModelsModule } from "@/modules/ai-models";
 
 const ModelManagement = () => {
   return (
@@ -12,8 +12,8 @@ const ModelManagement = () => {
             Configure AI models, activation rules, fallback settings, and analyze performance
           </p>
         </div>
-        
-        <ModelManagementModule />
+
+        <AIModelsModule />
       </div>
     </AdminLayout>
   );

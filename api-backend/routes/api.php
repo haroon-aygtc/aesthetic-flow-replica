@@ -58,8 +58,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // AI Model routes
     Route::apiResource('ai-models', AIModelController::class);
     Route::post('/ai-models/{id}/test', [AIModelController::class, 'testConnection']);
+    Route::post('/ai-models/{id}/test-chat', [AIModelController::class, 'testChat']);
     Route::get('/ai-models/{id}/fallback-options', [AIModelController::class, 'getFallbackOptions']);
     Route::post('/ai-models/{id}/toggle-activation', [AIModelController::class, 'toggleActivation']);
+    Route::get('/ai-models/{id}/available-models', [AIModelController::class, 'getAvailableModels']);
+    Route::post('/ai-models/{id}/discover-models', [AIModelController::class, 'discoverModels']);
 
     // Template routes
     Route::apiResource('templates', TemplateController::class);
@@ -118,4 +121,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/widgets/{widgetId}/branding', [BrandingController::class, 'updateBrandingSettings']);
     Route::post('/widgets/{widgetId}/branding/preview', [BrandingController::class, 'generatePreview']);
     Route::get('/branding-templates', [BrandingController::class, 'getBrandingTemplates']);
+
+    // Module Configuration routes
+    Route::get('/module-configurations', [App\Http\Controllers\ModuleConfigurationController::class, 'index']);
+    Route::get('/module-configurations/{moduleId}', [App\Http\Controllers\ModuleConfigurationController::class, 'show']);
+    Route::put('/module-configurations/{moduleId}', [App\Http\Controllers\ModuleConfigurationController::class, 'update']);
+    Route::post('/module-configurations/batch', [App\Http\Controllers\ModuleConfigurationController::class, 'batchUpdate']);
 });

@@ -27,10 +27,19 @@ export function ModelSelectionItem({ model, isSelected, onEdit }: ModelSelection
           <span className="text-xs bg-secondary px-2 py-1 rounded-full">{model.provider}</span>
         </div>
         <p className="text-sm text-muted-foreground">{model.description}</p>
-        <div className="flex justify-between items-center mt-3 text-xs text-muted-foreground">
-          <span>Max Tokens: {model.settings?.max_tokens || "Default"}</span>
-          {model.is_default && (
-            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full">Default</span>
+        <div className="flex flex-col gap-1 mt-3 text-xs text-muted-foreground">
+          <div className="flex justify-between">
+            <span>Model: {model.settings?.model_name || "Default"}</span>
+            <span>Temp: {model.settings?.temperature || "0.7"}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Max Tokens: {model.settings?.max_tokens || "Default"}</span>
+            {model.is_default && (
+              <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full">Default</span>
+            )}
+          </div>
+          {!model.active && (
+            <span className="bg-destructive/10 text-destructive px-2 py-0.5 rounded-full self-start mt-1">Inactive</span>
           )}
         </div>
         {isSelected && (

@@ -237,7 +237,7 @@ const WidgetConfig = () => {
                       <FormLabel>AI Model</FormLabel>
                       <Select
                         onValueChange={(value) => field.onChange(parseInt(value) || null)}
-                        value={field.value?.toString() || ""}
+                        value={field.value?.toString() || "none"}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -245,7 +245,7 @@ const WidgetConfig = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="null">Default AI Model</SelectItem>
+                          <SelectItem value="null">None</SelectItem>
                           {aiModels.map((model) => (
                             <SelectItem key={model.id} value={model.id.toString()}>
                               {model.name}

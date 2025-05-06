@@ -18,10 +18,12 @@ import ResponseFormatter from "./pages/ResponseFormatter";
 import Branding from "./pages/Branding";
 import FollowUp from "./pages/FollowUp";
 import Analytics from "./pages/Analytics";
+import DirectChat from "./pages/DirectChat";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { AuthProvider } from "./hooks/use-auth";
+import { ProtectedRoute } from "./components/protected-route";
 
 function App() {
   return (
@@ -30,24 +32,30 @@ function App() {
         <ThemeProvider defaultTheme="system" storageKey="ui-theme">
           <BrowserRouter>
             <Routes>
+              {/* Public routes */}
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/dashboard" element={<Templates />} />
-              <Route path="/dashboard/templates" element={<Templates />} />
-              <Route path="/dashboard/prompts" element={<PromptTemplatesModule />} />
-              <Route path="/dashboard/model-management" element={<ModelManagement />} />
-              <Route path="/dashboard/ai-configuration" element={<AIConfiguration />} />
-              <Route path="/dashboard/context-rules" element={<ContextRules />} />
-              <Route path="/dashboard/user-management" element={<UserManagement />} />
-              <Route path="/dashboard/api-tester" element={<ApiTester />} />
-              <Route path="/dashboard/widget-config" element={<WidgetConfig />} />
-              <Route path="/dashboard/embed-code" element={<EmbedCode />} />
-              <Route path="/dashboard/knowledge-base" element={<KnowledgeBase />} />
-              <Route path="/dashboard/response-formatter" element={<ResponseFormatter />} />
-              <Route path="/dashboard/branding" element={<Branding />} />
-              <Route path="/dashboard/follow-up" element={<FollowUp />} />
-              <Route path="/dashboard/analytics" element={<Analytics />} />
+
+              {/* Protected dashboard routes */}
+              <Route path="/dashboard" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
+              <Route path="/dashboard/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
+              <Route path="/dashboard/prompts" element={<ProtectedRoute><PromptTemplatesModule /></ProtectedRoute>} />
+              <Route path="/dashboard/model-management" element={<ProtectedRoute><ModelManagement /></ProtectedRoute>} />
+              <Route path="/dashboard/ai-configuration" element={<ProtectedRoute><AIConfiguration /></ProtectedRoute>} />
+              <Route path="/dashboard/context-rules" element={<ProtectedRoute><ContextRules /></ProtectedRoute>} />
+              <Route path="/dashboard/user-management" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
+              <Route path="/dashboard/api-tester" element={<ProtectedRoute><ApiTester /></ProtectedRoute>} />
+              <Route path="/dashboard/widget-config" element={<ProtectedRoute><WidgetConfig /></ProtectedRoute>} />
+              <Route path="/dashboard/embed-code" element={<ProtectedRoute><EmbedCode /></ProtectedRoute>} />
+              <Route path="/dashboard/knowledge-base" element={<ProtectedRoute><KnowledgeBase /></ProtectedRoute>} />
+              <Route path="/dashboard/response-formatter" element={<ProtectedRoute><ResponseFormatter /></ProtectedRoute>} />
+              <Route path="/dashboard/branding" element={<ProtectedRoute><Branding /></ProtectedRoute>} />
+              <Route path="/dashboard/follow-up" element={<ProtectedRoute><FollowUp /></ProtectedRoute>} />
+              <Route path="/dashboard/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+              <Route path="/dashboard/direct-chat" element={<ProtectedRoute><DirectChat /></ProtectedRoute>} />
+
+              {/* Fallback route */}
               <Route path="*" element={<Index />} />
             </Routes>
           </BrowserRouter>

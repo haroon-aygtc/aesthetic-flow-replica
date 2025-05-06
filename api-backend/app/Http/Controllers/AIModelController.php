@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\AIModel;
+use App\Services\AIService;
+use App\Services\AI\ProviderInterface;
+use App\Services\AI\ProviderRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
@@ -179,13 +182,16 @@ class AIModelController extends Controller
         try {
             $aiModel = AIModel::findOrFail($id);
 
-            // TODO: Implement actual connection testing logic
-            // This would typically involve making a test call to the AI provider API
-            // and checking if it returns a valid response
+            // Get the appropriate provider for this model
+            $provider = $this->getProviderForModel($aiModel);
+
+            // Test the connection using the provider's implementation
+            $result = $provider->testConnection($aiModel);
 
             return response()->json([
-                'success' => true,
-                'message' => 'Connection test successful'
+                'success' => $result['success'],
+                'message' => $result['message'],
+                'data' => $result['data'] ?? null
             ]);
         } catch (\Exception $e) {
             Log::error('Connection test failed: ' . $e->getMessage());
@@ -195,6 +201,107 @@ class AIModelController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Test chat with the AI model.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function testChat(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'message' => 'required|string|max:2000',
+            'temperature' => 'nullable|numeric|min:0|max:1',
+            'max_tokens' => 'nullable|integer|min:1|max:8000',
+            'system_prompt' => 'nullable|string|max:4000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors(), 'success' => false], 422);
+        }
+
+        try {
+            $aiModel = AIModel::findOrFail($id);
+
+            // Create messages array with system prompt if provided
+            $messages = [];
+
+            // Add system prompt if provided
+            if ($request->has('system_prompt') && !empty($request->input('system_prompt'))) {
+                $messages[] = [
+                    'role' => 'system',
+                    'content' => $request->input('system_prompt')
+                ];
+            }
+
+            // Add user message
+            $messages[] = [
+                'role' => 'user',
+                'content' => $request->input('message')
+            ];
+
+            // Get temperature and max_tokens from request or model settings
+            $temperature = $request->input('temperature', $aiModel->settings['temperature'] ?? 0.7);
+            $maxTokens = $request->input('max_tokens', $aiModel->settings['max_tokens'] ?? 2048);
+
+            // Create AIService instance
+            $aiService = app(AIService::class);
+
+            // Start timing the response
+            $startTime = microtime(true);
+
+            // Process the message
+            $response = $aiService->processMessage($messages, $aiModel);
+
+            // Calculate response time
+            $responseTime = microtime(true) - $startTime;
+
+            // Estimate token counts
+            $tokensInput = $aiService->countTokens($messages);
+            $tokensOutput = $aiService->countTokens([$response['content']]);
+
+            return response()->json([
+                'success' => !isset($response['metadata']['error']),
+                'response' => $response['content'],
+                'metadata' => [
+                    'model' => $aiModel->name,
+                    'provider' => $aiModel->provider,
+                    'response_time' => round($responseTime, 2),
+                    'tokens_input' => $tokensInput,
+                    'tokens_output' => $tokensOutput,
+                    'error' => $response['metadata']['error'] ?? null
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Chat test failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Chat test failed',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get the appropriate AI provider for the given model.
+     *
+     * @param  \App\Models\AIModel  $aiModel
+     * @return \App\Services\AI\ProviderInterface
+     * @throws \Exception
+     */
+    private function getProviderForModel(AIModel $aiModel): ProviderInterface
+    {
+        $registry = app(ProviderRegistry::class);
+        $provider = $registry->getProvider($aiModel->provider);
+
+        if (!$provider) {
+            throw new \Exception("Unsupported AI provider: {$aiModel->provider}");
+        }
+
+        return $provider;
     }
 
     /**
@@ -259,6 +366,89 @@ class AIModelController extends Controller
                 'message' => 'Failed to toggle model activation',
                 'error' => $e->getMessage(),
                 'success' => false
+            ], 500);
+        }
+    }
+
+    /**
+     * Get available models for a specific AI model.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function getAvailableModels($id)
+    {
+        try {
+            $aiModel = AIModel::findOrFail($id);
+
+            // Get available models from settings
+            $availableModels = $aiModel->settings['available_models'] ?? [];
+
+            // Convert to array format for the frontend
+            $models = [];
+            foreach ($availableModels as $name => $info) {
+                $models[] = [
+                    'name' => $name,
+                    'display_name' => $info['display_name'] ?? $name,
+                    'description' => $info['description'] ?? '',
+                    'input_token_limit' => $info['input_token_limit'] ?? 0,
+                    'output_token_limit' => $info['output_token_limit'] ?? 0,
+                    'supported_features' => $info['supported_features'] ?? [],
+                ];
+            }
+
+            return response()->json([
+                'data' => $models,
+                'success' => true
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to get available models: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to get available models',
+                'error' => $e->getMessage(),
+                'success' => false
+            ], 500);
+        }
+    }
+
+    /**
+     * Discover available models from the provider.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function discoverModels($id)
+    {
+        try {
+            $aiModel = AIModel::findOrFail($id);
+
+            // Get the appropriate provider for this model
+            $provider = $this->getProviderForModel($aiModel);
+
+            // Discover models using the provider
+            $result = $provider->discoverModels($aiModel);
+
+            if ($result['success']) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Models discovered successfully',
+                    'data' => [
+                        'models' => array_keys($result['models']),
+                        'current_model' => $aiModel->settings['model_name'] ?? null,
+                    ]
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to discover models: ' . ($result['error'] ?? 'Unknown error'),
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to discover models: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to discover models',
+                'error' => $e->getMessage()
             ], 500);
         }
     }

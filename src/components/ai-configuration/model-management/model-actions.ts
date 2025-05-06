@@ -1,10 +1,16 @@
 import { AIModelData, aiModelService } from "@/utils/ai-model-service";
 import { useToast } from "@/hooks/use-toast";
 
+/**
+ * Custom hook for AI model management actions
+ * Provides functions for model selection, configuration, and testing
+ */
 export const useModelActions = () => {
   const { toast } = useToast();
 
-  // Handle model selection
+  /**
+   * Handle model selection and update UI state
+   */
   const handleModelSelect = (
     modelId: string,
     models: AIModelData[] | null | undefined,
@@ -35,17 +41,11 @@ export const useModelActions = () => {
 
       // Update UI state based on model settings
       if (model.settings) {
-        if (model.settings.temperature !== undefined) {
-          setTemperature([model.settings.temperature]);
-        } else {
-          setTemperature([0.7]); // Default value
-        }
+        // Set temperature with fallback to default
+        setTemperature([model.settings.temperature ?? 0.7]);
 
-        if (model.settings.max_tokens !== undefined) {
-          setMaxTokens([model.settings.max_tokens]);
-        } else {
-          setMaxTokens([2048]); // Default value
-        }
+        // Set max tokens with fallback to default
+        setMaxTokens([model.settings.max_tokens ?? 2048]);
       }
 
       // Update API key field
@@ -59,7 +59,10 @@ export const useModelActions = () => {
     }
   };
 
-  // Handle API key save
+  /**
+   * Handle API key save
+   * Updates the API key for the selected model
+   */
   const handleAPIKeySave = async (
     selectedModel: AIModelData | null,
     selectedModelId: number | null,
@@ -96,7 +99,10 @@ export const useModelActions = () => {
     }
   };
 
-  // Handle configuration save
+  /**
+   * Handle configuration save
+   * Updates the model settings (temperature, max tokens)
+   */
   const handleSaveConfiguration = async (
     selectedModel: AIModelData | null,
     selectedModelId: number | null,
@@ -155,7 +161,10 @@ export const useModelActions = () => {
     }
   };
 
-  // Handle connection test
+  /**
+   * Handle connection test
+   * Tests the connection to the AI provider using the model's API key
+   */
   const handleTestConnection = async (
     selectedModel: AIModelData | null,
     selectedModelId: number | null,
@@ -196,7 +205,10 @@ export const useModelActions = () => {
     }
   };
 
-  // Handle template selection
+  /**
+   * Handle template selection
+   * Associates a prompt template with the selected model
+   */
   const handleTemplateSelect = async (
     selectedModelId: number | null,
     templateId: string | null,
@@ -213,10 +225,10 @@ export const useModelActions = () => {
     }
 
     try {
-      // In a real implementation, this would call an API to associate the template with the model
-      console.log(`Associating template ${templateId} with model ${selectedModelId}`);
+      // Call API to associate template with model
+      await aiModelService.assignTemplate(selectedModelId, templateId);
 
-      // For now, we'll just update the local state to simulate the change
+      // Update local state
       const updatedModels = models.map(model => {
         if (model.id === selectedModelId) {
           return {
@@ -247,13 +259,19 @@ export const useModelActions = () => {
     }
   };
 
-  // Handle creating a new template
+  /**
+   * Handle creating a new template
+   * Navigates to the templates page
+   */
   const handleCreateTemplate = () => {
-    // This would typically open a dialog or navigate to a template creation page
-    window.location.href = "/templates";
+    // Navigate to templates page
+    window.location.href = "/dashboard/templates";
   };
 
-  // Handle dialog operations
+  /**
+   * Handle model dialog form submission
+   * Creates a new model or updates an existing one
+   */
   const handleModelDialogSubmit = async (
     formData: AIModelData,
     editingModel: AIModelData | null,
@@ -293,6 +311,27 @@ export const useModelActions = () => {
     }
   };
 
+  /**
+   * Handle opening the test chat dialog
+   * Validates that a model is selected before opening
+   */
+  const handleOpenTestChat = (
+    selectedModel: AIModelData | null,
+    selectedModelId: number | null,
+    setIsTestChatOpen: (open: boolean) => void
+  ) => {
+    if (!selectedModel || !selectedModelId) {
+      toast({
+        title: "Error",
+        description: "Please select a model first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsTestChatOpen(true);
+  };
+
   return {
     handleModelSelect,
     handleAPIKeySave,
@@ -300,6 +339,7 @@ export const useModelActions = () => {
     handleTestConnection,
     handleModelDialogSubmit,
     handleTemplateSelect,
-    handleCreateTemplate
+    handleCreateTemplate,
+    handleOpenTestChat
   };
 };

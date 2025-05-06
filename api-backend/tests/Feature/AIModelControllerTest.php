@@ -61,7 +61,7 @@ class AIModelControllerTest extends TestCase
                  ]);
 
         $this->assertTrue($response['success']);
-        $this->assertDatabaseHas('a_i_models', ['name' => $data['name']]);
+        $this->assertDatabaseHas('ai_models', ['name' => $data['name']]);
     }
 
     public function test_can_get_single_ai_model()
@@ -100,7 +100,7 @@ class AIModelControllerTest extends TestCase
 
         $this->assertTrue($response['success']);
         $this->assertEquals($newName, $response['data']['name']);
-        $this->assertDatabaseHas('a_i_models', ['id' => $model->id, 'name' => $newName]);
+        $this->assertDatabaseHas('ai_models', ['id' => $model->id, 'name' => $newName]);
     }
 
     public function test_can_delete_ai_model()
@@ -110,7 +110,7 @@ class AIModelControllerTest extends TestCase
         $response = $this->deleteJson("/api/ai-models/{$model->id}");
 
         $response->assertStatus(200);
-        $this->assertDatabaseMissing('a_i_models', ['id' => $model->id]);
+        $this->assertDatabaseMissing('ai_models', ['id' => $model->id]);
     }
 
     public function test_validation_works_for_create()

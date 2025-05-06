@@ -7,41 +7,59 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Spinner } from "@/components/ui/spinner";
 import { Info, Settings } from "lucide-react";
 import { AIModelData } from "@/utils/ai-model-service";
+import { ModelSelector } from "./model-selector";
 
 interface ConfigParametersCardProps {
-  selectedModel: AIModelData | null;
   temperature: number[];
   maxTokens: number[];
   isSaving: boolean;
+  selectedModel: AIModelData | null;
   onTemperatureChange: (values: number[]) => void;
   onMaxTokensChange: (values: number[]) => void;
   onSaveConfiguration: () => void;
+  onModelNameChange: (modelName: string) => void;
 }
 
 export function ConfigParametersCard({
-  selectedModel,
   temperature,
   maxTokens,
   isSaving,
+  selectedModel,
   onTemperatureChange,
   onMaxTokensChange,
-  onSaveConfiguration
+  onSaveConfiguration,
+  onModelNameChange
 }: ConfigParametersCardProps) {
-  if (!selectedModel) return null;
-
   return (
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-xl flex items-center gap-2">
           <Settings className="h-5 w-5" />
-          Configuration Parameters
+          Model Settings
         </CardTitle>
         <CardDescription>
-          Adjust parameters to control AI behavior and output
+          Adjust parameters to control AI behavior and output quality.
+          These settings will be used when sending messages to the model.
         </CardDescription>
+        {selectedModel && (
+          <div className="mt-2 text-sm">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span>Provider: {selectedModel.provider}</span>
+              <span>Status: {selectedModel.active ? "Active" : "Inactive"}</span>
+            </div>
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
+          <div className="space-y-4 pb-4 border-b">
+            <ModelSelector
+              selectedModel={selectedModel}
+              onModelSelect={onModelNameChange}
+              disabled={isSaving}
+            />
+          </div>
+
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="temperature">
@@ -76,7 +94,7 @@ export function ConfigParametersCard({
               <span>Creative</span>
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="max-tokens">
@@ -110,13 +128,23 @@ export function ConfigParametersCard({
               <span>Detailed</span>
             </div>
           </div>
-          
-          <Button 
-            className="w-full" 
+
+          <Button
+            className="w-full"
             onClick={onSaveConfiguration}
             disabled={isSaving}
           >
-            {isSaving ? <Spinner size="sm" className="mr-2" /> : "Save Configuration"}
+            {isSaving ? (
+              <>
+                <Spinner size="sm" className="mr-2" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Settings className="h-4 w-4 mr-2" />
+                Save Settings
+              </>
+            )}
           </Button>
         </div>
       </CardContent>

@@ -1,11 +1,14 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { WidgetSettings } from "@/utils/widgetService";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
+import { aiModelService, AIModelData } from "@/utils/ai-model-service";
+import { useToast } from "@/hooks/use-toast";
 
 interface ContentTabProps {
   settings: WidgetSettings;
@@ -19,8 +22,37 @@ export function ContentTab({ settings, onChange }: ContentTabProps) {
     inputPlaceholder: settings.inputPlaceholder || "Type your message...",
     sendButtonText: settings.sendButtonText || "Send",
     offlineMessage: settings.offlineMessage || "Sorry, we're currently offline. Please leave a message and we'll get back to you.",
-    systemPrompt: settings.systemPrompt || "You are a helpful AI assistant."
+    systemPrompt: settings.systemPrompt || "You are a helpful AI assistant.",
+    ai_model_id: settings.ai_model_id || null
   });
+
+  const [aiModels, setAiModels] = useState<AIModelData[]>([]);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const { toast } = useToast();
+
+  // Load AI models when component mounts
+  useEffect(() => {
+    const fetchAIModels = async () => {
+      setIsLoadingModels(true);
+      try {
+        const models = await aiModelService.getModels();
+        // Filter to only include active models
+        const activeModels = models.filter(model => model.active !== false);
+        setAiModels(activeModels);
+      } catch (error) {
+        console.error("Failed to load AI models:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load AI models. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoadingModels(false);
+      }
+    };
+
+    fetchAIModels();
+  }, [toast]);
 
   const handleChange = (key: string, value: any) => {
     setLocalSettings((prev) => {
@@ -29,7 +61,7 @@ export function ContentTab({ settings, onChange }: ContentTabProps) {
       return updated;
     });
   };
-  
+
   return (
     <CardContent className="space-y-6 pt-6">
       <div className="space-y-4">
@@ -43,7 +75,7 @@ export function ContentTab({ settings, onChange }: ContentTabProps) {
             maxLength={50}
           />
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="initialMessage">Initial Welcome Message</Label>
           <Textarea
@@ -57,7 +89,7 @@ export function ContentTab({ settings, onChange }: ContentTabProps) {
             This message will be shown to the user when they first open the chat.
           </p>
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="inputPlaceholder">Input Placeholder</Label>
           <Input
@@ -68,7 +100,7 @@ export function ContentTab({ settings, onChange }: ContentTabProps) {
             maxLength={50}
           />
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="sendButtonText">Send Button Text</Label>
           <Input
@@ -79,7 +111,7 @@ export function ContentTab({ settings, onChange }: ContentTabProps) {
             maxLength={20}
           />
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="offlineMessage">Offline Message</Label>
           <Textarea
@@ -91,28 +123,44 @@ export function ContentTab({ settings, onChange }: ContentTabProps) {
           />
         </div>
       </div>
-      
+
       <div className="border-t pt-4 space-y-4">
         <h3 className="text-lg font-medium">AI Configuration</h3>
-        
+
         <div className="space-y-2">
           <Label htmlFor="aiModel">AI Model</Label>
-          <Select 
-            value={localSettings.ai_model_id?.toString() || ""} 
-            onValueChange={(value) => handleChange("ai_model_id", Number(value) || null)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select an AI model" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">GPT-4o</SelectItem>
-              <SelectItem value="2">GPT-3.5 Turbo</SelectItem>
-              <SelectItem value="3">Claude 3 Opus</SelectItem>
-              <SelectItem value="4">Claude 3 Sonnet</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="relative">
+            {isLoadingModels && (
+              <div className="absolute right-10 top-1/2 transform -translate-y-1/2 z-10">
+                <Spinner size="sm" />
+              </div>
+            )}
+            <Select
+              value={localSettings.ai_model_id?.toString() || "none"}
+              onValueChange={(value) => handleChange("ai_model_id", Number(value) || null)}
+              disabled={isLoadingModels}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select an AI model" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {aiModels.map((model) => (
+                  <SelectItem key={model.id} value={model.id?.toString() || ""}>
+                    {model.name} ({model.provider})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {/* Show selected model details if available */}
+          {localSettings.ai_model_id && (
+            <div className="text-xs text-muted-foreground mt-1">
+              {aiModels.find(m => m.id === localSettings.ai_model_id)?.description || ""}
+            </div>
+          )}
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="systemPrompt">System Prompt</Label>
           <Textarea

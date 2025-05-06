@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             AIModelSeeder::class,
             SuperAdminSeeder::class,
             WidgetSeeder::class,
+            ModuleConfigurationSeeder::class,
         ]);
     }
 }

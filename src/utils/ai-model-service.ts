@@ -123,12 +123,43 @@ export const aiModelService = {
   },
 
   // Test a model connection
-  testConnection: async (id: number): Promise<{ success: boolean; message: string }> => {
+  testConnection: async (id: number): Promise<{ success: boolean; message: string; data?: any }> => {
     try {
       const response = await api.post(`ai-models/${id}/test`);
       return response.data;
     } catch (error) {
       console.error(`Error testing connection for AI model with ID ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // Test chat with a model
+  testChat: async (id: number, message: string, options?: {
+    temperature?: number;
+    max_tokens?: number;
+    system_prompt?: string;
+  }): Promise<{
+    success: boolean;
+    response: string;
+    metadata: {
+      model: string;
+      provider: string;
+      response_time: number;
+      tokens_input: number;
+      tokens_output: number;
+      error?: string;
+    }
+  }> => {
+    try {
+      const response = await api.post(`ai-models/${id}/test-chat`, {
+        message,
+        temperature: options?.temperature,
+        max_tokens: options?.max_tokens,
+        system_prompt: options?.system_prompt
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`Error testing chat for AI model with ID ${id}:`, error);
       throw error;
     }
   },
@@ -237,6 +268,41 @@ export const aiModelService = {
     } catch (error) {
       console.error(`Error fetching detailed analytics for AI model with ID ${modelId}:`, error);
       return {};
+    }
+  },
+
+  // Assign a template to a model
+  assignTemplate: async (modelId: number, templateId: string | null): Promise<any> => {
+    try {
+      const response = await api.post(`ai-models/${modelId}/templates`, {
+        template_id: templateId
+      });
+      return response.data && response.data.data ? response.data.data : response.data;
+    } catch (error) {
+      console.error(`Error assigning template to AI model with ID ${modelId}:`, error);
+      throw error;
+    }
+  },
+
+  // Get available models for a specific AI model
+  getAvailableModels: async (id: number): Promise<any> => {
+    try {
+      const response = await api.get(`ai-models/${id}/available-models`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching available models for AI model with ID ${id}:`, error);
+      return { data: [], success: false };
+    }
+  },
+
+  // Discover available models from the provider
+  discoverModels: async (id: number): Promise<any> => {
+    try {
+      const response = await api.post(`ai-models/${id}/discover-models`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error discovering models for AI model with ID ${id}:`, error);
+      throw error;
     }
   }
 };

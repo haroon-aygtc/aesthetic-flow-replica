@@ -11,7 +11,7 @@ import { DeleteRuleDialog } from "./delete-rule-dialog";
 import { useActivationRules } from "./use-activation-rules";
 
 interface ModelActivationRulesProps {
-  selectedModel: AIModelData | null;
+  selectedModel: AIModelData;
   onRuleUpdate: () => void;
 }
 
@@ -30,19 +30,16 @@ export function ModelActivationRules({ selectedModel, onRuleUpdate }: ModelActiv
     handleSaveRule
   } = useActivationRules(selectedModel, onRuleUpdate);
 
-  if (!selectedModel) return null;
-
   return (
     <Card className="mt-6">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-xl flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Model Activation Rules
+              Activation Rules
             </CardTitle>
             <CardDescription>
-              Define when this model should be automatically selected based on context
+              Define when this model should be automatically selected based on user input and context
             </CardDescription>
           </div>
           <Button onClick={() => setIsCreating(true)} disabled={isLoading}>
@@ -70,7 +67,7 @@ export function ModelActivationRules({ selectedModel, onRuleUpdate }: ModelActiv
       {/* Create/Edit Rule Dialog */}
       {(isCreating || editingRule) && (
         <ModelActivationRuleForm
-          modelId={selectedModel.id!}
+          modelId={selectedModel.id}
           rule={editingRule}
           onSave={handleSaveRule}
           onCancel={() => {

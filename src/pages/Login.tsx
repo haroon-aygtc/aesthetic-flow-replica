@@ -4,8 +4,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, MessageSquare } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import * as authService from "@/utils/authService";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { authService } from "@/utils/api-service";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -14,6 +15,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,18 +35,9 @@ const Login = () => {
       // Get CSRF cookie first
       await authService.getCsrfToken();
 
-      // Attempt login using our API service
+      // Attempt login using our auth context
       console.log("Attempting login with:", { email });
-      const response = await authService.login(email, password);
-      console.log("Login response:", response);
-
-      // Store token in localStorage
-      if (!response.token) {
-        console.error("No token found in response:", response);
-        throw new Error("Authentication failed: No token received");
-      }
-
-      localStorage.setItem("token", response.token);
+      await login(email, password);
 
       toast({
         title: "Login successful!",

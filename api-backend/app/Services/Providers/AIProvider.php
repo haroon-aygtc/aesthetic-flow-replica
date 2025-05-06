@@ -83,8 +83,7 @@ abstract class AIProvider
     {
         // Check if model has a template configured
         if (!empty($aiModel->settings['template_id'])) {
-            // Fetch template content - would typically come from database
-            // This is placeholder logic that would be replaced with actual template fetching
+            // Fetch template content from the database
             $templateContent = $this->getTemplateContent($aiModel->settings['template_id']);
 
             if ($templateContent) {
@@ -114,20 +113,26 @@ abstract class AIProvider
     }
 
     /**
-     * Get template content by ID - stub method to be replaced with actual implementation.
+     * Get template content by ID from the database.
      *
-     * @param  string  $templateId
+     * @param  string|int  $templateId
      * @return string|null
      */
-    private function getTemplateContent(string $templateId): ?string
+    private function getTemplateContent($templateId): ?string
     {
-        // This would be replaced with actual database query or cache lookup
-        $templates = [
-            'template1' => "You are a helpful customer support assistant. Be professional, concise, and focus on solving the customer's issue.",
-            'template2' => "You are a sales assistant helping customers find the right products. Be friendly, highlight benefits, and ask follow-up questions.",
-            'template3' => "You are a technical support assistant. Provide clear step-by-step instructions and focus on troubleshooting technical issues."
-        ];
+        try {
+            // Get the template from the database
+            $template = \App\Models\Template::find($templateId);
 
-        return $templates[$templateId] ?? null;
+            // Return the content if template exists
+            if ($template) {
+                return $template->content;
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error fetching template: ' . $e->getMessage());
+            return null;
+        }
     }
 }

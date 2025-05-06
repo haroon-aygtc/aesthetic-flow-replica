@@ -10,6 +10,11 @@ export interface TemplateData {
   version?: number;
   is_default?: boolean;
   variables?: string[];
+  metadata?: Record<string, any>;
+  status?: string;
+  created_by?: number;
+  updated_by?: number;
+  slug?: string;
 }
 
 export const templateService = {
@@ -17,15 +22,15 @@ export const templateService = {
   getTemplates: async (): Promise<TemplateData[]> => {
     try {
       const response = await api.get('templates');
-      
+
       if (response.data && response.data.data && Array.isArray(response.data.data)) {
         return response.data.data;
       }
-      
+
       if (Array.isArray(response.data)) {
         return response.data;
       }
-      
+
       console.error('Unexpected response format from templates API:', response.data);
       return [];
     } catch (error) {
@@ -38,15 +43,15 @@ export const templateService = {
   getTemplate: async (id: number): Promise<TemplateData> => {
     try {
       const response = await api.get(`templates/${id}`);
-      
+
       if (response.data && response.data.data) {
         return response.data.data;
       }
-      
+
       if (response.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
         return response.data;
       }
-      
+
       console.error('Unexpected response format from template API:', response.data);
       throw new Error('Failed to retrieve template data');
     } catch (error) {
@@ -91,15 +96,15 @@ export const templateService = {
   getModelTemplates: async (modelId: number): Promise<TemplateData[]> => {
     try {
       const response = await api.get(`ai-models/${modelId}/templates`);
-      
+
       if (response.data && response.data.data && Array.isArray(response.data.data)) {
         return response.data.data;
       }
-      
+
       if (Array.isArray(response.data)) {
         return response.data;
       }
-      
+
       console.error('Unexpected response format from model templates API:', response.data);
       return [];
     } catch (error) {

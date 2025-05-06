@@ -15,7 +15,9 @@ import {
   Award,
   Rocket,
   User,
-  Shield
+  Shield,
+  LogOut,
+  MessageCircle
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,14 +28,46 @@ import {
   SidebarContent,
   SidebarFooter
 } from "@/components/ui/sidebar";
+import { useToast } from "@/hooks/use-toast";
+import { authService } from "@/utils/api-service";
 
 export function Sidebar() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { toast } = useToast();
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+    setIsLoggingOut(true);
+    try {
+      // Call the real logout API endpoint
+      await authService.logout();
+
+      // Clear the token from localStorage
+      localStorage.removeItem("token");
+
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of your account",
+      });
+
+      // Redirect to login page
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+
+      // Even if the API call fails, we should still clear the token and redirect
+      localStorage.removeItem("token");
+
+      toast({
+        title: "Logged out",
+        description: "You have been logged out of your account",
+      });
+
+      navigate("/login");
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -54,8 +88,15 @@ export function Sidebar() {
               <p className="text-sm text-muted-foreground">{user?.email}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" className="mt-2 w-full" onClick={handleLogout}>
-            Logout
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-2 w-full"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            {isLoggingOut ? "Logging out..." : "Logout"}
           </Button>
         </div>
       </SidebarHeader>
@@ -117,7 +158,7 @@ export function Sidebar() {
                     }`
                   }>
                     <Settings className="mr-2 h-4 w-4" />
-                    Model Management
+                    AI Model Management
                   </NavLink>
                 </li>
                 <li>
@@ -172,6 +213,15 @@ export function Sidebar() {
                   }>
                     <MessageSquare className="mr-2 h-4 w-4" />
                     Context Rules
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/dashboard/direct-chat" className={({ isActive }) =>
+                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                    }`
+                  }>
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Direct Chat Testing
                   </NavLink>
                 </li>
               </ul>
