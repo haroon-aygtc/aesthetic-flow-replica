@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 
 export const modelFormSchema = z.object({
@@ -14,6 +13,9 @@ export const modelFormSchema = z.object({
     model_name: z.string().optional(),
     temperature: z.number().min(0).max(1).default(0.7),
     max_tokens: z.number().min(1).default(2048),
+    top_p: z.number().min(0).max(1).default(1.0),
+    frequency_penalty: z.number().min(0).max(2).default(0.0),
+    presence_penalty: z.number().min(0).max(2).default(0.0),
   }),
 });
 

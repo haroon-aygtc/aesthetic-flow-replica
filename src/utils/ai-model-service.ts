@@ -31,7 +31,7 @@ export interface ModelAnalytics {
 }
 
 export const aiModelService = {
-  // Get all models
+  // Get models
   getModels: async (): Promise<AIModelData[]> => {
     try {
       const response = await api.get('ai-models');
@@ -111,6 +111,17 @@ export const aiModelService = {
     }
   },
 
+  // Set model as default
+  setDefaultModel: async (id: number): Promise<AIModelData> => {
+    try {
+      const response = await api.post(`ai-models/${id}/set-default`);
+      return response.data && response.data.data ? response.data.data : response.data;
+    } catch (error) {
+      console.error(`Error setting AI model with ID ${id} as default:`, error);
+      throw error;
+    }
+  },
+
   // Toggle model activation
   toggleModelActivation: async (id: number, active: boolean): Promise<AIModelData> => {
     try {
@@ -129,6 +140,24 @@ export const aiModelService = {
       return response.data;
     } catch (error) {
       console.error(`Error testing connection for AI model with ID ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // Discover available models for an existing model
+  discoverModels: async (id: number): Promise<{ 
+    success: boolean; 
+    message: string; 
+    data?: { 
+      models: string[]; 
+      current_model?: string; 
+    } 
+  }> => {
+    try {
+      const response = await api.post(`ai-models/${id}/discover-models`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error discovering models for AI model with ID ${id}:`, error);
       throw error;
     }
   },
@@ -292,17 +321,6 @@ export const aiModelService = {
     } catch (error) {
       console.error(`Error fetching available models for AI model with ID ${id}:`, error);
       return { data: [], success: false };
-    }
-  },
-
-  // Discover available models from the provider
-  discoverModels: async (id: number): Promise<any> => {
-    try {
-      const response = await api.post(`ai-models/${id}/discover-models`);
-      return response.data;
-    } catch (error) {
-      console.error(`Error discovering models for AI model with ID ${id}:`, error);
-      throw error;
     }
   }
 };

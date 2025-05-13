@@ -15,6 +15,7 @@ use App\Http\Controllers\GuestUserAdminController;
 use App\Http\Controllers\FollowUpController;
 use App\Http\Controllers\BrandingController;
 use App\Http\Controllers\TemplateController;
+use App\Http\Controllers\API\ProviderAPIController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,6 +55,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('permissions', App\Http\Controllers\PermissionController::class);
     Route::post('/users/{user}/roles', [App\Http\Controllers\UserController::class, 'assignRoles']);
     Route::post('/roles/{role}/permissions', [App\Http\Controllers\RoleController::class, 'assignPermissions']);
+    
+    // Admin Provider Management Routes
+    Route::apiResource('admin/providers', App\Http\Controllers\Admin\ProviderAdminController::class);
+    
+    // Provider Models
+    Route::get('admin/providers/{id}/models', [App\Http\Controllers\Admin\ProviderAdminController::class, 'manageModels']);
+    Route::post('admin/providers/{id}/models', [App\Http\Controllers\Admin\ProviderAdminController::class, 'storeModel']);
+    Route::put('admin/providers/{providerId}/models/{modelId}', [App\Http\Controllers\Admin\ProviderAdminController::class, 'updateModel']);
+    Route::delete('admin/providers/{providerId}/models/{modelId}', [App\Http\Controllers\Admin\ProviderAdminController::class, 'destroyModel']);
+    Route::post('admin/providers/{id}/discover-models', [App\Http\Controllers\Admin\ProviderAdminController::class, 'discoverModels']);
+    
+    // Provider Parameters
+    Route::get('admin/providers/{id}/parameters', [App\Http\Controllers\Admin\ProviderAdminController::class, 'manageParameters']);
+    Route::post('admin/providers/{id}/parameters', [App\Http\Controllers\Admin\ProviderAdminController::class, 'updateParameters']);
 
     // AI Model routes
     Route::apiResource('ai-models', AIModelController::class);
@@ -127,4 +142,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/module-configurations/{moduleId}', [App\Http\Controllers\ModuleConfigurationController::class, 'show']);
     Route::put('/module-configurations/{moduleId}', [App\Http\Controllers\ModuleConfigurationController::class, 'update']);
     Route::post('/module-configurations/batch', [App\Http\Controllers\ModuleConfigurationController::class, 'batchUpdate']);
+
+    // Add AI provider test route
+    Route::post('/ai-test', [ApiTestController::class, 'testAIProvider']);
+
+    // Public API test endpoint for discovering models without needing an existing model
+    Route::post('/ai-test', [AIModelController::class, 'testAIConnection']);
+
+    // Provider API routes
+    Route::get('/providers', [ProviderAPIController::class, 'getProviders']);
+    Route::get('/providers/{slug}/models', [ProviderAPIController::class, 'getProviderModels']);
+    Route::get('/providers/{slug}/parameters', [ProviderAPIController::class, 'getProviderParameters']);
 });

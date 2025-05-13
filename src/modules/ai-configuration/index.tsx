@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Card,
@@ -29,16 +29,18 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 export function AIConfigurationModule() {
   const location = useLocation();
   const navigate = useNavigate();
+  const hasInitializedRef = useRef(false);
+  const fetchingModuleRef = useRef(false);
 
   // Get module ID from URL path if available
-  const getModuleIdFromPath = () => {
+  const getModuleIdFromPath = useCallback(() => {
     const path = location.pathname;
     if (path.includes('response-formatter')) return 'response_formatter';
     if (path.includes('knowledge-base')) return 'knowledge_base';
     if (path.includes('follow-up')) return 'follow_up';
     if (path.includes('branding')) return 'branding';
     return 'chat'; // Default
-  };
+  }, [location.pathname]);
 
   const [modules, setModules] = useState<ModuleConfig[]>([]);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(getModuleIdFromPath());
@@ -49,98 +51,107 @@ export function AIConfigurationModule() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Load data on component mount
+  // Load initial data once
   useEffect(() => {
-    const loadData = async () => {
+    if (hasInitializedRef.current) return;
+    
+    const loadInitialData = async () => {
       setIsLoading(true);
       setError(null);
+      
       try {
-        // Load modules and models in parallel
-        const [modulesData, modelsData] = await Promise.all([
-          loadModuleConfigurations(),
-          loadModels()
-        ]);
-
-        setModules(modulesData);
+        // Load models
+        const modelsData = await loadModels();
         setAvailableModels(modelsData.filter(model => model.active !== false));
+        
+        // Load default modules (without API call)
+        const defaultModules = getDefaultModules();
+        setModules(defaultModules);
+        
+        // Set initial selected module
+        const initialModuleId = getModuleIdFromPath();
+        const initialModule = defaultModules.find(m => m.id === initialModuleId);
+        if (initialModule) {
+          setSelectedModule(initialModule);
+        }
+        
+        hasInitializedRef.current = true;
       } catch (err) {
         console.error("Failed to load initial data:", err);
         setError("Failed to load configuration data. Please try again.");
+        
+        // Set default modules as fallback
+        const defaultModules = getDefaultModules();
+        setModules(defaultModules);
+        
+        // Set initial selected module from defaults
+        const initialModuleId = getModuleIdFromPath();
+        const initialModule = defaultModules.find(m => m.id === initialModuleId);
+        if (initialModule) {
+          setSelectedModule(initialModule);
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadData();
-  }, []);
+    loadInitialData();
+  }, [getModuleIdFromPath]);
 
-  // Set selected module when moduleId changes or modules are loaded
-  useEffect(() => {
-    const updateSelectedModule = async () => {
-      if (selectedModuleId && modules.length > 0) {
-        // First try to find the module in the current modules list
-        const module = modules.find(m => m.id === selectedModuleId);
-
-        if (module) {
-          setSelectedModule(module);
-        } else {
-          // If not found, try to fetch it directly from the API
-          try {
-            setIsLoading(true);
-            const moduleConfig = await moduleConfigService.getModuleConfiguration(selectedModuleId);
-
-            if (moduleConfig) {
-              const formattedModule = {
-                ...moduleConfig,
-                icon: getIconComponent(moduleConfig.icon as string)
-              };
-              setSelectedModule(formattedModule);
-
-              // Also update the modules list to include this module
-              setModules(prevModules => {
-                const moduleExists = prevModules.some(m => m.id === selectedModuleId);
-                if (!moduleExists) {
-                  return [...prevModules, formattedModule];
-                }
-                return prevModules;
-              });
-            } else {
-              setSelectedModule(null);
-            }
-          } catch (error) {
-            console.error(`Failed to fetch module ${selectedModuleId}:`, error);
-            setSelectedModule(null);
-          } finally {
-            setIsLoading(false);
-          }
-        }
-      } else {
-        setSelectedModule(null);
+  // Handle module selection from the list
+  const handleModuleSelect = (moduleId: string) => {
+    if (moduleId === selectedModuleId) return;
+    
+    // Set the selected module ID
+    setSelectedModuleId(moduleId);
+    
+    // Find the module in the current modules list
+    const module = modules.find(m => m.id === moduleId);
+    if (module) {
+      setSelectedModule(module);
+    } else {
+      // If not found, use a default module with the correct ID
+      const defaultModules = getDefaultModules();
+      const defaultModule = defaultModules.find(m => m.id === moduleId);
+      if (defaultModule) {
+        setSelectedModule(defaultModule);
+        // Add to modules list
+        setModules(prev => [...prev, defaultModule]);
       }
-    };
+    }
 
-    updateSelectedModule();
-  }, [selectedModuleId, modules]);
+    // Navigate to the appropriate URL
+    setTimeout(() => {
+      switch (moduleId) {
+        case 'response_formatter':
+          navigate('/dashboard/response-formatter');
+          break;
+        case 'knowledge_base':
+          navigate('/dashboard/knowledge-base');
+          break;
+        case 'follow_up':
+          navigate('/dashboard/follow-up');
+          break;
+        case 'branding':
+          navigate('/dashboard/branding');
+          break;
+        default:
+          navigate('/dashboard/ai-configuration');
+      }
+    }, 50);
+  };
 
-  const loadModuleConfigurations = async (): Promise<ModuleConfig[]> => {
+  const loadModels = async (): Promise<AIModelData[]> => {
     try {
-      // Try to get module configurations from API
-      const moduleConfigs = await moduleConfigService.getModuleConfigurations();
-
-      if (moduleConfigs && moduleConfigs.length > 0) {
-        return moduleConfigs.map(config => ({
-          ...config,
-          // Map string icon names to React components
-          icon: getIconComponent(config.icon as string)
-        }));
-      }
-
-      // Fallback to default modules if API fails or returns empty
-      return getDefaultModules();
+      return await aiModelService.getModels();
     } catch (error) {
-      console.error("Failed to load module configurations:", error);
-      // Return default modules as fallback
-      return getDefaultModules();
+      console.error("Failed to load AI models:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load AI models. Using default settings.",
+        variant: "destructive"
+      });
+      return [];
     }
   };
 
@@ -220,76 +231,6 @@ export function AIConfigurationModule() {
     ];
   };
 
-  const loadModels = async (): Promise<AIModelData[]> => {
-    try {
-      return await aiModelService.getModels();
-    } catch (error) {
-      console.error("Failed to load AI models:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load AI models. Please try again.",
-        variant: "destructive"
-      });
-      return [];
-    }
-  };
-
-  const handleModuleSelect = async (moduleId: string) => {
-    setSelectedModuleId(moduleId);
-    setIsLoading(true);
-
-    try {
-      // Fetch the specific module configuration to ensure we have the latest data
-      const moduleConfig = await moduleConfigService.getModuleConfiguration(moduleId);
-
-      if (moduleConfig) {
-        // Update the module in the modules list with the latest data
-        const updatedModules = modules.map(m =>
-          m.id === moduleId ? {
-            ...moduleConfig,
-            icon: getIconComponent(moduleConfig.icon as string)
-          } : m
-        );
-
-        setModules(updatedModules);
-
-        // Set the selected module with the latest data
-        const updatedModule = {
-          ...moduleConfig,
-          icon: getIconComponent(moduleConfig.icon as string)
-        };
-        setSelectedModule(updatedModule);
-      }
-    } catch (error) {
-      console.error(`Failed to load module configuration for ${moduleId}:`, error);
-      toast({
-        title: "Error",
-        description: `Failed to load configuration for ${moduleId}. Using cached data.`,
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-
-    // Navigate to the appropriate URL based on the selected module
-    switch (moduleId) {
-      case 'response_formatter':
-        navigate('/dashboard/response-formatter');
-        break;
-      case 'knowledge_base':
-        navigate('/dashboard/knowledge-base');
-        break;
-      case 'follow_up':
-        navigate('/dashboard/follow-up');
-        break;
-      case 'branding':
-        navigate('/dashboard/branding');
-        break;
-      default:
-        navigate('/dashboard/ai-configuration');
-    }
-  };
-
   const handleModelSelect = (modelId: string) => {
     if (!selectedModule) return;
 
@@ -298,12 +239,14 @@ export function AIConfigurationModule() {
       modelId: modelId && modelId !== 'none' ? Number(modelId) : null
     };
 
-    const updatedModules = modules.map(m =>
-      m.id === updatedModule.id ? updatedModule : m
-    );
-
-    setModules(updatedModules);
     setSelectedModule(updatedModule);
+    
+    // Update the modules list
+    setModules(prevModules => {
+      return prevModules.map(m => 
+        m.id === updatedModule.id ? updatedModule : m
+      );
+    });
   };
 
   const handleSettingChange = (key: string, value: any) => {
@@ -317,12 +260,14 @@ export function AIConfigurationModule() {
       }
     };
 
-    const updatedModules = modules.map(m =>
-      m.id === updatedModule.id ? updatedModule : m
-    );
-
-    setModules(updatedModules);
     setSelectedModule(updatedModule);
+    
+    // Update the modules list
+    setModules(prevModules => {
+      return prevModules.map(m => 
+        m.id === updatedModule.id ? updatedModule : m
+      );
+    });
   };
 
   const handleSaveConfiguration = async () => {
@@ -333,7 +278,7 @@ export function AIConfigurationModule() {
 
     try {
       // Update the specific module configuration
-      const updatedConfig = await moduleConfigService.updateModuleConfiguration(selectedModule.id, {
+      await moduleConfigService.updateModuleConfiguration(selectedModule.id, {
         modelId: selectedModule.modelId,
         settings: selectedModule.settings
       });
@@ -342,19 +287,6 @@ export function AIConfigurationModule() {
         title: "Configuration Saved",
         description: `${selectedModule.name} configuration has been saved successfully.`
       });
-
-      // Refresh the modules list to get the latest data
-      const updatedModules = await loadModuleConfigurations();
-      setModules(updatedModules);
-
-      // Update the selected module with the latest data
-      if (updatedConfig) {
-        const updatedSelectedModule = {
-          ...updatedConfig,
-          icon: getIconComponent(updatedConfig.icon as string)
-        };
-        setSelectedModule(updatedSelectedModule);
-      }
     } catch (error) {
       console.error("Failed to save module configuration:", error);
       setError("Failed to save configuration. Please try again.");
@@ -513,15 +445,7 @@ export function AIConfigurationModule() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <Tabs defaultValue="basic" onValueChange={() => {
-                        // Ensure we have the latest data when switching tabs
-                        if (selectedModule) {
-                          const currentModule = modules.find(m => m.id === selectedModule.id);
-                          if (currentModule) {
-                            setSelectedModule(currentModule);
-                          }
-                        }
-                      }}>
+                      <Tabs defaultValue="basic">
                         <TabsList className="mb-4">
                           <TabsTrigger value="basic">Basic Settings</TabsTrigger>
                           <TabsTrigger value="advanced">Advanced Settings</TabsTrigger>

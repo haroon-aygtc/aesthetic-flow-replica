@@ -21,7 +21,7 @@ export function useActivationRules(selectedModel: AIModelData, onRuleUpdate: () 
   const loadRules = async (modelId: number) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/ai-models/${modelId}/rules`);
+      const response = await fetch(`/ai-models/${modelId}/rules`);
       if (!response.ok) {
         throw new Error("Failed to load rules");
       }
@@ -56,7 +56,7 @@ export function useActivationRules(selectedModel: AIModelData, onRuleUpdate: () 
 
   const handleToggleActive = async (rule: ModelActivationRule) => {
     try {
-      const response = await fetch(`/api/ai-models/${selectedModel?.id}/rules/${rule.id}`, {
+      const response = await fetch(`/ai-models/${selectedModel?.id}/rules/${rule.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"
@@ -93,7 +93,7 @@ export function useActivationRules(selectedModel: AIModelData, onRuleUpdate: () 
     if (!deleteRuleId || !selectedModel?.id) return;
 
     try {
-      const response = await fetch(`/api/ai-models/${selectedModel.id}/rules/${deleteRuleId}`, {
+      const response = await fetch(`/ai-models/${selectedModel.id}/rules/${deleteRuleId}`, {
         method: "DELETE"
       });
 

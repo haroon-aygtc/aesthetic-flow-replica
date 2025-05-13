@@ -1,16 +1,65 @@
-
 import { Button } from "@/components/ui/button";
 import { RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { AIModelData } from "@/utils/ai-model-service";
+import { Link } from "react-router-dom";
 
 interface ModelSelectionItemProps {
   model: AIModelData;
   isSelected: boolean;
   onEdit: () => void;
+  useFullPageEditor?: boolean;
 }
 
-export function ModelSelectionItem({ model, isSelected, onEdit }: ModelSelectionItemProps) {
+export function ModelSelectionItem({ 
+  model, 
+  isSelected, 
+  onEdit,
+  useFullPageEditor = false
+}: ModelSelectionItemProps) {
+  // Only render edit button for models with valid IDs (not the "None" option)
+  const shouldRenderEditButton = isSelected && model.id !== null;
+  
+  // Render the appropriate edit button based on the useFullPageEditor flag
+  const renderEditButton = () => {
+    if (!shouldRenderEditButton) return null;
+    
+    if (useFullPageEditor) {
+      return (
+        <Button
+          size="sm"
+          variant="outline"
+          asChild
+          className="absolute top-2 right-2 z-10"
+        >
+          <Link 
+            to={`/dashboard/model-management/edit/${model.id}`}
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+          >
+            Edit
+          </Link>
+        </Button>
+      );
+    } else {
+      return (
+        <Button
+          size="sm"
+          variant="outline"
+          className="absolute top-2 right-2"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onEdit();
+          }}
+        >
+          Edit
+        </Button>
+      );
+    }
+  };
+
   return (
     <div className="relative">
       <RadioGroupItem
@@ -42,20 +91,7 @@ export function ModelSelectionItem({ model, isSelected, onEdit }: ModelSelection
             <span className="bg-destructive/10 text-destructive px-2 py-0.5 rounded-full self-start mt-1">Inactive</span>
           )}
         </div>
-        {isSelected && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="absolute top-2 right-2"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onEdit();
-            }}
-          >
-            Edit
-          </Button>
-        )}
+        {renderEditButton()}
       </Label>
     </div>
   );

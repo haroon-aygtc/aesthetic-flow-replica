@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
@@ -17,7 +16,8 @@ import {
   User,
   Shield,
   LogOut,
-  MessageCircle
+  MessageCircle,
+  Server
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -159,6 +159,15 @@ export function Sidebar() {
                   }>
                     <Settings className="mr-2 h-4 w-4" />
                     AI Model Management
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/dashboard/provider-management" className={({ isActive }) =>
+                    `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                    }`
+                  }>
+                    <Server className="mr-2 h-4 w-4" />
+                    Provider Management
                   </NavLink>
                 </li>
                 <li>

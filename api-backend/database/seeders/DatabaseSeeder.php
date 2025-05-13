@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             SuperAdminSeeder::class,
             WidgetSeeder::class,
             ModuleConfigurationSeeder::class,
+            ProviderSeeder::class,
         ]);
     }
 }

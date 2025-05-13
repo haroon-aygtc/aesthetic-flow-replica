@@ -1,4 +1,3 @@
-
 // List of supported AI providers
 export const providers = [
   { value: "openai", label: "OpenAI" },
@@ -40,9 +39,37 @@ export const getModelOptions = (provider: string) => {
       ];
     case "huggingface":
       return [
-        { value: "meta-llama/Llama-2-70b-chat-hf", label: "Llama 2 70B" },
-        { value: "meta-llama/Llama-3-70b-chat-hf", label: "Llama 3 70B" },
-        { value: "mistralai/Mixtral-8x7B-Instruct-v0.1", label: "Mixtral 8x7B" }
+        // Free models - widely accessible
+        { value: "google/flan-t5-small", label: "Flan-T5 Small (Free)" },
+        { value: "facebook/bart-large-cnn", label: "BART CNN (Free)" },
+        { value: "gpt2", label: "GPT-2 (Free)" },
+        { value: "EleutherAI/gpt-neo-125m", label: "GPT-Neo 125M (Free)" },
+        { value: "EleutherAI/gpt-neo-1.3B", label: "GPT-Neo 1.3B (Free)" },
+        { value: "bigscience/bloom-560m", label: "BLOOM 560M (Free)" },
+        { value: "t5-small", label: "T5 Small (Free)" },
+        { value: "distilbert-base-uncased", label: "DistilBERT Base (Free)" },
+        { value: "sentence-transformers/all-MiniLM-L6-v2", label: "MiniLM L6 v2 (Free)" },
+        
+        // Models requiring access approval
+        // Meta Llama models
+        { value: "meta-llama/Llama-3-70b-chat-hf", label: "Llama 3 70B (Restricted)" },
+        { value: "meta-llama/Llama-3-8b-chat-hf", label: "Llama 3 8B (Restricted)" },
+        { value: "meta-llama/Llama-2-70b-chat-hf", label: "Llama 2 70B (Restricted)" },
+        { value: "meta-llama/Llama-2-13b-chat-hf", label: "Llama 2 13B (Restricted)" },
+        
+        // Mistral models
+        { value: "mistralai/Mixtral-8x7B-Instruct-v0.1", label: "Mixtral 8x7B (Restricted)" },
+        { value: "mistralai/Mistral-7B-Instruct-v0.2", label: "Mistral 7B v0.2 (Restricted)" },
+        
+        // Gemma models
+        { value: "google/gemma-7b-it", label: "Gemma 7B-IT (Restricted)" },
+        { value: "google/gemma-2b-it", label: "Gemma 2B-IT (Restricted)" },
+        
+        // Other restricted models
+        { value: "tiiuae/falcon-7b-instruct", label: "Falcon 7B (Restricted)" },
+        { value: "bigscience/bloomz-7b1", label: "BLOOMZ 7B (Restricted)" },
+        { value: "microsoft/phi-2", label: "Phi-2 (Restricted)" },
+        { value: "Salesforce/codegen25-7b-instruct", label: "CodeGen 2.5 7B (Restricted)" }
       ];
     case "openrouter":
       return [

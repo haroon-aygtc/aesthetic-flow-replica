@@ -1,4 +1,3 @@
-
 import { useAIModelManagement } from "@/hooks/use-ai-model-management";
 import { useModelActions } from "./model-management/model-actions";
 import { AIModelData } from "@/utils/ai-model-service";
@@ -145,14 +144,18 @@ export function AIModelManager({ initialTab = "basic", onTabChange }: AIModelMan
     );
   };
 
-  // Handle adding new model
+  // Handle adding new model - with support for both dialog and full-page approaches
   const onAddNewModel = () => {
+    // The dialog approach is only used as a fallback if useFullPageEditor is false
+    // The Button in ModelSelectionCard will use Link directly to the new page if useFullPageEditor is true
     setEditingModel(null);
     setIsDialogOpen(true);
   };
 
-  // Handle editing model
+  // Handle editing model - with support for both dialog and full-page approaches
   const onEditModel = (model: AIModelData) => {
+    // The dialog approach is only used as a fallback if useFullPageEditor is false
+    // The Button in ModelSelectionCard will use Link directly to the edit page if useFullPageEditor is true
     setEditingModel(model);
     setIsDialogOpen(true);
   };
@@ -191,6 +194,7 @@ export function AIModelManager({ initialTab = "basic", onTabChange }: AIModelMan
             onAddNewModel={onAddNewModel}
             onEditModel={onEditModel}
             isLoading={isLoading}
+            useFullPageEditor={true}
           />
         </div>
         {selectedModel && (
@@ -278,7 +282,7 @@ export function AIModelManager({ initialTab = "basic", onTabChange }: AIModelMan
         </Tabs>
       )}
 
-      {/* Model Dialog */}
+      {/* Model Dialog - Kept for fallback when useFullPageEditor is false */}
       <AIModelDialog
         model={editingModel || undefined}
         open={isDialogOpen}

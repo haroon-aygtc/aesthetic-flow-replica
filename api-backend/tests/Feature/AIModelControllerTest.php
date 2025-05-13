@@ -4,10 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\AIModel;
 use App\Models\User;
+use Laravel\Sanctum\Sanctum;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
-use Laravel\Sanctum\Sanctum;
 
 class AIModelControllerTest extends TestCase
 {
@@ -26,7 +26,7 @@ class AIModelControllerTest extends TestCase
     {
         AIModel::factory()->count(3)->create();
 
-        $response = $this->getJson('/api/ai-models');
+        $response = $this->getJson('/ai-models');
 
         $response->assertStatus(200)
                  ->assertJsonStructure([
@@ -47,7 +47,7 @@ class AIModelControllerTest extends TestCase
             'fallback_model_id' => null,
         ];
 
-        $response = $this->postJson('/api/ai-models', $data);
+        $response = $this->postJson('/ai-models', $data);
 
         $response->assertStatus(201)
                  ->assertJsonStructure([
@@ -68,7 +68,7 @@ class AIModelControllerTest extends TestCase
     {
         $model = AIModel::factory()->create();
 
-        $response = $this->getJson("/api/ai-models/{$model->id}");
+        $response = $this->getJson("/ai-models/{$model->id}");
 
         $response->assertStatus(200)
                  ->assertJsonStructure([
@@ -88,7 +88,7 @@ class AIModelControllerTest extends TestCase
         $model = AIModel::factory()->create();
         $newName = 'Updated Model Name';
 
-        $response = $this->putJson("/api/ai-models/{$model->id}", [
+        $response = $this->putJson("/ai-models/{$model->id}", [
             'name' => $newName
         ]);
 
@@ -107,7 +107,7 @@ class AIModelControllerTest extends TestCase
     {
         $model = AIModel::factory()->create();
 
-        $response = $this->deleteJson("/api/ai-models/{$model->id}");
+        $response = $this->deleteJson("/ai-models/{$model->id}");
 
         $response->assertStatus(200);
         $this->assertDatabaseMissing('ai_models', ['id' => $model->id]);
@@ -115,7 +115,7 @@ class AIModelControllerTest extends TestCase
 
     public function test_validation_works_for_create()
     {
-        $response = $this->postJson("/api/ai-models", [
+        $response = $this->postJson("/ai-models", [
             // Missing required fields
         ]);
 
@@ -132,7 +132,7 @@ class AIModelControllerTest extends TestCase
     {
         $model = AIModel::factory()->create();
 
-        $response = $this->postJson("/api/ai-models/{$model->id}/test");
+        $response = $this->postJson("/ai-models/{$model->id}/test");
 
         $response->assertStatus(200)
                  ->assertJsonStructure([

@@ -18,9 +18,10 @@ return [
 
         'gemini' => [
             'base_url' => env('GEMINI_API_URL', 'https://generativelanguage.googleapis.com/v1'),
-            'default_model' => env('GEMINI_DEFAULT_MODEL', 'gemini-1.5-pro'),
-            'timeout' => env('GEMINI_TIMEOUT', 30),
-            'retry_attempts' => env('GEMINI_RETRY_ATTEMPTS', 3),
+            'default_model' => env('GEMINI_DEFAULT_MODEL', 'gemini-1.5-flash'),
+            'timeout' => env('GEMINI_TIMEOUT', 60),
+            'retry_attempts' => env('GEMINI_RETRY_ATTEMPTS', 5),
+            'retry_delay' => env('GEMINI_RETRY_DELAY', 2000),
         ],
 
         'grok' => [

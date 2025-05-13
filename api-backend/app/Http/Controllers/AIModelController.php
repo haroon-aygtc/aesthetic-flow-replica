@@ -426,7 +426,40 @@ class AIModelController extends Controller
             $provider = $this->getProviderForModel($aiModel);
 
             // Discover models using the provider
-            $result = $provider->discoverModels($aiModel);
+            try {
+                $result = $provider->discoverModels($aiModel);
+            } catch (\Exception $e) {
+                // Check for authentication errors
+                $errorMessage = $e->getMessage();
+                $isAuthError = 
+                    stripos($errorMessage, 'authentication') !== false || 
+                    stripos($errorMessage, 'auth') !== false ||
+                    stripos($errorMessage, 'key') !== false ||
+                    stripos($errorMessage, 'token') !== false ||
+                    stripos($errorMessage, 'credential') !== false ||
+                    stripos($errorMessage, 'unauthorized') !== false;
+                
+                Log::error('Failed to discover models: ' . $errorMessage, [
+                    'model_id' => $id,
+                    'provider' => $aiModel->provider,
+                    'error_type' => $isAuthError ? 'authentication' : 'unknown'
+                ]);
+                
+                // Return detailed error for authentication issues
+                if ($isAuthError) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Authentication error: Please check your API key for ' . $aiModel->provider,
+                        'error_type' => 'authentication',
+                        'error_detail' => $errorMessage
+                    ], 401);
+                }
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to discover models: ' . $errorMessage,
+                ], 400);
+            }
 
             if ($result['success']) {
                 return response()->json([
@@ -438,17 +471,140 @@ class AIModelController extends Controller
                     ]
                 ]);
             } else {
+                // Check if there's a specific error message that indicates an authentication issue
+                $errorMessage = $result['error'] ?? 'Unknown error';
+                $isAuthError = 
+                    stripos($errorMessage, 'authentication') !== false || 
+                    stripos($errorMessage, 'auth') !== false ||
+                    stripos($errorMessage, 'key') !== false ||
+                    stripos($errorMessage, 'token') !== false ||
+                    stripos($errorMessage, 'credential') !== false ||
+                    stripos($errorMessage, 'unauthorized') !== false;
+                
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to discover models: ' . ($result['error'] ?? 'Unknown error'),
-                ]);
+                    'message' => $isAuthError 
+                        ? 'Authentication error: Please check your API key for ' . $aiModel->provider 
+                        : 'Failed to discover models: ' . $errorMessage,
+                    'error_type' => $isAuthError ? 'authentication' : 'unknown',
+                    'error_detail' => $errorMessage
+                ], $isAuthError ? 401 : 400);
             }
         } catch (\Exception $e) {
-            Log::error('Failed to discover models: ' . $e->getMessage());
+            $errorMessage = $e->getMessage();
+            Log::error('Failed to discover models: ' . $errorMessage, [
+                'model_id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to discover models',
-                'error' => $e->getMessage()
+                'error' => $errorMessage
+            ], 500);
+        }
+    }
+
+    /**
+     * Test an AI connection and discover models without requiring an existing model
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function testAIConnection(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'provider' => 'required|string',
+                'api_key' => 'required|string',
+            ]);
+            
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+            
+            // Create a temporary model instance
+            $tempModel = new AIModel([
+                'name' => 'Temporary Model',
+                'provider' => $request->provider,
+                'api_key' => $request->api_key,
+                'settings' => [
+                    'model_name' => null,
+                ]
+            ]);
+            
+            // Get the appropriate provider
+            try {
+                $provider = $this->getProviderForModel($tempModel);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid provider: ' . $e->getMessage(),
+                ], 400);
+            }
+            
+            // Test connection and discover models
+            try {
+                // First test the connection
+                $connectionTest = $provider->testConnection($tempModel);
+                
+                if (!$connectionTest['success']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $connectionTest['message'] ?? 'Connection test failed',
+                        'error_type' => $connectionTest['error_type'] ?? 'unknown'
+                    ], 400);
+                }
+                
+                // Then discover models
+                $result = $provider->discoverModels($tempModel);
+                
+                if ($result['success']) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Successfully connected to provider',
+                        'data' => [
+                            'models' => array_keys($result['models']),
+                            'source' => $result['source'] ?? 'unknown'
+                        ]
+                    ]);
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $result['error'] ?? 'Failed to discover models',
+                    ], 400);
+                }
+            } catch (\Exception $e) {
+                // Check for authentication errors
+                $errorMessage = $e->getMessage();
+                $isAuthError = 
+                    stripos($errorMessage, 'authentication') !== false || 
+                    stripos($errorMessage, 'auth') !== false ||
+                    stripos($errorMessage, 'key') !== false ||
+                    stripos($errorMessage, 'token') !== false ||
+                    stripos($errorMessage, 'credential') !== false ||
+                    stripos($errorMessage, 'unauthorized') !== false;
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => $isAuthError 
+                        ? 'Authentication error: ' . $errorMessage 
+                        : 'Error testing connection: ' . $errorMessage,
+                    'error_type' => $isAuthError ? 'authentication' : 'unknown'
+                ], $isAuthError ? 401 : 400);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error in AI test connection: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Server error: ' . $e->getMessage(),
             ], 500);
         }
     }

@@ -1,6 +1,5 @@
-
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/components/ui/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/react-query";
@@ -12,6 +11,7 @@ import ContextRules from "./pages/ContextRules";
 import UserManagement from "./pages/UserManagement";
 import ApiTester from "./pages/ApiTester";
 import WidgetConfig from "./pages/WidgetConfig";
+import AIModelsModule from "./modules/ai-models";
 import EmbedCode from "./pages/EmbedCode";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import ResponseFormatter from "./pages/ResponseFormatter";
@@ -19,11 +19,13 @@ import Branding from "./pages/Branding";
 import FollowUp from "./pages/FollowUp";
 import Analytics from "./pages/Analytics";
 import DirectChat from "./pages/DirectChat";
+import ProviderManagement from "./pages/ProviderManagement";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { AuthProvider } from "./hooks/use-auth";
 import { ProtectedRoute } from "./components/protected-route";
+import Dashboard from "./pages/Dashboard";
 
 function App() {
   return (
@@ -38,10 +40,11 @@ function App() {
               <Route path="/register" element={<Register />} />
 
               {/* Protected dashboard routes */}
-              <Route path="/dashboard" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/dashboard/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
               <Route path="/dashboard/prompts" element={<ProtectedRoute><PromptTemplatesModule /></ProtectedRoute>} />
-              <Route path="/dashboard/model-management" element={<ProtectedRoute><ModelManagement /></ProtectedRoute>} />
+              <Route path="/dashboard/model-management/*" element={<ProtectedRoute><ModelManagement /></ProtectedRoute>} />
+              <Route path="/dashboard/provider-management/*" element={<ProtectedRoute><ProviderManagement /></ProtectedRoute>} />
               <Route path="/dashboard/ai-configuration" element={<ProtectedRoute><AIConfiguration /></ProtectedRoute>} />
               <Route path="/dashboard/context-rules" element={<ProtectedRoute><ContextRules /></ProtectedRoute>} />
               <Route path="/dashboard/user-management" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
@@ -54,7 +57,7 @@ function App() {
               <Route path="/dashboard/follow-up" element={<ProtectedRoute><FollowUp /></ProtectedRoute>} />
               <Route path="/dashboard/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
               <Route path="/dashboard/direct-chat" element={<ProtectedRoute><DirectChat /></ProtectedRoute>} />
-
+              <Route path="/dashboard/ai-models" element={<ProtectedRoute><AIModelsModule /></ProtectedRoute>} />
               {/* Fallback route */}
               <Route path="*" element={<Index />} />
             </Routes>

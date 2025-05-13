@@ -1,20 +1,20 @@
-
-import { AdminLayout } from "@/components/admin-layout";
+import {AdminLayout} from "@/components/admin-layout";
 import { AIModelsModule } from "@/modules/ai-models";
+import { Route, Routes } from "react-router-dom";
+import { ModelEditPage } from "@/pages/ModelEditPage";
 
 const ModelManagement = () => {
   return (
     <AdminLayout>
-      <div className="flex flex-col">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">AI Model Management</h1>
-          <p className="text-muted-foreground">
-            Configure AI models, activation rules, fallback settings, and analyze performance
-          </p>
-        </div>
-
-        <AIModelsModule />
-      </div>
+      <Routes>
+        <Route path="/" element={
+          <div className="flex flex-col">
+            <AIModelsModule />
+          </div>
+        } />
+        <Route path="edit/:modelId" element={<ModelEditPage />} />
+        <Route path="new" element={<ModelEditPage />} />
+      </Routes>
     </AdminLayout>
   );
 };

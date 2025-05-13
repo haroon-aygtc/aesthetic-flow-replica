@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useFormContext } from "react-hook-form";
 import { 
@@ -6,51 +5,59 @@ import {
   FormItem, 
   FormLabel, 
   FormControl, 
-  FormMessage 
+  FormMessage,
+  FormDescription
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { 
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { providers } from "./model-provider-options";
 
-export const ModelBasicInfoFields: React.FC = () => {
+export function ModelBasicInfoFields() {
   const form = useFormContext();
   
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <FormField
         control={form.control}
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Name <span className="text-destructive">*</span></FormLabel>
+            <FormLabel>Model Name</FormLabel>
             <FormControl>
-              <Input placeholder="My AI Model" {...field} />
+              <Input 
+                placeholder="e.g., OpenAI GPT-4" 
+                {...field} 
+                className="bg-background"
+              />
             </FormControl>
+            <FormDescription>
+              A descriptive name to identify this model
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
       />
-
+      
       <FormField
         control={form.control}
         name="provider"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Provider <span className="text-destructive">*</span></FormLabel>
+            <FormLabel>Provider</FormLabel>
             <Select 
               onValueChange={field.onChange} 
               defaultValue={field.value}
             >
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select provider" />
+                  <SelectValue placeholder="Select a provider" />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
@@ -61,11 +68,14 @@ export const ModelBasicInfoFields: React.FC = () => {
                 ))}
               </SelectContent>
             </Select>
+            <FormDescription>
+              The AI service provider for this model
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
       />
-
+      
       <FormField
         control={form.control}
         name="description"
@@ -74,14 +84,18 @@ export const ModelBasicInfoFields: React.FC = () => {
             <FormLabel>Description</FormLabel>
             <FormControl>
               <Textarea 
-                placeholder="Describe this AI model..." 
+                placeholder="Brief description of this model, its capabilities, and use cases" 
+                className="h-20 bg-background resize-none"
                 {...field} 
               />
             </FormControl>
+            <FormDescription>
+              Optional description to help identify the model's purpose
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
       />
     </div>
   );
-};
+}
