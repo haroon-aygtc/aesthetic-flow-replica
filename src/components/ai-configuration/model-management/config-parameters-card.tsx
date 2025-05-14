@@ -1,4 +1,3 @@
-
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -109,6 +108,7 @@ export function ConfigParametersCard({
                 <PopoverContent className="w-80">
                   <p className="text-sm">
                     Limits the number of tokens in the model's response. One token is roughly 4 characters.
+                    Valid values are between 1 and 8000.
                   </p>
                 </PopoverContent>
               </Popover>
@@ -116,10 +116,20 @@ export function ConfigParametersCard({
             <Slider
               id="max-tokens"
               min={100}
-              max={4096}
+              max={8000}
               step={100}
               value={maxTokens}
-              onValueChange={onMaxTokensChange}
+              onValueChange={(values) => {
+                // Ensure values are within valid range before updating
+                const newValue = values[0];
+                if (newValue < 1) {
+                  onMaxTokensChange([1]);
+                } else if (newValue > 8000) {
+                  onMaxTokensChange([8000]);
+                } else {
+                  onMaxTokensChange(values);
+                }
+              }}
               disabled={isSaving}
             />
             <div className="flex justify-between text-xs text-muted-foreground">

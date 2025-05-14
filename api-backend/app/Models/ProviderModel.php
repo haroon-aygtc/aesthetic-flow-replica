@@ -10,28 +10,31 @@ class ProviderModel extends Model
     use HasFactory;
 
     protected $fillable = [
-        'provider_id', 
-        'model_id', 
-        'display_name', 
+        'provider_id',
+        'model_id',
+        'display_name',
         'description',
-        'is_free', 
-        'is_restricted', 
-        'is_featured',
-        'input_token_limit', 
-        'output_token_limit', 
+        'is_default',
+        'is_free',
+        'is_restricted',
+        'input_token_limit',
+        'output_token_limit',
         'capabilities',
-        'pricing',
-        'display_order'
+        'display_order',
     ];
     
     protected $casts = [
+        'is_default' => 'boolean',
         'is_free' => 'boolean',
         'is_restricted' => 'boolean',
-        'is_featured' => 'boolean',
+        'input_token_limit' => 'integer',
+        'output_token_limit' => 'integer',
         'capabilities' => 'array',
-        'pricing' => 'array'
     ];
-    
+
+    /**
+     * Get the provider that owns the model.
+     */
     public function provider()
     {
         return $this->belongsTo(AIProvider::class, 'provider_id');

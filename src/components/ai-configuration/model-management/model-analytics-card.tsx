@@ -32,19 +32,45 @@ export function ModelAnalyticsCard({ selectedModel }: ModelAnalyticsCardProps) {
     
     setIsLoading(true);
     try {
+      // First try to get data by day grouping as a fallback
+      let useGroupBy = groupBy;
+      
       const data = await aiModelService.getModelDetailedAnalytics(
         selectedModel.id,
         period,
-        groupBy
-      );
+        useGroupBy
+      ).catch(async (error) => {
+        console.warn(`Error loading analytics with group_by=${useGroupBy}:`, error);
+        
+        // If the original grouping failed, fall back to 'day' grouping
+        if (useGroupBy !== 'day') {
+          toast({
+            title: "Analytics Warning",
+            description: `Could not load data grouped by ${useGroupBy}, falling back to daily view`,
+            variant: "default"
+          });
+          
+          // Try with day grouping as fallback
+          return await aiModelService.getModelDetailedAnalytics(
+            selectedModel.id,
+            period,
+            'day'
+          );
+        }
+        // If even day grouping fails, rethrow the error
+        throw error;
+      });
+      
       setAnalyticsData(data);
     } catch (error) {
       console.error("Failed to load analytics data:", error);
       toast({
-        title: "Error",
-        description: "Failed to load model analytics data",
+        title: "Analytics Error",
+        description: "Unable to load analytics data. The feature may not be fully implemented or no data is available yet.",
         variant: "destructive"
       });
+      // Set empty analytics data to show "no data" state
+      setAnalyticsData({ analytics: [] });
     } finally {
       setIsLoading(false);
     }

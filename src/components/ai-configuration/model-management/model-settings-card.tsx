@@ -187,17 +187,89 @@ export function ModelSettingsCard({
             {/* Max Tokens Control */}
             <div className="space-y-2">
               <Label htmlFor="max-tokens" className="text-sm font-medium">Max Response Tokens</Label>
-              <Input
-                id="max-tokens"
-                type="number"
-                min={1}
-                max={100000}
-                value={maxTokens}
-                onChange={(e) => setMaxTokens(parseInt(e.target.value))}
-                className="bg-background"
-              />
+              <div className="flex items-center gap-2">
+                <Input
+                  id="max-tokens"
+                  type="number"
+                  value={maxTokens}
+                  onChange={(e) => {
+                    const inputValue = e.target.value;
+                    const value = parseInt(inputValue);
+                    
+                    if (isNaN(value)) {
+                      return;
+                    }
+                    
+                    if (value < 1) {
+                      setMaxTokens(1);
+                      toast({
+                        title: "Invalid Value",
+                        description: "Max tokens must be at least 1",
+                        variant: "destructive"
+                      });
+                    } else if (value > 8000) {
+                      setMaxTokens(8000);
+                      toast({
+                        title: "Invalid Value",
+                        description: "Max tokens must not exceed 8000",
+                        variant: "destructive"
+                      });
+                    } else {
+                      setMaxTokens(value);
+                    }
+                  }}
+                  className="w-24 text-right bg-background"
+                />
+                <Slider
+                  id="max-tokens-slider"
+                  min={1}
+                  max={8000}
+                  step={100}
+                  value={[maxTokens]}
+                  onValueChange={(values) => setMaxTokens(values[0])}
+                  className="flex-1"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setMaxTokens(1024)}
+                  className={`h-7 text-xs ${maxTokens === 1024 ? "bg-primary/10" : ""}`}
+                >
+                  1024
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setMaxTokens(2048)}
+                  className={`h-7 text-xs ${maxTokens === 2048 ? "bg-primary/10" : ""}`}
+                >
+                  2048
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setMaxTokens(4000)}
+                  className={`h-7 text-xs ${maxTokens === 4000 ? "bg-primary/10" : ""}`}
+                >
+                  4000
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setMaxTokens(8000)}
+                  className={`h-7 text-xs ${maxTokens === 8000 ? "bg-primary/10" : ""}`}
+                >
+                  8000
+                </Button>
+              </div>
               <p className="text-xs text-muted-foreground">
-                Maximum number of tokens the model can generate in a response.
+                Maximum number of tokens the model can generate in a response. Higher values allow longer responses.
               </p>
             </div>
           </TabsContent>

@@ -1,6 +1,6 @@
 import { useAIModelManagement } from "@/hooks/use-ai-model-management";
 import { useModelActions } from "./model-management/model-actions";
-import { AIModelData } from "@/utils/ai-model-service";
+import { AIModelData, aiModelService } from "@/utils/ai-model-service";
 import { AIModelDialog } from "./model-management/ai-model-dialog";
 import { ModelSelectionCard } from "./model-management/model-selection-card";
 import { ApiKeyCard } from "./model-management/api-key-card";
@@ -8,6 +8,7 @@ import { ConfigParametersCard } from "./model-management/config-parameters-card"
 import { ModelFallbackCard } from "./model-management/model-fallback-card";
 import { ModelAnalyticsCard } from "./model-management/model-analytics-card";
 import { ModelTestChatDialog } from "./model-management/model-test-chat-dialog";
+import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { MessageSquare } from "lucide-react";
@@ -19,6 +20,7 @@ interface AIModelManagerProps {
 }
 
 export function AIModelManager({ initialTab = "basic", onTabChange }: AIModelManagerProps = {}) {
+  const { toast } = useToast();
   const {
     selectedModelId,
     setSelectedModelId,
@@ -160,6 +162,67 @@ export function AIModelManager({ initialTab = "basic", onTabChange }: AIModelMan
     setIsDialogOpen(true);
   };
 
+  // Handle deleting a model
+  const onDeleteModel = async (id: number) => {
+    try {
+      setIsSaving(true);
+      await aiModelService.deleteModel(id);
+
+      // Update the models list
+      setModels(models.filter(model => model.id !== id));
+
+      // If the deleted model was selected, reset selection
+      if (selectedModelId === id) {
+        setSelectedModelId(null);
+        setSelectedModel(null);
+      }
+
+      toast({
+        title: "Model Deleted",
+        description: "The AI model was deleted successfully."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete model",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Handle toggling model activation
+  const onToggleActive = async (id: number, active: boolean) => {
+    try {
+      setIsSaving(true);
+      const updatedModel = await aiModelService.toggleModelActivation(id, active);
+
+      // Update the models list
+      setModels(models.map(model =>
+        model.id === id ? { ...model, active: updatedModel.active } : model
+      ));
+
+      // If this is the selected model, update it
+      if (selectedModelId === id) {
+        setSelectedModel(updatedModel);
+      }
+
+      toast({
+        title: active ? "Model Activated" : "Model Deactivated",
+        description: `The model has been ${active ? 'activated' : 'deactivated'} successfully.`
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update model status",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Handle model dialog submit
   const onModelDialogSubmit = async (formData: AIModelData) => {
     await handleModelDialogSubmit(
@@ -182,31 +245,49 @@ export function AIModelManager({ initialTab = "basic", onTabChange }: AIModelMan
     }
   };
 
+  // Handle setting a model as default
+  const onSetDefault = async (id: number) => {
+    try {
+      setIsSaving(true);
+      await aiModelService.setDefaultModel(id);
+
+      // Update the models list to reflect the change
+      setModels(models.map(model => ({
+        ...model,
+        is_default: model.id === id
+      })));
+
+      toast({
+        title: "Default Model Updated",
+        description: "The default AI model has been updated successfully."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to set default model",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Model Selection Card */}
-      <div className="flex flex-col md:flex-row md:items-center gap-4">
-        <div className="flex-1">
-          <ModelSelectionCard
-            models={models}
-            selectedModelId={selectedModelId}
-            onModelSelect={onModelSelect}
-            onAddNewModel={onAddNewModel}
-            onEditModel={onEditModel}
-            isLoading={isLoading}
-            useFullPageEditor={true}
-          />
-        </div>
-        {selectedModel && (
-          <Button
-            variant="outline"
-            className="flex items-center gap-2 self-end"
-            onClick={onOpenTestChat}
-          >
-            <MessageSquare className="h-4 w-4" />
-            Test Chat
-          </Button>
-        )}
+      <div>
+        <ModelSelectionCard
+          models={models}
+          selectedModelId={selectedModelId}
+          onModelSelect={onModelSelect}
+          onAddNewModel={onAddNewModel}
+          onEditModel={onEditModel}
+          onDeleteModel={onDeleteModel}
+          onToggleActive={onToggleActive}
+          onSetDefault={onSetDefault}
+          isLoading={isLoading}
+          useFullPageEditor={true}
+        />
       </div>
 
       {/* Only show configuration cards if a model is selected */}
@@ -235,6 +316,10 @@ export function AIModelManager({ initialTab = "basic", onTabChange }: AIModelMan
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <BarChart className="h-4 w-4" />
               Analytics
+            </TabsTrigger>
+            <TabsTrigger value="test" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Test
             </TabsTrigger>
           </TabsList>
 
@@ -278,6 +363,25 @@ export function AIModelManager({ initialTab = "basic", onTabChange }: AIModelMan
 
           <TabsContent value="analytics">
             <ModelAnalyticsCard selectedModel={selectedModel} />
+          </TabsContent>
+
+          <TabsContent value="test">
+            <div className="flex flex-col items-center justify-center p-6 bg-card border rounded-lg">
+              <div className="text-center mb-6">
+                <h3 className="text-lg font-medium mb-2">Test Model Chat</h3>
+                <p className="text-muted-foreground">
+                  Test how your AI model responds to different prompts and messages.
+                </p>
+              </div>
+              <Button
+                size="lg"
+                onClick={onOpenTestChat}
+                className="flex items-center gap-2"
+              >
+                <MessageSquare className="h-5 w-5" />
+                Start Test Chat
+              </Button>
+            </div>
           </TabsContent>
         </Tabs>
       )}

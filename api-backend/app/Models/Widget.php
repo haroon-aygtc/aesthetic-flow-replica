@@ -82,4 +82,49 @@ class Widget extends Model
     {
         return $this->hasMany(GuestUser::class);
     }
+
+    /**
+     * Get the default settings for a widget.
+     *
+     * @return array
+     */
+    public static function getDefaultSettings()
+    {
+        return [
+            'theme' => 'light',
+            'position' => 'bottom-right',
+            'welcome_message' => 'Hello! How can I help you today?',
+            'placeholder_text' => 'Type your message here...',
+            'use_knowledge_base' => false,
+            'knowledge_base_settings' => [
+                'search_threshold' => 0.7,
+                'max_results' => 5,
+                'sources' => ['embeddings', 'qa_pairs', 'keywords'],
+                'categories' => [],
+            ],
+        ];
+    }
+
+    /**
+     * Get the knowledge base settings for this widget.
+     *
+     * @return array
+     */
+    public function getKnowledgeBaseSettings()
+    {
+        $settings = $this->settings ?? [];
+        $defaultKnowledgeSettings = self::getDefaultSettings()['knowledge_base_settings'];
+
+        return $settings['knowledge_base_settings'] ?? $defaultKnowledgeSettings;
+    }
+
+    /**
+     * Check if knowledge base is enabled for this widget.
+     *
+     * @return bool
+     */
+    public function isKnowledgeBaseEnabled()
+    {
+        return $this->settings['use_knowledge_base'] ?? false;
+    }
 }

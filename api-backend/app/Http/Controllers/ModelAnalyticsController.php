@@ -98,58 +98,50 @@ class ModelAnalyticsController extends Controller
 
             // Group by time period
             if ($groupBy === 'day') {
-                $query->select(
-                    DB::raw('DATE(created_at) as date'),
-                    DB::raw('COUNT(*) as total_requests'),
-                    DB::raw('SUM(tokens_input) as total_input_tokens'),
-                    DB::raw('SUM(tokens_output) as total_output_tokens'),
-                    DB::raw('AVG(response_time) as avg_response_time'),
-                    DB::raw('AVG(confidence_score) as avg_confidence_score'),
-                    DB::raw('SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successful_requests'),
-                    DB::raw('SUM(CASE WHEN fallback_used = 1 THEN 1 ELSE 0 END) as fallback_requests')
-                )
-                ->groupBy('date')
-                ->orderBy('date');
+                $query->selectRaw('DATE(created_at) as date')
+                    ->selectRaw('COUNT(*) as total_requests')
+                    ->selectRaw('SUM(tokens_input) as total_input_tokens')
+                    ->selectRaw('SUM(tokens_output) as total_output_tokens')
+                    ->selectRaw('AVG(response_time) as avg_response_time')
+                    ->selectRaw('AVG(confidence_score) as avg_confidence_score')
+                    ->selectRaw('SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successful_requests')
+                    ->selectRaw('SUM(CASE WHEN fallback_used = 1 THEN 1 ELSE 0 END) as fallback_requests')
+                    ->groupBy('date')
+                    ->orderBy('date');
             } elseif ($groupBy === 'query_type') {
-                $query->select(
-                    'query_type',
-                    DB::raw('COUNT(*) as total_requests'),
-                    DB::raw('SUM(tokens_input) as total_input_tokens'),
-                    DB::raw('SUM(tokens_output) as total_output_tokens'),
-                    DB::raw('AVG(response_time) as avg_response_time'),
-                    DB::raw('AVG(confidence_score) as avg_confidence_score'),
-                    DB::raw('SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successful_requests'),
-                    DB::raw('SUM(CASE WHEN fallback_used = 1 THEN 1 ELSE 0 END) as fallback_requests')
-                )
-                ->groupBy('query_type')
-                ->orderBy('total_requests', 'desc');
+                $query->select('query_type')
+                    ->selectRaw('COUNT(*) as total_requests')
+                    ->selectRaw('SUM(tokens_input) as total_input_tokens')
+                    ->selectRaw('SUM(tokens_output) as total_output_tokens')
+                    ->selectRaw('AVG(response_time) as avg_response_time')
+                    ->selectRaw('AVG(confidence_score) as avg_confidence_score')
+                    ->selectRaw('SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successful_requests')
+                    ->selectRaw('SUM(CASE WHEN fallback_used = 1 THEN 1 ELSE 0 END) as fallback_requests')
+                    ->groupBy('query_type')
+                    ->orderBy('total_requests', 'desc');
             } elseif ($groupBy === 'use_case') {
-                $query->select(
-                    'use_case',
-                    DB::raw('COUNT(*) as total_requests'),
-                    DB::raw('SUM(tokens_input) as total_input_tokens'),
-                    DB::raw('SUM(tokens_output) as total_output_tokens'),
-                    DB::raw('AVG(response_time) as avg_response_time'),
-                    DB::raw('AVG(confidence_score) as avg_confidence_score'),
-                    DB::raw('SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successful_requests'),
-                    DB::raw('SUM(CASE WHEN fallback_used = 1 THEN 1 ELSE 0 END) as fallback_requests')
-                )
-                ->groupBy('use_case')
-                ->orderBy('total_requests', 'desc');
+                $query->select('use_case')
+                    ->selectRaw('COUNT(*) as total_requests')
+                    ->selectRaw('SUM(tokens_input) as total_input_tokens')
+                    ->selectRaw('SUM(tokens_output) as total_output_tokens')
+                    ->selectRaw('AVG(response_time) as avg_response_time')
+                    ->selectRaw('AVG(confidence_score) as avg_confidence_score')
+                    ->selectRaw('SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successful_requests')
+                    ->selectRaw('SUM(CASE WHEN fallback_used = 1 THEN 1 ELSE 0 END) as fallback_requests')
+                    ->groupBy('use_case')
+                    ->orderBy('total_requests', 'desc');
             } else {
                 // Default to hourly
-                $query->select(
-                    DB::raw('HOUR(created_at) as hour'),
-                    DB::raw('COUNT(*) as total_requests'),
-                    DB::raw('SUM(tokens_input) as total_input_tokens'),
-                    DB::raw('SUM(tokens_output) as total_output_tokens'),
-                    DB::raw('AVG(response_time) as avg_response_time'),
-                    DB::raw('AVG(confidence_score) as avg_confidence_score'),
-                    DB::raw('SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successful_requests'),
-                    DB::raw('SUM(CASE WHEN fallback_used = 1 THEN 1 ELSE 0 END) as fallback_requests')
-                )
-                ->groupBy('hour')
-                ->orderBy('hour');
+                $query->selectRaw('HOUR(created_at) as hour')
+                    ->selectRaw('COUNT(*) as total_requests')
+                    ->selectRaw('SUM(tokens_input) as total_input_tokens')
+                    ->selectRaw('SUM(tokens_output) as total_output_tokens')
+                    ->selectRaw('AVG(response_time) as avg_response_time')
+                    ->selectRaw('AVG(confidence_score) as avg_confidence_score')
+                    ->selectRaw('SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successful_requests')
+                    ->selectRaw('SUM(CASE WHEN fallback_used = 1 THEN 1 ELSE 0 END) as fallback_requests')
+                    ->groupBy('hour')
+                    ->orderBy('hour');
             }
 
             $analytics = $query->get();

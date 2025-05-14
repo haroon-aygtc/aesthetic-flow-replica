@@ -7,11 +7,20 @@ use App\Models\ChatMessage;
 use App\Models\Widget;
 use App\Models\GuestUser;
 use App\Services\AIService;
+use App\Services\KnowledgeAIService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class ChatController extends Controller
 {
+    protected $aiService;
+    protected $knowledgeAIService;
+
+    public function __construct(AIService $aiService, KnowledgeAIService $knowledgeAIService)
+    {
+        $this->aiService = $aiService;
+        $this->knowledgeAIService = $knowledgeAIService;
+    }
     /**
      * Initialize a new chat session.
      *
@@ -96,19 +105,71 @@ class ChatController extends Controller
         $session->last_activity_at = now();
         $session->save();
 
+        // Get the widget
+        $widget = Widget::find($session->widget_id);
+
+        // Get previous messages for context
+        $previousMessages = ChatMessage::where('chat_session_id', $session->id)
+            ->orderBy('created_at')
+            ->get();
+
+        // Format messages for AI processing
+        $messages = [];
+        foreach ($previousMessages as $prevMessage) {
+            $messages[] = [
+                'role' => $prevMessage->role,
+                'content' => $prevMessage->content
+            ];
+        }
+
+        // Add the current message
+        $messages[] = [
+            'role' => 'user',
+            'content' => $request->message
+        ];
+
+        // Context for AI processing
+        $context = [
+            'user_id' => auth()->id(),
+            'widget_id' => $widget->id,
+            'session_id' => $session->session_id,
+            'visitor_id' => $session->visitor_id,
+        ];
+
+        // Check if knowledge base is enabled for this widget
+        $useKnowledgeBase = $widget->settings['use_knowledge_base'] ?? false;
+
         // Get AI response
-        $aiService = new AIService();
-        $response = $aiService->getAIResponse($session->widget_id, $request->message, $session->session_id);
+        if ($useKnowledgeBase) {
+            $aiResponse = $this->knowledgeAIService->processMessageWithKnowledge(
+                $messages,
+                $widget->aiModel,
+                $widget->settings,
+                $context
+            );
+        } else {
+            $aiResponse = $this->aiService->processMessage(
+                $messages,
+                $widget->aiModel,
+                $widget->settings,
+                $context
+            );
+        }
+
+        // Extract response content
+        $responseContent = $aiResponse['content'] ?? 'Sorry, I could not generate a response.';
 
         // Save the AI response
         $aiChatMessage = new ChatMessage();
         $aiChatMessage->chat_session_id = $session->id;
         $aiChatMessage->role = 'assistant';
-        $aiChatMessage->content = $response;
+        $aiChatMessage->content = $responseContent;
+        $aiChatMessage->metadata = $aiResponse['metadata'] ?? null;
         $aiChatMessage->save();
 
         return response()->json([
-            'message' => $response,
+            'message' => $responseContent,
+            'metadata' => $aiResponse['metadata'] ?? null,
         ]);
     }
 

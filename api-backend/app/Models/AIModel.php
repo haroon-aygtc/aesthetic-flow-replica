@@ -52,7 +52,7 @@ class AIModel extends Model
      */
     public function widgets()
     {
-        return $this->hasMany(Widget::class);
+        return $this->hasMany(Widget::class, 'ai_model_id');
     }
 
     /**

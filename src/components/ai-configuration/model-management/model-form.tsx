@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -23,7 +23,7 @@ interface ModelFormProps {
 export function ModelForm({ initialModel, mode = "create" }: ModelFormProps) {
   const router = useRouter();
   const { toast } = useToast();
-  
+
   const {
     form,
     isLoading,
@@ -39,17 +39,20 @@ export function ModelForm({ initialModel, mode = "create" }: ModelFormProps) {
         description: `Successfully ${mode === "create" ? "created" : "updated"} the AI model.`,
         variant: "success",
       });
-      
-      router.push("/ai-configuration/models");
+
+      // Add a small delay before redirecting to ensure the update is processed
+      setTimeout(() => {
+        router.push("/ai-configuration/models");
+      }, 500);
     }
   });
 
   return (
     <div className="container max-w-4xl py-6">
       <div className="flex items-center mb-8">
-        <Button 
-          variant="ghost" 
-          className="mr-2 h-8 w-8 p-0" 
+        <Button
+          variant="ghost"
+          className="mr-2 h-8 w-8 p-0"
           onClick={() => router.push("/ai-configuration/models")}
         >
           <ArrowLeft className="h-4 w-4" />
@@ -58,9 +61,16 @@ export function ModelForm({ initialModel, mode = "create" }: ModelFormProps) {
           {mode === "create" ? "Add New AI Model" : "Edit AI Model"}
         </h1>
       </div>
-      
+
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+        <form
+          onSubmit={(e) => {
+            // Prevent default form submission which can cause page refresh
+            e.preventDefault();
+            form.handleSubmit(handleFormSubmit)(e);
+          }}
+          className="space-y-6"
+        >
           <Tabs defaultValue="basic" className="w-full">
             <TabsList className="grid grid-cols-3 w-full max-w-md mb-6">
               <TabsTrigger value="basic" className="flex items-center gap-2">
@@ -76,26 +86,26 @@ export function ModelForm({ initialModel, mode = "create" }: ModelFormProps) {
                 <span>Model Settings</span>
               </TabsTrigger>
             </TabsList>
-            
+
             <Card className="border-none shadow-sm">
               <TabsContent value="basic" className="p-6 space-y-6 mt-0">
                 <ModelBasicInfoFields />
-                
+
                 <div className="space-y-4 pt-4 border-t">
                   <ModelDefaultToggle />
                   <ModelActiveToggle />
                 </div>
               </TabsContent>
-              
+
               <TabsContent value="connection" className="p-6 space-y-6 mt-0">
-                <ModelApiKeyField 
-                  onFetchModels={handleFetchModels} 
+                <ModelApiKeyField
+                  onFetchModels={handleFetchModels}
                   isFetching={isFetchingModels}
                 />
               </TabsContent>
-              
+
               <TabsContent value="settings" className="mt-0">
-                <ModelSettingsFields 
+                <ModelSettingsFields
                   fetchedModels={fetchedModels}
                   isLoadingModels={isFetchingModels}
                   autoUpdateModelName={true}
@@ -104,18 +114,28 @@ export function ModelForm({ initialModel, mode = "create" }: ModelFormProps) {
               </TabsContent>
             </Card>
           </Tabs>
-          
+
           <div className="flex justify-end pt-6">
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => router.push("/ai-configuration/models")}
               className="mr-2"
               disabled={isLoading}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              onClick={(e) => {
+                // Additional safeguard against page refresh
+                if (isLoading) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }
+              }}
+            >
               {isLoading && <Spinner className="mr-2" size="sm" />}
               {mode === "create" ? "Create Model" : "Save Changes"}
             </Button>
@@ -124,4 +144,4 @@ export function ModelForm({ initialModel, mode = "create" }: ModelFormProps) {
       </Form>
     </div>
   );
-} 
+}

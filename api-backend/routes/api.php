@@ -16,6 +16,7 @@ use App\Http\Controllers\FollowUpController;
 use App\Http\Controllers\BrandingController;
 use App\Http\Controllers\TemplateController;
 use App\Http\Controllers\API\ProviderAPIController;
+use App\Http\Controllers\KnowledgeBaseController;
 
 /*
 |--------------------------------------------------------------------------
@@ -55,17 +56,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('permissions', App\Http\Controllers\PermissionController::class);
     Route::post('/users/{user}/roles', [App\Http\Controllers\UserController::class, 'assignRoles']);
     Route::post('/roles/{role}/permissions', [App\Http\Controllers\RoleController::class, 'assignPermissions']);
-    
+
     // Admin Provider Management Routes
     Route::apiResource('admin/providers', App\Http\Controllers\Admin\ProviderAdminController::class);
-    
+
     // Provider Models
     Route::get('admin/providers/{id}/models', [App\Http\Controllers\Admin\ProviderAdminController::class, 'manageModels']);
     Route::post('admin/providers/{id}/models', [App\Http\Controllers\Admin\ProviderAdminController::class, 'storeModel']);
     Route::put('admin/providers/{providerId}/models/{modelId}', [App\Http\Controllers\Admin\ProviderAdminController::class, 'updateModel']);
     Route::delete('admin/providers/{providerId}/models/{modelId}', [App\Http\Controllers\Admin\ProviderAdminController::class, 'destroyModel']);
     Route::post('admin/providers/{id}/discover-models', [App\Http\Controllers\Admin\ProviderAdminController::class, 'discoverModels']);
-    
+
     // Provider Parameters
     Route::get('admin/providers/{id}/parameters', [App\Http\Controllers\Admin\ProviderAdminController::class, 'manageParameters']);
     Route::post('admin/providers/{id}/parameters', [App\Http\Controllers\Admin\ProviderAdminController::class, 'updateParameters']);
@@ -93,10 +94,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Model analytics routes
     Route::get('/analytics/models', [ModelAnalyticsController::class, 'getModelAnalytics']);
     Route::get('/analytics/models/{modelId}', [ModelAnalyticsController::class, 'getModelDetailedAnalytics']);
+    Route::get('/analytics/models/{modelId}/detailed', [ModelAnalyticsController::class, 'getModelDetailedAnalytics']);
     Route::get('/analytics/models/{modelId}/errors', [ModelAnalyticsController::class, 'getModelErrorLogs']);
 
     // Widget routes
     Route::apiResource('widgets', WidgetController::class);
+    Route::put('/widgets/{id}/knowledge-base', [WidgetController::class, 'updateKnowledgeBaseSettings']);
 
     // Guest user management routes (admin)
     Route::get('/guest-users', [GuestUserAdminController::class, 'index']);
@@ -153,4 +156,27 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/providers', [ProviderAPIController::class, 'getProviders']);
     Route::get('/providers/{slug}/models', [ProviderAPIController::class, 'getProviderModels']);
     Route::get('/providers/{slug}/parameters', [ProviderAPIController::class, 'getProviderParameters']);
+
+    // Knowledge Base routes
+    Route::prefix('knowledge-base')->group(function () {
+        // Document routes
+        Route::get('/documents', [KnowledgeBaseController::class, 'getDocuments']);
+        Route::post('/documents/upload', [KnowledgeBaseController::class, 'uploadDocument']);
+        Route::delete('/documents/{id}', [KnowledgeBaseController::class, 'deleteDocument']);
+        Route::get('/documents/{id}/download', [KnowledgeBaseController::class, 'downloadDocument']);
+        Route::post('/documents/{id}/process', [KnowledgeBaseController::class, 'processDocument']);
+        Route::get('/documents/{id}/embeddings', [KnowledgeBaseController::class, 'getDocumentEmbeddings']);
+
+        // QA Pair routes
+        Route::get('/qa-pairs', [KnowledgeBaseController::class, 'getQAPairs']);
+        Route::post('/qa-pairs', [KnowledgeBaseController::class, 'createQAPair']);
+        Route::put('/qa-pairs/{id}', [KnowledgeBaseController::class, 'updateQAPair']);
+        Route::delete('/qa-pairs/{id}', [KnowledgeBaseController::class, 'deleteQAPair']);
+
+        // Insights routes
+        Route::get('/insights', [KnowledgeBaseController::class, 'getInsights']);
+
+        // Search routes
+        Route::post('/search', [KnowledgeBaseController::class, 'search']);
+    });
 });

@@ -93,7 +93,20 @@ export const aiModelService = {
   // Update a model
   updateModel: async (id: number, data: Partial<AIModelData>): Promise<AIModelData> => {
     try {
-      const response = await api.put(`ai-models/${id}`, data);
+      // Ensure the ID is included in the data
+      const modelData = {
+        ...data,
+        id // Explicitly include the ID to ensure we're updating the right model
+      };
+
+      console.log(`Updating model with ID ${id}`, modelData);
+
+      // Use PUT request to update the model
+      const response = await api.put(`ai-models/${id}`, modelData);
+
+      // Log the response for debugging
+      console.log(`Update response for model ${id}:`, response.data);
+
       return response.data && response.data.data ? response.data.data : response.data;
     } catch (error) {
       console.error(`Error updating AI model with ID ${id}:`, error);
@@ -145,13 +158,13 @@ export const aiModelService = {
   },
 
   // Discover available models for an existing model
-  discoverModels: async (id: number): Promise<{ 
-    success: boolean; 
-    message: string; 
-    data?: { 
-      models: string[]; 
-      current_model?: string; 
-    } 
+  discoverModels: async (id: number): Promise<{
+    success: boolean;
+    message: string;
+    data?: {
+      models: string[];
+      current_model?: string;
+    }
   }> => {
     try {
       const response = await api.post(`ai-models/${id}/discover-models`);
@@ -292,11 +305,43 @@ export const aiModelService = {
   // Get detailed analytics for a model
   getModelDetailedAnalytics: async (modelId: number, period: string = 'month', groupBy: string = 'day'): Promise<any> => {
     try {
-      const response = await api.get(`analytics/models/${modelId}/detailed?period=${period}&group_by=${groupBy}`);
+      // Add timeout to prevent long-hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+
+      const response = await api.get(
+        `analytics/models/${modelId}/detailed?period=${period}&group_by=${groupBy}`,
+        { signal: controller.signal }
+      );
+
+      clearTimeout(timeoutId);
+
       return response.data && response.data.data ? response.data.data : response.data;
-    } catch (error) {
+    } catch (error: any) {
+      // Check if this is an abort error (timeout)
+      if (error.name === 'AbortError' || error.code === 'ECONNABORTED') {
+        console.error(`Analytics request timed out for modelId=${modelId}`);
+        throw new Error('Analytics request timed out');
+      }
+
+      // Check if this is a 500 server error related to groupBy
+      if (error.response && error.response.status === 500 && groupBy !== 'day') {
+        console.warn(`Error with group_by=${groupBy}, might be unsupported: ${error.message}`);
+
+        // This suggests the API may not support this grouping, throw a more specific error
+        throw new Error(`Analytics grouping by "${groupBy}" may not be supported`);
+      }
+
       console.error(`Error fetching detailed analytics for AI model with ID ${modelId}:`, error);
-      return {};
+
+      // Return an empty data object for graceful degradation
+      return {
+        model: { id: modelId },
+        analytics: [],
+        group_by: groupBy,
+        period: period,
+        success: false
+      };
     }
   },
 
