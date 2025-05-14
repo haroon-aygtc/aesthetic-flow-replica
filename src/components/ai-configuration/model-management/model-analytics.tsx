@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -58,9 +57,14 @@ export function ModelAnalytics({ selectedModel }: ModelAnalyticsProps) {
   const loadAnalytics = async (modelId: number, timePeriod: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/analytics/models/${modelId}?period=${timePeriod}`);
+      const response = await fetch(`/api/analytics/models/${modelId}?period=${timePeriod}`)
+        .catch(error => {
+          console.error("Network error loading analytics:", error);
+          throw new Error("Network error while loading analytics");
+        });
+        
       if (!response.ok) {
-        throw new Error("Failed to load analytics");
+        throw new Error(`Failed to load analytics: ${response.status} ${response.statusText}`);
       }
 
       const responseData = await response.json();
@@ -87,9 +91,23 @@ export function ModelAnalytics({ selectedModel }: ModelAnalyticsProps) {
     } catch (error) {
       console.error("Error loading model analytics:", error);
       toast({
-        title: "Error",
-        description: "Failed to load model analytics data",
+        title: "Analytics Error",
+        description: "The analytics feature may not be fully implemented or there may be no data available yet.",
         variant: "destructive"
+      });
+      
+      // Set empty analytics to show "no data" state instead of loading spinner
+      setAnalytics({
+        totalRequests: 0,
+        successRate: 0,
+        averageResponseTime: 0,
+        tokensUsed: 0,
+        costEstimate: 0,
+        fallbackRate: 0,
+        requestsOverTime: [],
+        useCaseDistribution: [],
+        confidenceScoreDistribution: [],
+        errorMessages: []
       });
     } finally {
       setIsLoading(false);

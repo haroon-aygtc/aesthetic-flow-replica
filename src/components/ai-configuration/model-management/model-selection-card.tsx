@@ -4,7 +4,7 @@ import { RadioGroup } from "@/components/ui/radio-group";
 import { Spinner } from "@/components/ui/spinner";
 import { AIModelData } from "@/utils/ai-model-service";
 import { ModelSelectionItem } from "./model-selection-item";
-import { Plus, Settings } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface ModelSelectionCardProps {
@@ -13,6 +13,9 @@ interface ModelSelectionCardProps {
   onModelSelect: (modelId: string) => void;
   onAddNewModel?: () => void;
   onEditModel?: (model: AIModelData) => void;
+  onDeleteModel?: (id: number) => void;
+  onToggleActive?: (id: number, active: boolean) => void;
+  onSetDefault?: (id: number) => void;
   isLoading: boolean;
   useFullPageEditor?: boolean;
 }
@@ -23,23 +26,27 @@ export function ModelSelectionCard({
   onModelSelect,
   onAddNewModel,
   onEditModel,
+  onDeleteModel,
+  onToggleActive,
+  onSetDefault,
   isLoading,
   useFullPageEditor = true
 }: ModelSelectionCardProps) {
-  const handleAddNew = () => {
-    if (useFullPageEditor) {
-      return;
-    } else if (onAddNewModel) {
-      onAddNewModel();
-    }
-  };
-  
+  // No longer needed as we use the renderAddButton function
+  // const handleAddNew = () => {
+  //   if (useFullPageEditor) {
+  //     return;
+  //   } else if (onAddNewModel) {
+  //     onAddNewModel();
+  //   }
+  // };
+
   const handleEdit = (model: AIModelData) => {
     if (!useFullPageEditor && onEditModel) {
       onEditModel(model);
     }
   };
-  
+
   const renderAddButton = () => {
     if (useFullPageEditor) {
       return (
@@ -59,8 +66,8 @@ export function ModelSelectionCard({
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-3">
+    <Card className="border-none shadow-sm">
+      <CardHeader className="flex flex-row items-center justify-between pb-3 border-b">
         <div>
           <CardTitle className="text-xl flex items-center gap-2">
             AI Models
@@ -71,7 +78,7 @@ export function ModelSelectionCard({
         </div>
         {renderAddButton()}
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         {isLoading ? (
           <div className="flex justify-center py-8">
             <Spinner size="lg" />
@@ -110,14 +117,14 @@ export function ModelSelectionCard({
           <RadioGroup
             value={selectedModelId ? String(selectedModelId) : "none"}
             onValueChange={onModelSelect}
-            className="grid gap-4 md:grid-cols-2"
+            className="grid gap-6 md:grid-cols-2"
           >
-            <ModelSelectionItem 
-              key="none" 
-              model={{ id: null, name: "None", provider: "None" }} 
-              isSelected={selectedModelId === null} 
+            <ModelSelectionItem
+              key="none"
+              model={{ id: null, name: "None", provider: "None", description: "No AI model will be used" }}
+              isSelected={selectedModelId === null}
               useFullPageEditor={useFullPageEditor}
-              onEdit={() => {}} 
+              onEdit={() => {}}
             />
             {models.map((model) => (
               <ModelSelectionItem
@@ -126,6 +133,9 @@ export function ModelSelectionCard({
                 isSelected={selectedModelId === model.id}
                 useFullPageEditor={useFullPageEditor}
                 onEdit={() => handleEdit(model)}
+                onDelete={onDeleteModel}
+                onToggleActive={onToggleActive}
+                onSetDefault={onSetDefault}
               />
             ))}
           </RadioGroup>

@@ -43,9 +43,16 @@ class WidgetController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $widget = new Widget($request->all());
+        // Merge default settings with provided settings
+        $defaultSettings = Widget::getDefaultSettings();
+        $providedSettings = $request->input('settings', []);
+        $mergedSettings = array_merge($defaultSettings, $providedSettings);
+
+        // Create the widget
+        $widget = new Widget($request->except('settings'));
         $widget->user_id = $request->user()->id;
         $widget->widget_id = Str::random(12);
+        $widget->settings = $mergedSettings;
         $widget->save();
 
         return response()->json($widget, 201);
@@ -91,7 +98,26 @@ class WidgetController extends Controller
                        ->where('user_id', $request->user()->id)
                        ->firstOrFail();
 
-        $widget->update($request->all());
+        // If settings are provided, merge with existing settings
+        if ($request->has('settings')) {
+            $existingSettings = $widget->settings ?? [];
+            $newSettings = $request->input('settings');
+
+            // Special handling for knowledge base settings
+            if (isset($newSettings['knowledge_base_settings'])) {
+                $existingKbSettings = $existingSettings['knowledge_base_settings'] ?? [];
+                $newSettings['knowledge_base_settings'] = array_merge($existingKbSettings, $newSettings['knowledge_base_settings']);
+            }
+
+            $mergedSettings = array_merge($existingSettings, $newSettings);
+            $widget->settings = $mergedSettings;
+
+            // Update other fields except settings
+            $widget->update($request->except('settings'));
+        } else {
+            // Update all fields
+            $widget->update($request->all());
+        }
 
         return response()->json($widget);
     }
@@ -130,6 +156,54 @@ class WidgetController extends Controller
         return response()->json([
             'widget_id' => $widget->widget_id,
             'settings' => $widget->settings,
+            'knowledge_base_enabled' => $widget->isKnowledgeBaseEnabled(),
+        ]);
+    }
+
+    /**
+     * Update knowledge base settings for a widget.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function updateKnowledgeBaseSettings(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'use_knowledge_base' => 'required|boolean',
+            'knowledge_base_settings' => 'required_if:use_knowledge_base,true|array',
+            'knowledge_base_settings.search_threshold' => 'numeric|min:0|max:1',
+            'knowledge_base_settings.max_results' => 'integer|min:1|max:20',
+            'knowledge_base_settings.sources' => 'array',
+            'knowledge_base_settings.sources.*' => 'string|in:embeddings,qa_pairs,keywords',
+            'knowledge_base_settings.categories' => 'array',
+            'knowledge_base_settings.categories.*' => 'string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $widget = Widget::where('id', $id)
+                       ->where('user_id', $request->user()->id)
+                       ->firstOrFail();
+
+        // Update knowledge base settings
+        $settings = $widget->settings ?? [];
+        $settings['use_knowledge_base'] = $request->input('use_knowledge_base');
+
+        if ($request->has('knowledge_base_settings')) {
+            $existingKbSettings = $settings['knowledge_base_settings'] ?? [];
+            $newKbSettings = $request->input('knowledge_base_settings');
+            $settings['knowledge_base_settings'] = array_merge($existingKbSettings, $newKbSettings);
+        }
+
+        $widget->settings = $settings;
+        $widget->save();
+
+        return response()->json([
+            'success' => true,
+            'widget' => $widget,
         ]);
     }
 }

@@ -29,6 +29,9 @@ class ProviderParameter extends Model
         'is_advanced' => 'boolean'
     ];
     
+    /**
+     * Get the provider that owns the parameter.
+     */
     public function provider()
     {
         return $this->belongsTo(AIProvider::class, 'provider_id');

@@ -46,6 +46,11 @@ class AIModelController extends Controller
             'description' => 'nullable|string',
             'api_key' => 'nullable|string',
             'settings' => 'nullable|array',
+            'settings.max_tokens' => 'nullable|integer|min:1|max:8000',
+            'settings.temperature' => 'nullable|numeric|min:0|max:1',
+            'settings.top_p' => 'nullable|numeric|min:0|max:1',
+            'settings.frequency_penalty' => 'nullable|numeric|min:0|max:2',
+            'settings.presence_penalty' => 'nullable|numeric|min:0|max:2',
             'is_default' => 'boolean',
             'fallback_model_id' => 'nullable|integer',
             'template_id' => 'nullable|integer|exists:templates,id',
@@ -109,6 +114,11 @@ class AIModelController extends Controller
             'description' => 'nullable|string',
             'api_key' => 'nullable|string',
             'settings' => 'nullable|array',
+            'settings.max_tokens' => 'nullable|integer|min:1|max:8000',
+            'settings.temperature' => 'nullable|numeric|min:0|max:1',
+            'settings.top_p' => 'nullable|numeric|min:0|max:1',
+            'settings.frequency_penalty' => 'nullable|numeric|min:0|max:2',
+            'settings.presence_penalty' => 'nullable|numeric|min:0|max:2',
             'is_default' => 'boolean',
             'template_id' => 'nullable|integer|exists:templates,id',
             'fallback_model_id' => 'nullable|integer',
@@ -245,7 +255,7 @@ class AIModelController extends Controller
 
             // Get temperature and max_tokens from request or model settings
             $temperature = $request->input('temperature', $aiModel->settings['temperature'] ?? 0.7);
-            $maxTokens = $request->input('max_tokens', $aiModel->settings['max_tokens'] ?? 2048);
+            $maxTokens = $request->input('max_tokens', $aiModel->settings['max_tokens'] ?? 1024);
 
             // Create AIService instance
             $aiService = app(AIService::class);
@@ -254,7 +264,10 @@ class AIModelController extends Controller
             $startTime = microtime(true);
 
             // Process the message
-            $response = $aiService->processMessage($messages, $aiModel);
+            $response = $aiService->processMessage($messages, $aiModel, null, [
+                'temperature' => $temperature,
+                'max_tokens' => $maxTokens
+            ]);
 
             // Calculate response time
             $responseTime = microtime(true) - $startTime;
@@ -414,81 +427,103 @@ class AIModelController extends Controller
     /**
      * Discover available models from the provider.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function discoverModels($id)
+    public function discoverModels(Request $request, $id)
     {
         try {
             $aiModel = AIModel::findOrFail($id);
 
-            // Get the appropriate provider for this model
-            $provider = $this->getProviderForModel($aiModel);
+            // Determine which model and provider to use
+            $modelToUse = $aiModel;
+            $providerName = $aiModel->provider;
 
-            // Discover models using the provider
+            // If a new provider is specified in the request, create a temporary model
+            if ($request->has('provider')) {
+                $providerName = $request->input('provider');
+                $modelToUse = new AIModel([
+                    'name' => $aiModel->name,
+                    'provider' => $providerName,
+                    'api_key' => $request->input('api_key', $aiModel->api_key),
+                    'settings' => $aiModel->settings
+                ]);
+            }
+
+            // Get the provider
             try {
-                $result = $provider->discoverModels($aiModel);
+                $registry = app(ProviderRegistry::class);
+                $provider = $registry->getProvider($providerName);
+
+                if (!$provider) {
+                    throw new \Exception("Unsupported AI provider: {$providerName}");
+                }
+
+                // Discover models
+                $result = $provider->discoverModels($modelToUse);
+
+                if ($result['success']) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Models discovered successfully',
+                        'data' => [
+                            'models' => array_keys($result['models']),
+                            'current_model' => $modelToUse->settings['model_name'] ?? null,
+                        ]
+                    ]);
+                } else {
+                    // Check if there's a specific error message that indicates an authentication issue
+                    $errorMessage = $result['error'] ?? 'Unknown error';
+                    $isAuthError =
+                        stripos($errorMessage, 'authentication') !== false ||
+                        stripos($errorMessage, 'auth') !== false ||
+                        stripos($errorMessage, 'key') !== false ||
+                        stripos($errorMessage, 'token') !== false ||
+                        stripos($errorMessage, 'credential') !== false ||
+                        stripos($errorMessage, 'unauthorized') !== false;
+
+                    return response()->json([
+                        'success' => false,
+                        'message' => $isAuthError
+                            ? 'Authentication error: Please check your API key for ' . $providerName
+                            : 'Failed to discover models: ' . $errorMessage,
+                        'error' => $errorMessage,
+                        'error_type' => $isAuthError ? 'authentication' : 'unknown'
+                    ], $isAuthError ? 401 : 400);
+                }
             } catch (\Exception $e) {
                 // Check for authentication errors
                 $errorMessage = $e->getMessage();
-                $isAuthError = 
-                    stripos($errorMessage, 'authentication') !== false || 
+                $isAuthError =
+                    stripos($errorMessage, 'authentication') !== false ||
                     stripos($errorMessage, 'auth') !== false ||
                     stripos($errorMessage, 'key') !== false ||
                     stripos($errorMessage, 'token') !== false ||
                     stripos($errorMessage, 'credential') !== false ||
                     stripos($errorMessage, 'unauthorized') !== false;
-                
+
                 Log::error('Failed to discover models: ' . $errorMessage, [
                     'model_id' => $id,
-                    'provider' => $aiModel->provider,
+                    'provider' => $providerName,
                     'error_type' => $isAuthError ? 'authentication' : 'unknown'
                 ]);
-                
+
                 // Return detailed error for authentication issues
                 if ($isAuthError) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Authentication error: Please check your API key for ' . $aiModel->provider,
+                        'message' => 'Authentication error: Please check your API key for ' . $providerName,
                         'error_type' => 'authentication',
-                        'error_detail' => $errorMessage
+                        'error' => $errorMessage
                     ], 401);
                 }
-                
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Failed to discover models: ' . $errorMessage,
+                    'error' => $errorMessage
                 ], 400);
-            }
-
-            if ($result['success']) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Models discovered successfully',
-                    'data' => [
-                        'models' => array_keys($result['models']),
-                        'current_model' => $aiModel->settings['model_name'] ?? null,
-                    ]
-                ]);
-            } else {
-                // Check if there's a specific error message that indicates an authentication issue
-                $errorMessage = $result['error'] ?? 'Unknown error';
-                $isAuthError = 
-                    stripos($errorMessage, 'authentication') !== false || 
-                    stripos($errorMessage, 'auth') !== false ||
-                    stripos($errorMessage, 'key') !== false ||
-                    stripos($errorMessage, 'token') !== false ||
-                    stripos($errorMessage, 'credential') !== false ||
-                    stripos($errorMessage, 'unauthorized') !== false;
-                
-                return response()->json([
-                    'success' => false,
-                    'message' => $isAuthError 
-                        ? 'Authentication error: Please check your API key for ' . $aiModel->provider 
-                        : 'Failed to discover models: ' . $errorMessage,
-                    'error_type' => $isAuthError ? 'authentication' : 'unknown',
-                    'error_detail' => $errorMessage
-                ], $isAuthError ? 401 : 400);
             }
         } catch (\Exception $e) {
             $errorMessage = $e->getMessage();
@@ -496,7 +531,7 @@ class AIModelController extends Controller
                 'model_id' => $id,
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to discover models',
@@ -518,7 +553,7 @@ class AIModelController extends Controller
                 'provider' => 'required|string',
                 'api_key' => 'required|string',
             ]);
-            
+
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
@@ -526,7 +561,7 @@ class AIModelController extends Controller
                     'errors' => $validator->errors(),
                 ], 422);
             }
-            
+
             // Create a temporary model instance
             $tempModel = new AIModel([
                 'name' => 'Temporary Model',
@@ -536,7 +571,7 @@ class AIModelController extends Controller
                     'model_name' => null,
                 ]
             ]);
-            
+
             // Get the appropriate provider
             try {
                 $provider = $this->getProviderForModel($tempModel);
@@ -546,12 +581,12 @@ class AIModelController extends Controller
                     'message' => 'Invalid provider: ' . $e->getMessage(),
                 ], 400);
             }
-            
+
             // Test connection and discover models
             try {
                 // First test the connection
                 $connectionTest = $provider->testConnection($tempModel);
-                
+
                 if (!$connectionTest['success']) {
                     return response()->json([
                         'success' => false,
@@ -559,10 +594,10 @@ class AIModelController extends Controller
                         'error_type' => $connectionTest['error_type'] ?? 'unknown'
                     ], 400);
                 }
-                
+
                 // Then discover models
                 $result = $provider->discoverModels($tempModel);
-                
+
                 if ($result['success']) {
                     return response()->json([
                         'success' => true,
@@ -581,18 +616,18 @@ class AIModelController extends Controller
             } catch (\Exception $e) {
                 // Check for authentication errors
                 $errorMessage = $e->getMessage();
-                $isAuthError = 
-                    stripos($errorMessage, 'authentication') !== false || 
+                $isAuthError =
+                    stripos($errorMessage, 'authentication') !== false ||
                     stripos($errorMessage, 'auth') !== false ||
                     stripos($errorMessage, 'key') !== false ||
                     stripos($errorMessage, 'token') !== false ||
                     stripos($errorMessage, 'credential') !== false ||
                     stripos($errorMessage, 'unauthorized') !== false;
-                
+
                 return response()->json([
                     'success' => false,
-                    'message' => $isAuthError 
-                        ? 'Authentication error: ' . $errorMessage 
+                    'message' => $isAuthError
+                        ? 'Authentication error: ' . $errorMessage
                         : 'Error testing connection: ' . $errorMessage,
                     'error_type' => $isAuthError ? 'authentication' : 'unknown'
                 ], $isAuthError ? 401 : 400);
@@ -601,7 +636,7 @@ class AIModelController extends Controller
             Log::error('Error in AI test connection: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Server error: ' . $e->getMessage(),

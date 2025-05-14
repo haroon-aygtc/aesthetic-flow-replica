@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormControl, 
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
   FormMessage,
   FormDescription
 } from "@/components/ui/form";
-import { 
+import {
   Command,
   CommandEmpty,
   CommandGroup,
@@ -21,25 +21,13 @@ import {
   PopoverContent,
   PopoverTrigger
 } from "@/components/ui/popover";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  SelectGroup,
-  SelectLabel
-} from "@/components/ui/select";
 import { getModelOptions } from "./model-provider-options";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckIcon, ChevronsUpDown, RefreshCw, Zap, Lock } from "lucide-react";
+import { CheckIcon, ChevronsUpDown, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/hooks/use-toast";
 
 interface ModelOption {
@@ -60,13 +48,13 @@ interface ModelSettingsFieldsProps {
 // Helper function to create a professional name from provider and model
 const generateModelName = (provider: string, modelName: string): string => {
   if (!provider || !modelName) return '';
-  
+
   // Format provider name to be more readable
   let formattedProvider = provider
     .charAt(0).toUpperCase() + provider.slice(1)
     .replace(/([A-Z])/g, ' $1')
     .trim();
-  
+
   // Handle special case providers
   if (provider.toLowerCase() === 'openai') {
     formattedProvider = 'OpenAI';
@@ -79,20 +67,20 @@ const generateModelName = (provider: string, modelName: string): string => {
   } else if (provider.toLowerCase() === 'cohere') {
     formattedProvider = 'Cohere';
   }
-  
+
   // Format the model name - remove provider prefix if it exists
   let formattedModelName = modelName;
-  
+
   // Handle model names with provider prefixes (e.g., openai/gpt-4, google/gemini-pro)
   if (modelName.includes('/')) {
     formattedModelName = modelName.split('/').pop() || modelName;
   }
-  
+
   // Clean up the model name for display
   formattedModelName = formattedModelName
     .replace(/-/g, ' ')
     .replace(/\b\w/g, l => l.toUpperCase()); // Capitalize first letter of each word
-  
+
   // Format specific well-known models
   if (formattedModelName.toLowerCase().includes('gpt')) {
     // Ensure GPT is properly capitalized
@@ -105,7 +93,7 @@ const generateModelName = (provider: string, modelName: string): string => {
       .replace(/\bclaude\b/i, 'Claude')
       .replace(/\bclaude(\d+)\b/i, 'Claude $1');
   }
-  
+
   return `${formattedProvider} - ${formattedModelName}`;
 };
 
@@ -219,7 +207,7 @@ const providerRecommendations: Record<string, ProviderRecommendations> = {
   }
 };
 
-export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({ 
+export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({
   fetchedModels = [],
   isLoadingModels = false,
   autoUpdateModelName = true,
@@ -231,46 +219,41 @@ export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({
     control: form.control,
     name: "provider",
   });
-  
+
   const selectedModelName = useWatch({
     control: form.control,
     name: "settings.model_name",
   });
-  
-  const currentModelName = useWatch({
-    control: form.control,
-    name: "name"
-  });
 
   // State for model combobox
   const [modelCommandOpen, setModelCommandOpen] = useState(false);
-  
+
   // Add state for dynamic provider parameters
   const [providerParameters, setProviderParameters] = useState<any>(null);
   const [isLoadingParameters, setIsLoadingParameters] = useState(false);
-  
+
   // Get the appropriate recommendations - either from API or fallback to hardcoded
   const recommendations = providerParameters || providerRecommendations[selectedProvider?.toLowerCase() || ''] || providerRecommendations.default;
-  
+
   // Auto-update model name when provider or model selection changes
   useEffect(() => {
     if (!autoUpdateModelName || !selectedProvider || !selectedModelName) return;
-    
+
     // Generate a name based on the selected provider and model
     const generatedName = generateModelName(selectedProvider, selectedModelName);
-    
+
     // Always set the name automatically since the field is readonly
     if (generatedName) {
       form.setValue("name", generatedName);
     }
   }, [selectedProvider, selectedModelName, form, autoUpdateModelName]);
-  
+
   // Fetch provider parameters when provider changes
   useEffect(() => {
     if (!selectedProvider) return;
-    
+
     setIsLoadingParameters(true);
-    
+
     fetch(`/api/providers/${selectedProvider}/parameters`)
       .then(res => res.json())
       .then(data => {
@@ -290,24 +273,24 @@ export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({
               description: data.data.maxTokens?.description || "Default token limit varies by model"
             }
           });
-          
+
           // Set default values if not already set
           if (data.data.temperature && !form.getValues("settings.temperature")) {
             form.setValue("settings.temperature", data.data.temperature.default);
           }
-          
+
           if (data.data.maxTokens && !form.getValues("settings.max_tokens")) {
             form.setValue("settings.max_tokens", data.data.maxTokens.default);
           }
-          
+
           if (data.data.topP && !form.getValues("settings.top_p")) {
             form.setValue("settings.top_p", data.data.topP.default);
           }
-          
+
           if (data.data.frequencyPenalty && !form.getValues("settings.frequency_penalty")) {
             form.setValue("settings.frequency_penalty", data.data.frequencyPenalty.default);
           }
-          
+
           if (data.data.presencePenalty && !form.getValues("settings.presence_penalty")) {
             form.setValue("settings.presence_penalty", data.data.presencePenalty.default);
           }
@@ -320,29 +303,29 @@ export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({
         setIsLoadingParameters(false);
       });
   }, [selectedProvider, form]);
-  
+
   // Auto-update recommended values when provider changes (fallback to hardcoded)
   useEffect(() => {
     if (!selectedProvider) return;
-    
+
     // Only set these values if they haven't been explicitly set by the user yet
     // and if we don't have dynamic parameters from the API
     if (!providerParameters) {
       const recs = providerRecommendations[selectedProvider?.toLowerCase() || ''] || providerRecommendations.default;
-      
+
       if (!form.getValues("settings.temperature")) {
         form.setValue("settings.temperature", recs.temperature.recommended);
       }
-      
+
       if (!form.getValues("settings.max_tokens")) {
         form.setValue("settings.max_tokens", recs.maxTokens.recommended);
       }
     }
   }, [selectedProvider, form, providerParameters]);
-  
+
   // Get static model options as a fallback
   const staticModelOptions = getModelOptions(selectedProvider);
-  
+
   // Use fetched models if available, otherwise use static options
   const modelOptions = fetchedModels.length > 0 ? fetchedModels : staticModelOptions;
 
@@ -351,7 +334,7 @@ export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({
     const freeModels: ModelOption[] = [];
     const restrictedModels: ModelOption[] = [];
     const otherModels: ModelOption[] = [];
-    
+
     models.forEach(model => {
       if (model.isFree || model.label.includes('Free')) {
         freeModels.push({...model, isFree: true});
@@ -361,32 +344,38 @@ export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({
         otherModels.push(model);
       }
     });
-    
+
     return { freeModels, restrictedModels, otherModels };
   };
-  
+
   const { freeModels, restrictedModels, otherModels } = categorizeModels(modelOptions);
-  
+
   if (!selectedProvider) {
     return null;
   }
-  
-  const handlePreciseClick = () => {
+
+  const handlePreciseClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent form submission
+    e.stopPropagation(); // Stop event propagation
     form.setValue("settings.temperature", recommendations.temperature.precise);
   };
-  
-  const handleBalancedClick = () => {
+
+  const handleBalancedClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent form submission
+    e.stopPropagation(); // Stop event propagation
     form.setValue("settings.temperature", recommendations.temperature.recommended);
   };
-  
-  const handleCreativeClick = () => {
+
+  const handleCreativeClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent form submission
+    e.stopPropagation(); // Stop event propagation
     form.setValue("settings.temperature", recommendations.temperature.creative);
   };
-  
+
   return (
     <div className="space-y-6 border p-4 rounded-md">
       <h3 className="font-medium">Model Settings</h3>
-      
+
       {/* Model name selection */}
       <FormField
         control={form.control}
@@ -396,10 +385,10 @@ export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({
             <div className="flex items-center justify-between">
             <FormLabel>Model</FormLabel>
               {onFetchModels && (
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     onFetchModels();
                     toast({
@@ -453,23 +442,23 @@ export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({
                       <CommandInput placeholder="Search model..." className="h-9" />
                       <CommandList className="max-h-[300px]">
                         <CommandEmpty>
-                          No model found. 
+                          No model found.
                           {onFetchModels && (
                             <div className="p-2 text-xs">
-                              <Button 
-                                type="button" 
-                                variant="outline" 
-                                size="sm" 
-                                className="w-full mt-2" 
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="w-full mt-2"
                                 onClick={onFetchModels}
                               >
-                                <RefreshCw className="h-3 w-3 mr-2" /> 
+                                <RefreshCw className="h-3 w-3 mr-2" />
                                 Try fetching models
                               </Button>
                             </div>
                           )}
                         </CommandEmpty>
-                        
+
                         {/* Free models */}
                         {freeModels.length > 0 && (
                           <CommandGroup heading="Free Models">
@@ -500,7 +489,7 @@ export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({
                             ))}
                           </CommandGroup>
                         )}
-                        
+
                         {/* Other models */}
                         {otherModels.length > 0 && (
                           <CommandGroup heading="Standard Models">
@@ -526,7 +515,7 @@ export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({
                             ))}
                           </CommandGroup>
                         )}
-                        
+
                         {/* Restricted models */}
                         {restrictedModels.length > 0 && (
                           <CommandGroup heading="Models Requiring Access Approval">
@@ -561,7 +550,7 @@ export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({
                     </Command>
                   </PopoverContent>
                 </Popover>
-                
+
                 {fetchedModels.length > 0 && (
                   <FormDescription>
                     Models fetched from provider
@@ -578,7 +567,7 @@ export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({
           </FormItem>
         )}
       />
-      
+
       {/* Temperature setting */}
       {isLoadingParameters ? (
         <div className="space-y-4">
@@ -595,55 +584,63 @@ export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({
               <FormItem>
                 <FormLabel>Temperature</FormLabel>
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="range"
-                      min={recommendations.temperature.min}
-                      max={recommendations.temperature.max}
-                      step="0.1"
-                      value={field.value}
-                      onChange={field.onChange}
-                      className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                    />
-                    <span className="w-12 text-right font-medium bg-muted px-2 py-1 rounded-md text-foreground">{field.value?.toFixed(1) || '0.0'}</span>
-                  </div>
-                  
-                  <div className="flex justify-between gap-2">
-                    <button
+                  {/* Temperature presets */}
+                  <div className="flex flex-wrap gap-2">
+                    <Button
                       type="button"
+                      variant={Math.abs(field.value - recommendations.temperature.precise) < 0.1 ? "default" : "outline"}
+                      size="sm"
                       onClick={handlePreciseClick}
-                      className={`px-3 py-1 text-xs rounded-full ${
-                        Math.abs(field.value - recommendations.temperature.precise) < 0.1 
-                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100 border border-blue-300 dark:border-blue-700' 
-                          : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200'
-                      }`}
+                      onMouseDown={(e) => e.preventDefault()} // Prevent focus issues
+                      className="h-8 px-3"
                     >
-                      Precise
-                    </button>
-                    <button
+                      Precise ({recommendations.temperature.precise})
+                    </Button>
+                    <Button
                       type="button"
+                      variant={Math.abs(field.value - recommendations.temperature.recommended) < 0.1 ? "default" : "outline"}
+                      size="sm"
                       onClick={handleBalancedClick}
-                      className={`px-3 py-1 text-xs rounded-full ${
-                        Math.abs(field.value - recommendations.temperature.recommended) < 0.1 
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 border border-green-300 dark:border-green-700' 
-                          : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200'
-                      }`}
+                      onMouseDown={(e) => e.preventDefault()} // Prevent focus issues
+                      className="h-8 px-3"
                     >
-                      Balanced
-                    </button>
-                    <button
+                      Balanced ({recommendations.temperature.recommended})
+                    </Button>
+                    <Button
                       type="button"
+                      variant={Math.abs(field.value - recommendations.temperature.creative) < 0.1 ? "default" : "outline"}
+                      size="sm"
                       onClick={handleCreativeClick}
-                      className={`px-3 py-1 text-xs rounded-full ${
-                        Math.abs(field.value - recommendations.temperature.creative) < 0.1 
-                          ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100 border border-purple-300 dark:border-purple-700' 
-                          : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200'
-                      }`}
+                      onMouseDown={(e) => e.preventDefault()} // Prevent focus issues
+                      className="h-8 px-3"
                     >
-                      Creative
-                    </button>
+                      Creative ({recommendations.temperature.creative})
+                    </Button>
                   </div>
-                  
+
+                  {/* Custom value input */}
+                  <div className="flex items-center gap-3">
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={recommendations.temperature.min}
+                        max={recommendations.temperature.max}
+                        step="0.1"
+                        value={field.value}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value);
+                          if (!isNaN(value) && value >= recommendations.temperature.min && value <= recommendations.temperature.max) {
+                            field.onChange(value);
+                          }
+                        }}
+                        className="w-20 text-center"
+                      />
+                    </FormControl>
+                    <span className="text-sm text-muted-foreground">
+                      Range: {recommendations.temperature.min} - {recommendations.temperature.max}
+                    </span>
+                  </div>
+
                   <FormDescription>
                     <span className="block mb-1">Temperature controls randomness:</span>
                     <span className="block text-xs text-muted-foreground">• Low (0-0.3): More predictable, consistent, and factual responses</span>
@@ -655,7 +652,7 @@ export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({
               </FormItem>
             )}
           />
-          
+
           {/* Max tokens */}
           <FormField
             control={form.control}
@@ -664,41 +661,92 @@ export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({
               <FormItem>
                 <FormLabel>Max Output Tokens</FormLabel>
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      value={field.value}
-                      onChange={(e) => field.onChange(parseInt(e.target.value, 10) || recommendations.maxTokens.recommended)}
-                      min={recommendations.maxTokens.min}
-                      max={recommendations.maxTokens.max}
-                      step="100"
-                      className="w-full p-2 border rounded-md bg-background"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => field.onChange(recommendations.maxTokens.recommended)}
-                      className={`px-3 py-1 text-xs whitespace-nowrap rounded-full ${
-                        field.value === recommendations.maxTokens.recommended 
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 border border-green-300 dark:border-green-700' 
-                          : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200'
-                      }`}
-                    >
-                      Recommended
-                    </button>
+                  {/* Max tokens presets */}
+                  <div className="flex flex-wrap gap-2">
+                    {[1024, 2048, 4000, 8000].map((tokenValue) => (
+                      <Button
+                        key={tokenValue}
+                        type="button"
+                        variant={field.value === tokenValue ? "default" : "outline"}
+                        size="sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          field.onChange(tokenValue);
+                        }}
+                        onMouseDown={(e) => e.preventDefault()}
+                        className="h-8"
+                      >
+                        {tokenValue === 1024 && "Short"}
+                        {tokenValue === 2048 && "Standard"}
+                        {tokenValue === 4000 && "Long"}
+                        {tokenValue === 8000 && "Maximum"}
+                        {" "}
+                        ({tokenValue.toLocaleString()})
+                      </Button>
+                    ))}
                   </div>
-                  
+
+                  {/* Custom value input */}
+                  <div className="flex items-center gap-3">
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={8000}
+                        step="1"
+                        value={field.value}
+                        onChange={(e) => {
+                          const inputValue = e.target.value;
+                          const value = parseInt(inputValue, 10);
+
+                          if (isNaN(value)) {
+                            field.onChange(2048); // Default to 2048 if input is not a number
+                            return;
+                          }
+
+                          // Validate and enforce limits with toast notifications
+                          if (value < 1) {
+                            toast({
+                              title: "Invalid Value",
+                              description: "Max tokens must be at least 1",
+                              variant: "destructive",
+                            });
+                            field.onChange(1);
+                            return;
+                          }
+
+                          if (value > 8000) {
+                            toast({
+                              title: "Invalid Value",
+                              description: "Max tokens must not exceed 8000",
+                              variant: "destructive",
+                            });
+                            field.onChange(8000);
+                            return;
+                          }
+
+                          field.onChange(value);
+                        }}
+                        className="w-24 text-center"
+                      />
+                    </FormControl>
+                    <span className="text-sm text-muted-foreground">
+                      Range: 1 - 8000
+                    </span>
+                  </div>
+
                   <FormDescription>
-                    <span className="block mb-1">Max tokens limits the length of the model's response.</span>
-                    <span className="block text-xs text-muted-foreground font-medium">{recommendations.maxTokens.description}</span>
-                    <span className="block text-xs text-muted-foreground mt-1">• Higher values allow longer responses but may increase costs</span>
-                    <span className="block text-xs text-muted-foreground">• 1000 tokens ≈ 750 words</span>
+                    Maximum number of tokens in the model response.
+                    <br />
+                    The specific limit depends on the model selected.
                   </FormDescription>
+                  <FormMessage />
                 </div>
-                <FormMessage />
               </FormItem>
             )}
           />
-          
+
           {/* Top P Parameter */}
           <FormField
             control={form.control}
@@ -706,22 +754,76 @@ export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Top P</FormLabel>
-                <div className="flex flex-col space-y-2">
-                  <div className="flex justify-between items-center">
+                <div className="space-y-4">
+                  {/* Top P presets */}
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant={Math.abs(field.value - 0.1) < 0.01 ? "default" : "outline"}
+                      size="sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        field.onChange(0.1);
+                      }}
+                      onMouseDown={(e) => e.preventDefault()}
+                      className="h-8"
+                    >
+                      Focused (0.1)
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={Math.abs(field.value - 0.5) < 0.01 ? "default" : "outline"}
+                      size="sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        field.onChange(0.5);
+                      }}
+                      onMouseDown={(e) => e.preventDefault()}
+                      className="h-8"
+                    >
+                      Balanced (0.5)
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={Math.abs(field.value - 1.0) < 0.01 ? "default" : "outline"}
+                      size="sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        field.onChange(1.0);
+                      }}
+                      onMouseDown={(e) => e.preventDefault()}
+                      className="h-8"
+                    >
+                      Diverse (1.0)
+                    </Button>
+                  </div>
+
+                  {/* Custom value input */}
+                  <div className="flex items-center gap-3">
                     <FormControl>
-                      <Slider
+                      <Input
+                        type="number"
                         min={0}
                         max={1}
-                        step={0.01}
-                        value={[field.value]}
-                        onValueChange={(values) => field.onChange(values[0])}
-                        className="my-2"
+                        step="0.01"
+                        value={field.value}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value);
+                          if (!isNaN(value) && value >= 0 && value <= 1) {
+                            field.onChange(value);
+                          }
+                        }}
+                        className="w-20 text-center"
                       />
                     </FormControl>
-                    <span className="ml-2 w-12 text-right bg-muted px-2 py-1 rounded-md text-foreground">
-                      {field.value?.toFixed(2) || '0.00'}
+                    <span className="text-sm text-muted-foreground">
+                      Range: 0 - 1
                     </span>
                   </div>
+
                   <FormDescription>
                     Controls diversity via nucleus sampling: 1.0 considers all tokens, lower values focus on higher probability tokens.
                   </FormDescription>
@@ -730,7 +832,7 @@ export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({
               </FormItem>
             )}
           />
-          
+
           {/* Frequency Penalty */}
           <FormField
             control={form.control}
@@ -738,22 +840,76 @@ export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Frequency Penalty</FormLabel>
-                <div className="flex flex-col space-y-2">
-                  <div className="flex justify-between items-center">
+                <div className="space-y-4">
+                  {/* Frequency Penalty presets */}
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant={Math.abs(field.value - 0.0) < 0.01 ? "default" : "outline"}
+                      size="sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        field.onChange(0.0);
+                      }}
+                      onMouseDown={(e) => e.preventDefault()}
+                      className="h-8"
+                    >
+                      None (0.0)
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={Math.abs(field.value - 0.5) < 0.01 ? "default" : "outline"}
+                      size="sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        field.onChange(0.5);
+                      }}
+                      onMouseDown={(e) => e.preventDefault()}
+                      className="h-8"
+                    >
+                      Moderate (0.5)
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={Math.abs(field.value - 1.0) < 0.01 ? "default" : "outline"}
+                      size="sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        field.onChange(1.0);
+                      }}
+                      onMouseDown={(e) => e.preventDefault()}
+                      className="h-8"
+                    >
+                      Strong (1.0)
+                    </Button>
+                  </div>
+
+                  {/* Custom value input */}
+                  <div className="flex items-center gap-3">
                     <FormControl>
-                      <Slider
+                      <Input
+                        type="number"
                         min={0}
                         max={2}
-                        step={0.01}
-                        value={[field.value]}
-                        onValueChange={(values) => field.onChange(values[0])}
-                        className="my-2"
+                        step="0.01"
+                        value={field.value}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value);
+                          if (!isNaN(value) && value >= 0 && value <= 2) {
+                            field.onChange(value);
+                          }
+                        }}
+                        className="w-20 text-center"
                       />
                     </FormControl>
-                    <span className="ml-2 w-12 text-right bg-muted px-2 py-1 rounded-md text-foreground">
-                      {field.value?.toFixed(2) || '0.00'}
+                    <span className="text-sm text-muted-foreground">
+                      Range: 0 - 2
                     </span>
                   </div>
+
                   <FormDescription>
                     Reduces repetition by penalizing tokens that have already appeared in the text.
                   </FormDescription>
@@ -762,7 +918,7 @@ export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({
               </FormItem>
             )}
           />
-          
+
           {/* Presence Penalty */}
           <FormField
             control={form.control}
@@ -770,22 +926,76 @@ export const ModelSettingsFields: React.FC<ModelSettingsFieldsProps> = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Presence Penalty</FormLabel>
-                <div className="flex flex-col space-y-2">
-                  <div className="flex justify-between items-center">
+                <div className="space-y-4">
+                  {/* Presence Penalty presets */}
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant={Math.abs(field.value - 0.0) < 0.01 ? "default" : "outline"}
+                      size="sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        field.onChange(0.0);
+                      }}
+                      onMouseDown={(e) => e.preventDefault()}
+                      className="h-8"
+                    >
+                      None (0.0)
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={Math.abs(field.value - 0.5) < 0.01 ? "default" : "outline"}
+                      size="sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        field.onChange(0.5);
+                      }}
+                      onMouseDown={(e) => e.preventDefault()}
+                      className="h-8"
+                    >
+                      Moderate (0.5)
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={Math.abs(field.value - 1.0) < 0.01 ? "default" : "outline"}
+                      size="sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        field.onChange(1.0);
+                      }}
+                      onMouseDown={(e) => e.preventDefault()}
+                      className="h-8"
+                    >
+                      Strong (1.0)
+                    </Button>
+                  </div>
+
+                  {/* Custom value input */}
+                  <div className="flex items-center gap-3">
                     <FormControl>
-                      <Slider
+                      <Input
+                        type="number"
                         min={0}
                         max={2}
-                        step={0.01}
-                        value={[field.value]}
-                        onValueChange={(values) => field.onChange(values[0])}
-                        className="my-2"
+                        step="0.01"
+                        value={field.value}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value);
+                          if (!isNaN(value) && value >= 0 && value <= 2) {
+                            field.onChange(value);
+                          }
+                        }}
+                        className="w-20 text-center"
                       />
                     </FormControl>
-                    <span className="ml-2 w-12 text-right bg-muted px-2 py-1 rounded-md text-foreground">
-                      {field.value?.toFixed(2) || '0.00'}
+                    <span className="text-sm text-muted-foreground">
+                      Range: 0 - 2
                     </span>
                   </div>
+
                   <FormDescription>
                     Encourages the model to talk about new topics by penalizing tokens that have appeared at all.
                   </FormDescription>

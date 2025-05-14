@@ -16,7 +16,7 @@ export default function EditModelPage() {
   useEffect(() => {
     async function fetchModel() {
       if (!id) return;
-      
+
       try {
         setIsLoading(true);
         const modelData = await aiModelService.getModel(parseInt(id as string));
@@ -39,23 +39,8 @@ export default function EditModelPage() {
     }
   }, [id, router, toast]);
 
-  const handleFormSubmit = async (data: AIModelData) => {
-    try {
-      await aiModelService.updateModel(parseInt(id as string), data);
-      toast({
-        title: "Success",
-        description: "Model updated successfully",
-        variant: "success",
-      });
-      router.push("/ai-configuration/models");
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update model",
-        variant: "destructive",
-      });
-    }
-  };
+  // Note: We don't need this handleFormSubmit function anymore as it's handled by the ModelForm component
+  // The ModelForm component uses useModelForm hook which already handles the form submission
 
   if (isLoading) {
     return (
@@ -72,10 +57,10 @@ export default function EditModelPage() {
 
   return (
     <AdminLayout>
-      <ModelForm 
-        initialModel={model} 
+      <ModelForm
+        initialModel={model}
         mode="edit"
       />
     </AdminLayout>
   );
-} 
+}

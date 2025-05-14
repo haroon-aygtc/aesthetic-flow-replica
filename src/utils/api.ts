@@ -39,45 +39,106 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle errors and show toast
+// Add a response interceptor for global error handling
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Any status code within the range of 2xx causes this function to trigger
+    return response;
+  },
   (error) => {
-    console.error("API Response Error:", error);
-
-    // Check if server returned HTML instead of JSON
-    if (
-      typeof error?.response?.data === "string" &&
-      error.response.data.includes("<!DOCTYPE")
-    ) {
+    // Any status codes outside the range of 2xx cause this function to trigger
+    console.error("API Error:", error);
+    
+    // Format error messages for display
+    if (error.response) {
+      const statusCode = error.response.status;
+      const responseData = error.response.data;
+      
+      // Handle validation errors (422)
+      if (statusCode === 422) {
+        // Get validation errors
+        const validationErrors = responseData.errors || {};
+        
+        // Display the first validation error in a toast
+        const firstErrorKey = Object.keys(validationErrors)[0];
+        if (firstErrorKey) {
+          // Get the first error message for the first field with an error
+          const firstErrorMessage = validationErrors[firstErrorKey][0];
+          
+          toast({
+            title: "Validation Error",
+            description: firstErrorMessage,
+            variant: "destructive",
+          });
+        } else if (responseData.message) {
+          toast({
+            title: "Validation Error",
+            description: responseData.message,
+            variant: "destructive",
+          });
+        }
+      } 
+      // Handle unauthorized (401)
+      else if (statusCode === 401) {
+        toast({
+          title: "Authentication Error",
+          description: "You are not authorized to perform this action. Please log in again.",
+          variant: "destructive",
+        });
+        
+        // Redirect to login or refresh token as needed
+      }
+      // Handle forbidden (403) 
+      else if (statusCode === 403) {
+        toast({
+          title: "Permission Denied",
+          description: "You don't have permission to perform this action.",
+          variant: "destructive",
+        });
+      }
+      // Handle not found (404)
+      else if (statusCode === 404) {
+        toast({
+          title: "Not Found",
+          description: responseData.message || "The requested resource was not found.",
+          variant: "destructive",
+        });
+      }
+      // Handle server errors (500)
+      else if (statusCode >= 500) {
+        toast({
+          title: "Server Error",
+          description: "Something went wrong on the server. Please try again later.",
+          variant: "destructive",
+        });
+      }
+      // Handle all other errors
+      else {
+        toast({
+          title: "Error",
+          description: responseData.message || "An error occurred while processing your request.",
+          variant: "destructive",
+        });
+      }
+    } 
+    // Handle network errors (no response)
+    else if (error.request) {
       toast({
-        title: "Server Error",
-        description: "The server returned an invalid HTML response. Please contact support.",
-        variant: "destructive"
+        title: "Network Error",
+        description: "Could not connect to the server. Please check your internet connection.",
+        variant: "destructive",
       });
-      return Promise.reject(new Error("Invalid HTML response received from the server."));
-    }
-
-    const errorMessage =
-      error.response?.data?.message ||
-      error.response?.data?.error ||
-      "An unexpected error occurred";
-
-    // Show toast for general errors except validation (422)
-    if (error.response?.status !== 422) {
+    } 
+    // Handle other errors
+    else {
       toast({
         title: "Error",
-        description: errorMessage,
-        variant: "destructive"
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive",
       });
     }
-
-    // Handle unauthorized access
-    if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      window.location.href = "/login";
-    }
-
+    
+    // Rethrow the error for the component to handle if needed
     return Promise.reject(error);
   }
 );
