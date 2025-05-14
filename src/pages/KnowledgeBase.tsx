@@ -1,5 +1,4 @@
-
-import { AdminLayout } from "@/components/layouts/admin-layout";
+import AdminLayout from "@/components/layouts/admin-layout";
 import { KnowledgeBaseModule } from "@/modules/knowledge-base";
 
 const KnowledgeBase = () => {

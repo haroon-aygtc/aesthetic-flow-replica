@@ -26,6 +26,8 @@ import Register from "./pages/Register";
 import { AuthProvider } from "./hooks/use-auth";
 import { ProtectedRoute } from "./components/protected-route";
 import Dashboard from "./pages/Dashboard";
+import { TemplateList } from "./components/ai-configuration/prompt-templates/template-list";
+import { TemplateForm } from "./components/ai-configuration/prompt-templates/template-form";
 
 function App() {
   return (
@@ -42,7 +44,7 @@ function App() {
               {/* Protected dashboard routes */}
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/dashboard/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
-              <Route path="/dashboard/prompts" element={<ProtectedRoute><PromptTemplatesModule /></ProtectedRoute>} />
+              <Route path="/dashboard/prompts/*" element={<ProtectedRoute><PromptTemplatesModule /></ProtectedRoute>} />
               <Route path="/dashboard/model-management/*" element={<ProtectedRoute><ModelManagement /></ProtectedRoute>} />
               <Route path="/dashboard/provider-management/*" element={<ProtectedRoute><ProviderManagement /></ProtectedRoute>} />
               <Route path="/dashboard/ai-configuration" element={<ProtectedRoute><AIConfiguration /></ProtectedRoute>} />
@@ -57,7 +59,33 @@ function App() {
               <Route path="/dashboard/follow-up" element={<ProtectedRoute><FollowUp /></ProtectedRoute>} />
               <Route path="/dashboard/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
               <Route path="/dashboard/direct-chat" element={<ProtectedRoute><DirectChat /></ProtectedRoute>} />
-              <Route path="/dashboard/ai-models" element={<ProtectedRoute><AIModelsModule /></ProtectedRoute>} />
+              <Route path="/dashboard/ai-models/*" element={<ProtectedRoute><AIModelsModule /></ProtectedRoute>} />
+
+              {/* Prompt Template Management Routes */}
+              <Route path="/ai-configuration/prompt-templates" element={<ProtectedRoute><TemplateList /></ProtectedRoute>} />
+              <Route path="/ai-configuration/prompt-templates/create" element={
+                <ProtectedRoute>
+                  <TemplateForm
+                    initialTemplate={{
+                      name: "",
+                      description: "",
+                      content: "",
+                      variables: [],
+                      metadata: {
+                        tags: [],
+                        aiModel: [],
+                        activationRules: [],
+                        creator: "current-user",
+                        lastModified: new Date(),
+                        version: 1
+                      }
+                    }}
+                    isEditing={false}
+                  />
+                </ProtectedRoute>
+              } />
+              <Route path="/ai-configuration/prompt-templates/edit/:id" element={<ProtectedRoute><TemplateForm isEditing={true} /></ProtectedRoute>} />
+
               {/* Fallback route */}
               <Route path="*" element={<Index />} />
             </Routes>

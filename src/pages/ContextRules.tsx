@@ -1,5 +1,4 @@
-
-import { AdminLayout } from "@/components/layouts/admin-layout";
+import AdminLayout from "@/components/layouts/admin-layout";
 import { ContextRulesModule } from "@/modules/context-rules";
 
 const ContextRules = () => {

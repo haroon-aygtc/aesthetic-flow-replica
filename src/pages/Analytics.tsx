@@ -1,5 +1,4 @@
-
-import { AdminLayout } from "@/components/layouts/admin-layout";
+import AdminLayout from "@/components/layouts/admin-layout";
 import { BarChart2, Users, MessageSquare, Clock } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 

@@ -1,5 +1,4 @@
-
-import { AdminLayout } from "@/components/layouts/admin-layout";
+import AdminLayout from "@/components/layouts/admin-layout";
 import { FollowUpEngineModule } from "@/modules/follow-up-engine";
 
 const FollowUp = () => {

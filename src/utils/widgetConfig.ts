@@ -11,7 +11,7 @@ interface WidgetConfig {
 }
 
 class WidgetConfigService {
-    private readonly ENDPOINT = "/api/widget-config";
+    private readonly ENDPOINT = "widget-config";
 
     async getDefaultWidgetConfig(): Promise<WidgetConfig> {
         try {
@@ -19,6 +19,14 @@ class WidgetConfigService {
             return response.data;
         } catch (error) {
             console.error("Failed to fetch default widget config:", error);
+            // If API route is not found (404) or any other error, use fallback config
+            // This prevents displaying the error toast in the UI
+            if (!navigator.onLine) {
+                console.warn("No internet connection, using fallback config");
+            } else {
+                console.warn("API endpoint not available, using fallback config");
+            }
+
             // Return fallback config
             return {
                 initiallyOpen: false,

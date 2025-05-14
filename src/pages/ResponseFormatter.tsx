@@ -1,5 +1,4 @@
-
-import { AdminLayout } from "@/components/layouts/admin-layout";
+import AdminLayout from "@/components/layouts/admin-layout";
 import { ResponseFormatter } from "@/components/ai-configuration/response-formatter";
 
 const ResponseFormatterPage = () => {

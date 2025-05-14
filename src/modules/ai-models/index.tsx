@@ -1,11 +1,14 @@
 
 import { AIModelManagerContainer } from "./components/ai-model-manager-container";
+import AdminLayout from "@/components/layouts/admin-layout";
 
 export function AIModelsModule() {
   return (
-    <div className="space-y-6">
-      <AIModelManagerContainer />
-    </div>
+    <AdminLayout>
+      <div className="space-y-6">
+        <AIModelManagerContainer />
+      </div>
+    </AdminLayout>
   );
 }
 

@@ -35,9 +35,15 @@ export function KnowledgeDocumentList({ documents, onDocumentsChange }: Knowledg
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  const categories = ["all", ...Array.from(new Set(documents.map(doc => doc.category)))];
+  const categories = ["all", ...Array.from(new Set(
+    documents
+      .filter(doc => doc && doc.category)
+      .map(doc => doc.category)
+  ))];
 
   const filteredDocuments = documents.filter(doc => {
+    if (!doc || !doc.name) return false;
+
     const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === "all" || doc.category === selectedCategory;
     return matchesSearch && matchesCategory;
@@ -131,13 +137,15 @@ export function KnowledgeDocumentList({ documents, onDocumentsChange }: Knowledg
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2 sm:flex-nowrap">
-        <Input
-          placeholder="Search documents..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1"
-          prefix={<Search className="h-4 w-4 text-muted-foreground" />}
-        />
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search documents..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 pl-9"
+          />
+        </div>
         <Button onClick={() => setIsUploadDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Upload

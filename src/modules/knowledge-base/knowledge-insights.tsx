@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,7 +68,8 @@ export function KnowledgeInsights(_props: KnowledgeInsightsProps) {
     );
   }
 
-  const data = insightsData;
+  const data = insightsData?.data || {};
+  const summary = data?.summary || {};
 
   if (isLoading) {
     return (
@@ -105,7 +105,7 @@ export function KnowledgeInsights(_props: KnowledgeInsightsProps) {
             <div className="flex flex-col items-center justify-center space-y-2">
               <FileText className="h-8 w-8 text-blue-500" />
               <p className="text-sm font-medium text-muted-foreground">Total Documents</p>
-              <h3 className="text-3xl font-bold">{data.summary.totalDocuments}</h3>
+              <h3 className="text-3xl font-bold">{summary.totalDocuments || 0}</h3>
             </div>
           </CardContent>
         </Card>
@@ -115,7 +115,7 @@ export function KnowledgeInsights(_props: KnowledgeInsightsProps) {
             <div className="flex flex-col items-center justify-center space-y-2">
               <MessageSquare className="h-8 w-8 text-purple-500" />
               <p className="text-sm font-medium text-muted-foreground">Total Q&A Pairs</p>
-              <h3 className="text-3xl font-bold">{data.summary.totalQaPairs}</h3>
+              <h3 className="text-3xl font-bold">{summary.totalQaPairs || 0}</h3>
             </div>
           </CardContent>
         </Card>
@@ -125,7 +125,7 @@ export function KnowledgeInsights(_props: KnowledgeInsightsProps) {
             <div className="flex flex-col items-center justify-center space-y-2">
               <Search className="h-8 w-8 text-green-500" />
               <p className="text-sm font-medium text-muted-foreground">Total Queries</p>
-              <h3 className="text-3xl font-bold">{data.summary.totalQueries}</h3>
+              <h3 className="text-3xl font-bold">{summary.totalQueries || 0}</h3>
             </div>
           </CardContent>
         </Card>
@@ -135,7 +135,7 @@ export function KnowledgeInsights(_props: KnowledgeInsightsProps) {
             <div className="flex flex-col items-center justify-center space-y-2">
               <BarChartIcon className="h-8 w-8 text-orange-500" />
               <p className="text-sm font-medium text-muted-foreground">Avg Response Time</p>
-              <h3 className="text-3xl font-bold">{data.summary.averageResponseTime}</h3>
+              <h3 className="text-3xl font-bold">{summary.averageResponseTime || '0ms'}</h3>
             </div>
           </CardContent>
         </Card>
@@ -152,7 +152,7 @@ export function KnowledgeInsights(_props: KnowledgeInsightsProps) {
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.topDocuments} layout="vertical">
+                <BarChart data={data.topDocuments || []}>
                   <XAxis type="number" />
                   <YAxis dataKey="name" type="category" width={150} tick={{ fontSize: 12 }} />
                   <Tooltip />
@@ -173,7 +173,7 @@ export function KnowledgeInsights(_props: KnowledgeInsightsProps) {
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.queriesOverTime}>
+                <BarChart data={data.queriesOverTime || []}>
                   <XAxis dataKey="date" />
                   <YAxis />
                   <Tooltip />
@@ -195,7 +195,7 @@ export function KnowledgeInsights(_props: KnowledgeInsightsProps) {
         <CardContent>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.categoryDistribution}>
+              <BarChart data={data.categoryDistribution || []}>
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />

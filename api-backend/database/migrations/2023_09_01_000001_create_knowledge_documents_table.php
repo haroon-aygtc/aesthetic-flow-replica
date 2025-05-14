@@ -22,6 +22,7 @@ return new class extends Migration
             $table->longText('content')->nullable();
             $table->json('metadata')->nullable();
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
+            $table->morphs('source'); // Polymorphic relationship for different source types
             $table->timestamps();
         });
     }
@@ -33,4 +34,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('knowledge_documents');
     }
-}; 
+};

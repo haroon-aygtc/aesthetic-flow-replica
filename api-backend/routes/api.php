@@ -6,6 +6,7 @@ use App\Http\Controllers\AIModelController;
 use App\Http\Controllers\ModelActivationRuleController;
 use App\Http\Controllers\ModelAnalyticsController;
 use App\Http\Controllers\WidgetController;
+use App\Http\Controllers\WidgetConfigController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\EmbedCodeController;
 use App\Http\Controllers\WidgetAnalyticsController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\BrandingController;
 use App\Http\Controllers\TemplateController;
 use App\Http\Controllers\API\ProviderAPIController;
 use App\Http\Controllers\KnowledgeBaseController;
+use App\Http\Controllers\WebsiteSourceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -101,6 +103,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('widgets', WidgetController::class);
     Route::put('/widgets/{id}/knowledge-base', [WidgetController::class, 'updateKnowledgeBaseSettings']);
 
+    // Widget Config routes
+    Route::get('/widget-config/default', [WidgetConfigController::class, 'getDefault']);
+    Route::get('/widget-config/{id}', [WidgetConfigController::class, 'show']);
+    Route::post('/widget-config', [WidgetConfigController::class, 'store']);
+    Route::put('/widget-config/{id}', [WidgetConfigController::class, 'update']);
+    Route::delete('/widget-config/{id}', [WidgetConfigController::class, 'destroy']);
+
     // Guest user management routes (admin)
     Route::get('/guest-users', [GuestUserAdminController::class, 'index']);
     Route::get('/guest-users/{id}', [GuestUserAdminController::class, 'show']);
@@ -159,24 +168,29 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Knowledge Base routes
     Route::prefix('knowledge-base')->group(function () {
-        // Document routes
         Route::get('/documents', [KnowledgeBaseController::class, 'getDocuments']);
         Route::post('/documents/upload', [KnowledgeBaseController::class, 'uploadDocument']);
+        Route::get('/documents/{id}', [KnowledgeBaseController::class, 'getDocument']);
         Route::delete('/documents/{id}', [KnowledgeBaseController::class, 'deleteDocument']);
-        Route::get('/documents/{id}/download', [KnowledgeBaseController::class, 'downloadDocument']);
         Route::post('/documents/{id}/process', [KnowledgeBaseController::class, 'processDocument']);
+        Route::get('/documents/{id}/download', [KnowledgeBaseController::class, 'downloadDocument']);
         Route::get('/documents/{id}/embeddings', [KnowledgeBaseController::class, 'getDocumentEmbeddings']);
 
-        // QA Pair routes
         Route::get('/qa-pairs', [KnowledgeBaseController::class, 'getQAPairs']);
         Route::post('/qa-pairs', [KnowledgeBaseController::class, 'createQAPair']);
         Route::put('/qa-pairs/{id}', [KnowledgeBaseController::class, 'updateQAPair']);
         Route::delete('/qa-pairs/{id}', [KnowledgeBaseController::class, 'deleteQAPair']);
 
-        // Insights routes
-        Route::get('/insights', [KnowledgeBaseController::class, 'getInsights']);
+        Route::get('/website-sources', [WebsiteSourceController::class, 'index']);
+        Route::post('/website-sources', [WebsiteSourceController::class, 'store']);
+        Route::get('/website-sources/{id}', [WebsiteSourceController::class, 'show']);
+        Route::put('/website-sources/{id}', [WebsiteSourceController::class, 'update']);
+        Route::delete('/website-sources/{id}', [WebsiteSourceController::class, 'destroy']);
+        Route::post('/website-sources/{id}/refresh', [WebsiteSourceController::class, 'refresh']);
+        Route::get('/website-sources/{id}/preview', [WebsiteSourceController::class, 'previewContent']);
+        Route::post('/website-sources/{id}/export', [WebsiteSourceController::class, 'exportContent']);
 
-        // Search routes
+        Route::get('/insights', [KnowledgeBaseController::class, 'getInsights']);
         Route::post('/search', [KnowledgeBaseController::class, 'search']);
     });
 });

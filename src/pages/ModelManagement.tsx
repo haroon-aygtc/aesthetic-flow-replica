@@ -1,4 +1,4 @@
-import { AdminLayout } from "@/components/layouts/admin-layout";
+import AdminLayout from "@/components/layouts/admin-layout";
 import { AIModelsModule } from "@/modules/ai-models";
 import { Route, Routes } from "react-router-dom";
 import { ModelEditPage } from "@/pages/ModelEditPage";

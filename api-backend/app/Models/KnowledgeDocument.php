@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class KnowledgeDocument extends Model
 {
@@ -28,6 +29,8 @@ class KnowledgeDocument extends Model
         'content',
         'metadata',
         'user_id',
+        'source_id',
+        'source_type',
     ];
 
     /**
@@ -43,7 +46,7 @@ class KnowledgeDocument extends Model
     /**
      * Get the user that owns the document.
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
@@ -51,15 +54,23 @@ class KnowledgeDocument extends Model
     /**
      * Get the embeddings for the document.
      */
-    public function embeddings()
+    public function embeddings(): HasMany
     {
         return $this->hasMany(DocumentEmbedding::class, 'document_id');
     }
 
     /**
+     * Get the source of the document (polymorphic).
+     */
+    public function source(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    /**
      * Get the document processing status.
      */
-    public function getStatusAttribute($value)
+    public function getStatusAttribute($value): string
     {
         return $value ?: 'pending';
     }
@@ -67,7 +78,7 @@ class KnowledgeDocument extends Model
     /**
      * Check if the document has been processed.
      */
-    public function isProcessed()
+    public function isProcessed(): bool
     {
         return $this->status === 'processed';
     }
@@ -75,7 +86,7 @@ class KnowledgeDocument extends Model
     /**
      * Check if the document is being processed.
      */
-    public function isProcessing()
+    public function isProcessing(): bool
     {
         return in_array($this->status, ['processing', 'processing_embeddings']);
     }
@@ -83,7 +94,7 @@ class KnowledgeDocument extends Model
     /**
      * Check if the document processing has failed.
      */
-    public function hasFailed()
+    public function hasFailed(): bool
     {
         return $this->status === 'failed';
     }

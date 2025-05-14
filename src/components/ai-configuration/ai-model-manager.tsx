@@ -7,12 +7,13 @@ import { ApiKeyCard } from "./model-management/api-key-card";
 import { ConfigParametersCard } from "./model-management/config-parameters-card";
 import { ModelFallbackCard } from "./model-management/model-fallback-card";
 import { ModelAnalyticsCard } from "./model-management/model-analytics-card";
+import { ModelPromptTemplateCard } from "./model-management/model-prompt-template-card";
 import { ModelTestChatDialog } from "./model-management/model-test-chat-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { MessageSquare } from "lucide-react";
-import { Settings, History, BarChart } from "lucide-react";
+import { Settings, History, BarChart, MessageCircle } from "lucide-react";
 
 interface AIModelManagerProps {
   initialTab?: string;
@@ -309,6 +310,10 @@ export function AIModelManager({ initialTab = "basic", onTabChange }: AIModelMan
               <Settings className="h-4 w-4" />
               Basic Settings
             </TabsTrigger>
+            <TabsTrigger value="prompt" className="flex items-center gap-2">
+              <MessageCircle className="h-4 w-4" />
+              Prompt Template
+            </TabsTrigger>
             <TabsTrigger value="advanced" className="flex items-center gap-2">
               <History className="h-4 w-4" />
               Advanced Settings
@@ -347,6 +352,14 @@ export function AIModelManager({ initialTab = "basic", onTabChange }: AIModelMan
                 onModelNameChange={onModelNameChange}
               />
             </div>
+          </TabsContent>
+
+          <TabsContent value="prompt">
+            <ModelPromptTemplateCard
+              selectedModel={selectedModel}
+              onUpdateModel={onUpdateModel}
+              isLoading={isLoading}
+            />
           </TabsContent>
 
           <TabsContent value="advanced">

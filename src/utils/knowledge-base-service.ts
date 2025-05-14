@@ -20,6 +20,19 @@ export interface QAPair {
   created_at: string;
 }
 
+export interface WebsiteSource {
+  id: string;
+  url: string;
+  title: string;
+  description: string;
+  category: string;
+  status: "active" | "pending" | "failed";
+  last_crawled_at: string;
+  auto_update: boolean;
+  update_frequency: "daily" | "weekly" | "monthly";
+  created_at: string;
+}
+
 export const knowledgeBaseService = {
   // Document operations
   getDocuments: async () => {
@@ -105,12 +118,106 @@ export const knowledgeBaseService = {
     }
   },
 
+  // Website source operations
+  getWebsiteSources: async () => {
+    try {
+      return await api.get('knowledge-base/website-sources');
+    } catch (error) {
+      console.error("Error fetching website sources:", error);
+      throw error;
+    }
+  },
+
+  addWebsiteSource: async (data: {
+    url: string;
+    category: string;
+    auto_update?: boolean;
+    update_frequency?: 'daily' | 'weekly' | 'monthly'
+  }) => {
+    try {
+      return await api.post('knowledge-base/website-sources', data);
+    } catch (error) {
+      console.error("Error adding website source:", error);
+      throw error;
+    }
+  },
+
+  updateWebsiteSource: async (sourceId: string, data: {
+    category?: string;
+    auto_update?: boolean;
+    update_frequency?: 'daily' | 'weekly' | 'monthly'
+  }) => {
+    try {
+      return await api.put(`knowledge-base/website-sources/${sourceId}`, data);
+    } catch (error) {
+      console.error("Error updating website source:", error);
+      throw error;
+    }
+  },
+
+  deleteWebsiteSource: async (sourceId: string) => {
+    try {
+      return await api.delete(`knowledge-base/website-sources/${sourceId}`);
+    } catch (error) {
+      console.error("Error deleting website source:", error);
+      throw error;
+    }
+  },
+
+  refreshWebsiteSource: async (sourceId: string) => {
+    try {
+      return await api.post(`knowledge-base/website-sources/${sourceId}/refresh`);
+    } catch (error) {
+      console.error("Error refreshing website source:", error);
+      throw error;
+    }
+  },
+
+  previewWebsiteContent: async (sourceId: string) => {
+    try {
+      return await api.get(`knowledge-base/website-sources/${sourceId}/preview`);
+    } catch (error) {
+      console.error("Error previewing website content:", error);
+      throw error;
+    }
+  },
+
+  exportWebsiteContent: async (sourceId: string, format: string) => {
+    try {
+      return await api.post(`knowledge-base/website-sources/${sourceId}/export`, {
+        format,
+        use_cached: true
+      });
+    } catch (error) {
+      console.error("Error exporting website content:", error);
+      throw error;
+    }
+  },
+
   // Insights operations
   getInsights: async (timeframe: string = '30days') => {
     try {
       return await api.get(`knowledge-base/insights?timeframe=${timeframe}`);
     } catch (error) {
       console.error("Error fetching insights:", error);
+      throw error;
+    }
+  },
+
+  // Search operations
+  search: async (query: string, options?: {
+    limit?: number;
+    threshold?: number;
+    sources?: string[];
+    category?: string;
+  }) => {
+    try {
+      return await api.post('knowledge-base/search', {
+        query,
+        ...options
+      });
+    } catch (error) {
+      console.error("Error searching knowledge base:", error);
       throw error;
     }
   }

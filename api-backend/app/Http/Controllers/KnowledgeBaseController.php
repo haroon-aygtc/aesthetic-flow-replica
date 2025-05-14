@@ -82,6 +82,8 @@ class KnowledgeBaseController extends Controller
             'category' => $request->category,
             'url' => $url,
             'user_id' => auth()->id(),
+            'source_type' => 'upload', // Default source type for uploaded files
+            'source_id' => 0,          // Default source ID for uploaded files
         ]);
 
         // Dispatch job to process document content
@@ -298,9 +300,9 @@ class KnowledgeBaseController extends Controller
             'query' => 'required|string|min:3',
             'limit' => 'integer|min:1|max:20',
             'threshold' => 'numeric|min:0|max:1',
-            'category' => 'string|nullable',
-            'sources' => 'array|nullable',
+            'sources' => 'array',
             'sources.*' => 'string|in:embeddings,qa_pairs,keywords',
+            'category' => 'string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -312,34 +314,21 @@ class KnowledgeBaseController extends Controller
         }
 
         $query = $request->input('query');
-        $limit = $request->input('limit', 5);
-        $threshold = $request->input('threshold', 0.7);
-        $category = $request->input('category');
-        $sources = $request->input('sources', ['embeddings', 'qa_pairs', 'keywords']);
 
+        // Set default search options
         $options = [
-            'limit' => $limit,
-            'threshold' => $threshold,
-            'category' => $category,
-            'sources' => $sources,
+            'limit' => $request->input('limit', 5),
+            'threshold' => $request->input('threshold', 0.7),
+            'sources' => $request->input('sources', ['embeddings', 'qa_pairs', 'keywords']),
         ];
 
-        $results = $this->knowledgeSearchService->search($query, $options);
+        // Add category if provided
+        if ($request->has('category')) {
+            $options['category'] = $request->input('category');
+        }
 
-        // Log the search for analytics
-        KnowledgeInsight::create([
-            'type' => 'search',
-            'source_id' => auth()->id() ?? 0,
-            'source_type' => auth()->check() ? 'user' : 'guest',
-            'metric' => 'search_count',
-            'value' => 1,
-            'date' => now(),
-            'metadata' => [
-                'query' => $query,
-                'results_count' => count($results['results']),
-                'sources' => $sources,
-            ]
-        ]);
+        // Search for relevant content
+        $results = $this->knowledgeSearchService->search($query, $options);
 
         return response()->json([
             'success' => true,

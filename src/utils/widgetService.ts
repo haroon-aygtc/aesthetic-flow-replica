@@ -1,4 +1,3 @@
-
 import api from './api';
 
 // Types for widget configurations
@@ -23,6 +22,13 @@ export interface WidgetSettings {
   showNotifications?: boolean;
   triggerAfterPageViews?: number;
   pageTargeting?: string;
+  use_knowledge_base?: boolean;
+  knowledge_base_settings?: {
+    search_threshold?: number;
+    max_results?: number;
+    sources?: string[];
+    categories?: string[];
+  };
   avatar?: {
     enabled?: boolean;
     imageUrl?: string;

@@ -16,6 +16,8 @@ import {
   Key,
   Globe,
   Cpu,
+  Database,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,6 +27,21 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useToast } from "@/components/ui/use-toast";
+
+interface MenuItem {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  path: string;
+  disabled?: boolean;
+  submenu?: {
+    id: string;
+    label: string;
+    path: string;
+    disabled?: boolean;
+  }[];
+}
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -36,7 +53,7 @@ interface SidebarProps {
 
 const Sidebar = ({
   collapsed = false,
-  onToggleCollapse = () => {},
+  onToggleCollapse = () => { },
   userName = "Admin User",
   userEmail = "admin@example.com",
   userAvatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=admin",
@@ -44,59 +61,33 @@ const Sidebar = ({
   const location = useLocation();
   const navigate = useNavigate();
   const auth = useAuth();
+  const { toast } = useToast();
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     {
       id: "dashboard",
       label: "Dashboard",
       icon: <LayoutDashboard size={20} />,
-      path: "/admin/dashboard",
+      path: "/dashboard",
     },
     {
       id: "tutorials",
       label: "Tutorials",
       icon: <FileText size={20} />,
       path: "/tutorial",
+      disabled: true,
       submenu: [
         {
           id: "intro",
           label: "Introduction",
           path: "/tutorial",
+          disabled: true,
         },
         {
           id: "setup",
           label: "Setup Guide",
           path: "/tutorial/setup",
-        },
-        {
-          id: "chat-widget",
-          label: "Chat Widget",
-          path: "/tutorial/chat-widget",
-        },
-        {
-          id: "admin-dashboard",
-          label: "Admin Dashboard",
-          path: "/tutorial/admin-dashboard",
-        },
-        {
-          id: "embedding",
-          label: "Embedding Options",
-          path: "/tutorial/embedding",
-        },
-        {
-          id: "websocket",
-          label: "WebSocket Demo",
-          path: "/tutorial/websocket",
-        },
-        {
-          id: "video-tutorials",
-          label: "Video Tutorials",
-          path: "/tutorial/videos",
-        },
-        {
-          id: "animation-demo",
-          label: "2D/3D Animations",
-          path: "/tutorial/animations",
+          disabled: true,
         },
       ],
     },
@@ -104,124 +95,138 @@ const Sidebar = ({
       id: "widget",
       label: "Widget Config",
       icon: <Settings size={20} />,
-      path: "/admin/widget-config",
+      path: "/dashboard/widget-config",
     },
     {
       id: "contextRules",
       label: "Context Rules",
       icon: <MessageSquare size={20} />,
-      path: "/admin/context-rules",
+      path: "/dashboard/context-rules",
       submenu: [
         {
           id: "create",
           label: "Create Rule",
-          path: "/admin/context-rules/create",
+          path: "/dashboard/context-rules/create",
+          disabled: true,
         },
         {
           id: "manage",
           label: "Manage Rules",
-          path: "/admin/context-rules/manage",
-        },
-        { id: "test", label: "Test Rules", path: "/admin/context-rules/test" },
-      ],
-    },
-    {
-      id: "templates",
-      label: "Prompt Templates",
-      icon: <FileText size={20} />,
-      path: "/admin/templates",
-      submenu: [
-        {
-          id: "create",
-          label: "Create Template",
-          path: "/admin/templates/create",
-        },
-        {
-          id: "manage",
-          label: "Manage Templates",
-          path: "/admin/templates/manage",
+          path: "/dashboard/context-rules/manage",
+          disabled: true,
         },
       ],
     },
+
     {
       id: "scraping",
       label: "Web Scraping",
       icon: <Globe size={20} />,
-      path: "/admin/scraping",
+      path: "/dashboard/scraping",
+      disabled: true,
     },
     {
       id: "embedCode",
       label: "Embed Code",
       icon: <Code size={20} />,
-      path: "/admin/embed-code",
+      path: "/dashboard/embed-code",
     },
     {
       id: "analytics",
       label: "Analytics",
       icon: <BarChart3 size={20} />,
-      path: "/admin/analytics",
+      path: "/dashboard/analytics",
     },
     {
       id: "apiKeys",
       label: "API Keys",
       icon: <Key size={20} />,
-      path: "/admin/api-keys",
+      path: "/dashboard/api-keys",
+      disabled: true,
     },
     {
       id: "aiconfig",
       label: "AI Configuration",
       icon: <Cpu size={20} />,
-      path: "/admin/ai-config",
+      path: "/dashboard/ai-configuration",
+      submenu: [
+        {
+          id: "promptTemplates",
+          label: "Prompt Templates",
+          path: "/ai-configuration/prompt-templates",
+        },
+        {
+          id: "createTemplate",
+          label: "Create Template",
+          path: "/ai-configuration/prompt-templates/create",
+        },
+        {
+          id: "knowledgeBase",
+          label: "Knowledge Base",
+          path: "/dashboard/knowledge-base",
+        },
+        {
+          id: "models",
+          label: "AI Models",
+          path: "/dashboard/ai-models",
+        },
+      ],
+    },
+    {
+      id: "aiModels",
+      label: "AI Models",
+      icon: <Cpu size={20} />,
+      path: "/dashboard/ai-models",
+    },
+    {
+      id: "knowledge",
+      label: "Knowledge Base",
+      icon: <Database size={20} />,
+      path: "/dashboard/knowledge-base",
     },
     {
       id: "users",
       label: "User Management",
       icon: <Users size={20} />,
-      path: "/admin/users",
+      path: "/dashboard/user-management",
     },
   ];
 
-  // Determine active item based on current path with optimized logic
+  // Determine active item based on current path
   const getActiveItemFromPath = (path: string) => {
     // Remove trailing slash if present
     const normalizedPath = path.endsWith("/") ? path.slice(0, -1) : path;
 
-    // Create a map of path lengths for more efficient sorting
-    const pathMap = new Map<
-      string,
-      { id: string; isSubmenu: boolean; parentId?: string }
-    >();
-
-    // Populate the map with all paths
-    menuItems.forEach((item) => {
-      // Add main menu item
-      pathMap.set(item.path, { id: item.id, isSubmenu: false });
-
-      // Add submenu items if they exist
-      if (item.submenu) {
-        item.submenu.forEach((subItem) => {
-          pathMap.set(subItem.path, {
-            id: `${item.id}-${subItem.id}`,
-            isSubmenu: true,
-            parentId: item.id,
-          });
-        });
+    // Check direct matches first
+    for (const item of menuItems) {
+      if (item.path === normalizedPath) {
+        return item.id;
       }
-    });
 
-    // First check for exact matches which take priority
-    if (pathMap.has(normalizedPath)) {
-      return pathMap.get(normalizedPath)!.id;
+      // Check submenu items
+      if (item.submenu) {
+        for (const subItem of item.submenu) {
+          if (subItem.path === normalizedPath) {
+            return `${item.id}-${subItem.id}`;
+          }
+        }
+      }
     }
 
-    // If no exact match, find the longest matching path prefix
-    // Sort paths by length (descending) for most specific match first
-    const sortedPaths = Array.from(pathMap.keys())
-      .filter((p) => p !== "/" && normalizedPath.startsWith(p))
-      .sort((a, b) => b.length - a.length);
+    // Check if path is a subfolder of any menu items
+    for (const item of menuItems) {
+      if (normalizedPath.startsWith(item.path + '/')) {
+        return item.id;
+      }
 
-    if (sortedPaths.length > 0) {
-      return pathMap.get(sortedPaths[0])!.id;
+      // Check submenu items
+      if (item.submenu) {
+        for (const subItem of item.submenu) {
+          if (normalizedPath.startsWith(subItem.path + '/')) {
+            return `${item.id}-${subItem.id}`;
+          }
+        }
+      }
     }
 
     return "dashboard"; // Default to dashboard if no match
@@ -231,11 +236,11 @@ const Sidebar = ({
     getActiveItemFromPath(location.pathname),
   );
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
+    aiconfig: true,
     contextRules: true,
-    templates: false,
   });
 
-  // Update active item when location changes with memoization
+  // Update active item when location changes
   useEffect(() => {
     const newActiveItem = getActiveItemFromPath(location.pathname);
 
@@ -246,14 +251,10 @@ const Sidebar = ({
       // Expand parent menu if a submenu item is active
       if (newActiveItem.includes("-")) {
         const parentId = newActiveItem.split("-")[0];
-        setExpandedMenus((prev) => {
-          // Only update if the menu isn't already expanded
-          if (prev[parentId]) return prev;
-          return {
-            ...prev,
-            [parentId]: true,
-          };
-        });
+        setExpandedMenus((prev) => ({
+          ...prev,
+          [parentId]: true,
+        }));
       }
     }
   }, [location.pathname, activeItem]);
@@ -268,6 +269,18 @@ const Sidebar = ({
   const handleLogout = () => {
     auth.logout();
     navigate("/login");
+  };
+
+  const handleNavigation = (path: string, disabled?: boolean) => {
+    if (disabled) {
+      toast({
+        title: "Feature Unavailable",
+        description: "This feature is not available yet.",
+        variant: "default",
+      });
+      return;
+    }
+    navigate(path);
   };
 
   return (
@@ -333,10 +346,25 @@ const Sidebar = ({
                     variant="ghost"
                     className={cn(
                       "w-full justify-start text-slate-300 hover:text-white hover:bg-slate-800",
-                      activeItem === item.id && "bg-slate-800 text-white",
+                      (activeItem === item.id || activeItem.startsWith(item.id + "-")) && "bg-slate-800 text-white",
                       collapsed && "justify-center px-2",
+                      item.disabled && "opacity-60",
                     )}
-                    onClick={() => !collapsed && toggleMenu(item.id)}
+                    onClick={() => {
+                      if (item.disabled) {
+                        toast({
+                          title: "Feature Unavailable",
+                          description: "This feature is not available yet.",
+                          variant: "default",
+                        });
+                        return;
+                      }
+                      if (!collapsed) {
+                        toggleMenu(item.id);
+                      } else {
+                        handleNavigation(item.path);
+                      }
+                    }}
                   >
                     <TooltipProvider delayDuration={300}>
                       <Tooltip>
@@ -370,20 +398,29 @@ const Sidebar = ({
                     <ul className="mt-1 pl-10 space-y-1">
                       {item.submenu.map((subItem) => (
                         <li key={`${item.id}-${subItem.id}`}>
-                          <Link
-                            to={subItem.path}
+                          <Button
+                            variant="ghost"
                             className={cn(
-                              "block py-2 px-3 text-sm rounded-md text-slate-300 hover:text-white hover:bg-slate-800",
+                              "w-full justify-start text-sm py-2 text-slate-300 hover:text-white hover:bg-slate-800",
                               activeItem === `${item.id}-${subItem.id}` &&
-                                "bg-slate-800 text-white",
+                              "bg-slate-800 text-white",
+                              subItem.disabled && "opacity-60",
                             )}
                             onClick={() => {
+                              if (subItem.disabled) {
+                                toast({
+                                  title: "Feature Unavailable",
+                                  description: "This feature is not available yet.",
+                                  variant: "default",
+                                });
+                                return;
+                              }
                               setActiveItem(`${item.id}-${subItem.id}`);
                               navigate(subItem.path);
                             }}
                           >
                             {subItem.label}
-                          </Link>
+                          </Button>
                         </li>
                       ))}
                     </ul>
@@ -396,11 +433,9 @@ const Sidebar = ({
                     "w-full justify-start text-slate-300 hover:text-white hover:bg-slate-800",
                     activeItem === item.id && "bg-slate-800 text-white",
                     collapsed && "justify-center px-2",
+                    item.disabled && "opacity-60",
                   )}
-                  onClick={() => {
-                    setActiveItem(item.id);
-                    navigate(item.path);
-                  }}
+                  onClick={() => handleNavigation(item.path, item.disabled)}
                 >
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>

@@ -10,6 +10,9 @@ use App\Services\AIService;
 use App\Services\KnowledgeAIService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
+use App\Models\AIModel;
+use App\Models\ModelUsageLog;
 
 class ChatController extends Controller
 {
@@ -81,96 +84,149 @@ class ChatController extends Controller
      */
     public function sendMessage(Request $request)
     {
-        $request->validate([
-            'session_id' => 'required|string|exists:chat_sessions,session_id',
+        // Validate request
+        $validator = Validator::make($request->all(), [
             'message' => 'required|string',
-            'metadata' => 'nullable|array',
+            'chat_session_id' => 'required|exists:chat_sessions,id',
+            'widget_id' => 'required|string',
         ]);
 
-        // Find the session
-        $session = ChatSession::where('session_id', $request->session_id)->firstOrFail();
-
-        // Determine the role based on the session (assuming user is always 'user')
-        $role = 'user';
-
-        // Save the message
-        $chatMessage = new ChatMessage();
-        $chatMessage->chat_session_id = $session->id;
-        $chatMessage->role = $role;
-        $chatMessage->content = $request->message;
-        $chatMessage->metadata = $request->metadata;
-        $chatMessage->save();
-
-        // Update the session's last activity timestamp
-        $session->last_activity_at = now();
-        $session->save();
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
 
         // Get the widget
-        $widget = Widget::find($session->widget_id);
+        $widget = Widget::where('widget_id', $request->widget_id)
+                        ->where('is_active', true)
+                        ->first();
 
-        // Get previous messages for context
-        $previousMessages = ChatMessage::where('chat_session_id', $session->id)
-            ->orderBy('created_at')
-            ->get();
+        if (!$widget) {
+            return response()->json(['error' => 'Widget not found or inactive'], 404);
+        }
 
-        // Format messages for AI processing
-        $messages = [];
-        foreach ($previousMessages as $prevMessage) {
-            $messages[] = [
-                'role' => $prevMessage->role,
-                'content' => $prevMessage->content
+        // Get the chat session
+        $chatSession = ChatSession::findOrFail($request->chat_session_id);
+
+        // Get the AI model to use (from widget, or default)
+        $aiModel = null;
+        if ($widget->ai_model_id) {
+            $aiModel = AIModel::find($widget->ai_model_id);
+        }
+
+        if (!$aiModel) {
+            $aiModel = AIModel::where('is_default', true)->first();
+        }
+
+        if (!$aiModel) {
+            return response()->json(['error' => 'No AI model configured'], 500);
+        }
+
+        // Get previous messages from this session
+        $previousMessages = ChatMessage::where('chat_session_id', $chatSession->id)
+                                    ->orderBy('created_at', 'asc')
+                                    ->get();
+
+        // Format messages for the AI service
+        $formattedMessages = [];
+        foreach ($previousMessages as $msg) {
+            $formattedMessages[] = [
+                'role' => $msg->role,
+                'content' => $msg->content
             ];
         }
 
-        // Add the current message
-        $messages[] = [
+        // Add the new user message
+        $formattedMessages[] = [
             'role' => 'user',
             'content' => $request->message
         ];
 
-        // Context for AI processing
+        // Save the user message to the database
+        $userMessage = new ChatMessage();
+        $userMessage->chat_session_id = $chatSession->id;
+        $userMessage->role = 'user';
+        $userMessage->content = $request->message;
+        $userMessage->save();
+
+        // Update session last active timestamp
+        $chatSession->last_activity = now();
+        $chatSession->save();
+
+        // Prepare context for the AI service
         $context = [
-            'user_id' => auth()->id(),
+            'chat_session_id' => $chatSession->id,
             'widget_id' => $widget->id,
-            'session_id' => $session->session_id,
-            'visitor_id' => $session->visitor_id,
+            'user_id' => $chatSession->guest_user_id
         ];
 
-        // Check if knowledge base is enabled for this widget
-        $useKnowledgeBase = $widget->settings['use_knowledge_base'] ?? false;
+        try {
+            // Check if knowledge base is enabled for this widget
+            $useKnowledgeBase = $widget->isKnowledgeBaseEnabled();
+            $response = null;
 
-        // Get AI response
-        if ($useKnowledgeBase) {
-            $aiResponse = $this->knowledgeAIService->processMessageWithKnowledge(
-                $messages,
-                $widget->aiModel,
-                $widget->settings,
-                $context
-            );
-        } else {
-            $aiResponse = $this->aiService->processMessage(
-                $messages,
-                $widget->aiModel,
-                $widget->settings,
-                $context
-            );
+            if ($useKnowledgeBase) {
+                // Use the knowledge base-enhanced AI service
+                $knowledgeAIService = app(App\Services\KnowledgeAIService::class);
+                $response = $knowledgeAIService->processMessageWithKnowledge(
+                    $formattedMessages,
+                    $aiModel,
+                    $widget->settings,
+                    $context
+                );
+            } else {
+                // Use the regular AI service
+                $aiService = app(App\Services\AIService::class);
+                $response = $aiService->processMessage(
+                    $formattedMessages,
+                    $aiModel,
+                    $widget->settings,
+                    $context
+                );
+            }
+
+            // Save the AI's response to the database
+            $assistantMessage = new ChatMessage();
+            $assistantMessage->chat_session_id = $chatSession->id;
+            $assistantMessage->role = 'assistant';
+            $assistantMessage->content = $response['message'];
+            $assistantMessage->metadata = $response['metadata'] ?? null;
+            $assistantMessage->save();
+
+            // Update the model usage log
+            ModelUsageLog::create([
+                'ai_model_id' => $aiModel->id,
+                'chat_session_id' => $chatSession->id,
+                'widget_id' => $widget->id,
+                'tokens_used' => $response['usage']['total_tokens'] ?? 0,
+                'prompt_tokens' => $response['usage']['prompt_tokens'] ?? 0,
+                'completion_tokens' => $response['usage']['completion_tokens'] ?? 0,
+                'metadata' => [
+                    'user_message_id' => $userMessage->id,
+                    'assistant_message_id' => $assistantMessage->id,
+                    'knowledge_used' => $response['metadata']['knowledge_used'] ?? false
+                ]
+            ]);
+
+            return response()->json([
+                'id' => $assistantMessage->id,
+                'content' => $assistantMessage->content,
+                'metadata' => $assistantMessage->metadata,
+                'created_at' => $assistantMessage->created_at
+            ]);
+        } catch (\Exception $e) {
+            // Log the error
+            \Log::error('AI Processing error: ' . $e->getMessage(), [
+                'chat_session_id' => $chatSession->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // Return error response
+            return response()->json([
+                'error' => 'Failed to process your message',
+                'message' => config('app.debug') ? $e->getMessage() : 'An internal error occurred'
+            ], 500);
         }
-
-        // Extract response content
-        $responseContent = $aiResponse['content'] ?? 'Sorry, I could not generate a response.';
-
-        // Save the AI response
-        $aiChatMessage = new ChatMessage();
-        $aiChatMessage->chat_session_id = $session->id;
-        $aiChatMessage->role = 'assistant';
-        $aiChatMessage->content = $responseContent;
-        $aiChatMessage->metadata = $aiResponse['metadata'] ?? null;
-        $aiChatMessage->save();
-
-        return response()->json([
-            'message' => $responseContent,
-            'metadata' => $aiResponse['metadata'] ?? null,
-        ]);
     }
 
     /**

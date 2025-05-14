@@ -76,8 +76,6 @@ class KnowledgeInsight extends Model
     {
         return self::create([
             'type' => 'search',
-            'source_id' => $userId ?? 0,
-            'source_type' => $userId ? 'user' : 'guest',
             'metric' => 'search_count',
             'value' => 1,
             'date' => now(),
@@ -85,44 +83,70 @@ class KnowledgeInsight extends Model
                 'query' => $query,
                 'results_count' => $resultsCount,
                 'sources' => $sources,
+                'user_id' => $userId
             ]
         ]);
     }
 
     /**
-     * Create a document view insight record.
+     * Create a document usage insight record.
      */
-    public static function createDocumentViewInsight($documentId, $userId = null)
+    public static function createDocumentUsageInsight(KnowledgeDocument $document, $relevanceScore, $userId = null)
     {
         return self::create([
-            'type' => 'document_view',
-            'source_id' => $userId ?? 0,
-            'source_type' => $userId ? 'user' : 'guest',
-            'metric' => 'document_view_count',
+            'type' => 'document_usage',
+            'source_id' => $document->id,
+            'source_type' => KnowledgeDocument::class,
+            'metric' => 'usage_count',
             'value' => 1,
             'date' => now(),
             'metadata' => [
-                'document_id' => $documentId,
+                'document_id' => $document->id,
+                'document_name' => $document->name,
+                'relevance_score' => $relevanceScore,
+                'user_id' => $userId
             ]
         ]);
     }
 
     /**
-     * Create a search result click insight record.
+     * Create a QA pair usage insight record.
      */
-    public static function createSearchResultClickInsight($query, $resultType, $resultId, $userId = null)
+    public static function createQAPairUsageInsight(QAPair $qaPair, $relevanceScore, $userId = null)
     {
         return self::create([
-            'type' => 'search_result_click',
-            'source_id' => $userId ?? 0,
-            'source_type' => $userId ? 'user' : 'guest',
-            'metric' => 'search_result_click_count',
+            'type' => 'qa_pair_usage',
+            'source_id' => $qaPair->id,
+            'source_type' => QAPair::class,
+            'metric' => 'usage_count',
             'value' => 1,
             'date' => now(),
             'metadata' => [
-                'query' => $query,
-                'result_type' => $resultType,
-                'result_id' => $resultId,
+                'qa_pair_id' => $qaPair->id,
+                'question' => $qaPair->question,
+                'relevance_score' => $relevanceScore,
+                'user_id' => $userId
+            ]
+        ]);
+    }
+
+    /**
+     * Create a website source usage insight record.
+     */
+    public static function createWebsiteSourceUsageInsight(WebsiteSource $websiteSource, $relevanceScore, $userId = null)
+    {
+        return self::create([
+            'type' => 'website_source_usage',
+            'source_id' => $websiteSource->id,
+            'source_type' => WebsiteSource::class,
+            'metric' => 'usage_count',
+            'value' => 1,
+            'date' => now(),
+            'metadata' => [
+                'website_source_id' => $websiteSource->id,
+                'url' => $websiteSource->url,
+                'relevance_score' => $relevanceScore,
+                'user_id' => $userId
             ]
         ]);
     }
