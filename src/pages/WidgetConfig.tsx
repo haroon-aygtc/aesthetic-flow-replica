@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { ChatWidgetPreview } from "@/components/chat-widget-preview";
-import { AdminLayout } from "@/components/admin-layout";
+import { AdminLayout } from "@/components/layouts/admin-layout";
 import { Code, FileText, Palette, Settings, Save, Trash } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Widget, widgetService, WidgetSettings } from "@/utils/widgetService";

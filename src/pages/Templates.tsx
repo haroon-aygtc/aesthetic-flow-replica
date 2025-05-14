@@ -1,5 +1,5 @@
 
-import { AdminLayout } from "@/components/admin-layout";
+import { AdminLayout } from "@/components/layouts/admin-layout";
 import { File, FileEdit, Copy, Trash2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -54,7 +54,7 @@ const Templates = () => {
             Create Template
           </Button>
         </div>
-        
+
         <Tabs defaultValue="all-templates" className="w-full">
           <TabsList className="mb-8">
             <TabsTrigger value="all-templates">All Templates</TabsTrigger>
@@ -62,7 +62,7 @@ const Templates = () => {
             <TabsTrigger value="uae-gov">Uae-Gov</TabsTrigger>
             <TabsTrigger value="support">Support</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="all-templates" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {templates.map(template => (
@@ -91,16 +91,16 @@ const Templates = () => {
                       </Button>
                     </div>
                   </div>
-                  
+
                   <CardContent className="p-4">
                     <p className="text-sm mb-4">{template.description}</p>
-                    
+
                     <div className="bg-secondary/50 rounded-md p-3 mb-4">
                       <pre className="text-xs overflow-auto whitespace-pre-wrap">
                         {template.prompt}
                       </pre>
                     </div>
-                    
+
                     <div className="mb-4">
                       <p className="text-sm font-medium mb-2">Variables:</p>
                       <div className="flex flex-wrap gap-2">
@@ -111,7 +111,7 @@ const Templates = () => {
                         ))}
                       </div>
                     </div>
-                    
+
                     <div className="flex justify-between text-xs text-muted-foreground">
                       <span>Created: {template.createdAt}</span>
                       <span>Updated: {template.updatedAt}</span>
@@ -121,7 +121,7 @@ const Templates = () => {
               ))}
             </div>
           </TabsContent>
-          
+
           <TabsContent value="general" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {templates
@@ -152,16 +152,16 @@ const Templates = () => {
                         </Button>
                       </div>
                     </div>
-                    
+
                     <CardContent className="p-4">
                       <p className="text-sm mb-4">{template.description}</p>
-                      
+
                       <div className="bg-secondary/50 rounded-md p-3 mb-4">
                         <pre className="text-xs overflow-auto whitespace-pre-wrap">
                           {template.prompt}
                         </pre>
                       </div>
-                      
+
                       <div className="mb-4">
                         <p className="text-sm font-medium mb-2">Variables:</p>
                         <div className="flex flex-wrap gap-2">
@@ -172,7 +172,7 @@ const Templates = () => {
                           ))}
                         </div>
                       </div>
-                      
+
                       <div className="flex justify-between text-xs text-muted-foreground">
                         <span>Created: {template.createdAt}</span>
                         <span>Updated: {template.updatedAt}</span>
@@ -182,7 +182,7 @@ const Templates = () => {
                 ))}
             </div>
           </TabsContent>
-          
+
           <TabsContent value="uae-gov" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {templates
@@ -214,16 +214,16 @@ const Templates = () => {
                         </Button>
                       </div>
                     </div>
-                    
+
                     <CardContent className="p-4">
                       <p className="text-sm mb-4">{template.description}</p>
-                      
+
                       <div className="bg-secondary/50 rounded-md p-3 mb-4">
                         <pre className="text-xs overflow-auto whitespace-pre-wrap">
                           {template.prompt}
                         </pre>
                       </div>
-                      
+
                       <div className="mb-4">
                         <p className="text-sm font-medium mb-2">Variables:</p>
                         <div className="flex flex-wrap gap-2">
@@ -234,7 +234,7 @@ const Templates = () => {
                           ))}
                         </div>
                       </div>
-                      
+
                       <div className="flex justify-between text-xs text-muted-foreground">
                         <span>Created: {template.createdAt}</span>
                         <span>Updated: {template.updatedAt}</span>
@@ -244,7 +244,7 @@ const Templates = () => {
                 ))}
             </div>
           </TabsContent>
-          
+
           <TabsContent value="support" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {templates
@@ -276,16 +276,16 @@ const Templates = () => {
                         </Button>
                       </div>
                     </div>
-                    
+
                     <CardContent className="p-4">
                       <p className="text-sm mb-4">{template.description}</p>
-                      
+
                       <div className="bg-secondary/50 rounded-md p-3 mb-4">
                         <pre className="text-xs overflow-auto whitespace-pre-wrap">
                           {template.prompt}
                         </pre>
                       </div>
-                      
+
                       <div className="mb-4">
                         <p className="text-sm font-medium mb-2">Variables:</p>
                         <div className="flex flex-wrap gap-2">
@@ -296,7 +296,7 @@ const Templates = () => {
                           ))}
                         </div>
                       </div>
-                      
+
                       <div className="flex justify-between text-xs text-muted-foreground">
                         <span>Created: {template.createdAt}</span>
                         <span>Updated: {template.updatedAt}</span>

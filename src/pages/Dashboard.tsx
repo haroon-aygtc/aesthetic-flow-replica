@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { AdminLayout } from "@/components/admin-layout";
+import { AdminLayout } from "@/components/layouts/admin-layout";
 import { Button } from "@/components/ui/button";
 import { FileText, Code, Settings } from "lucide-react";
 
@@ -12,40 +12,40 @@ const Dashboard = () => {
     responseRate: { value: 0, target: 92 },
     responseTime: { value: 0, target: 3.2 }
   });
-  
+
   const systemStatuses = [
     { name: "API Status", status: "Checking..." },
     { name: "Gemini API", status: "Checking..." },
     { name: "Hugging Face API", status: "Checking..." },
     { name: "Database", status: "Checking..." }
   ];
-  
+
   // Simulate loading data
   useEffect(() => {
     const interval = setInterval(() => {
       setStats(prev => ({
-        conversations: { 
+        conversations: {
           value: Math.min(prev.conversations.value + 100, prev.conversations.target),
-          target: prev.conversations.target 
+          target: prev.conversations.target
         },
-        activeUsers: { 
+        activeUsers: {
           value: Math.min(prev.activeUsers.value + 30, prev.activeUsers.target),
-          target: prev.activeUsers.target 
+          target: prev.activeUsers.target
         },
-        responseRate: { 
+        responseRate: {
           value: Math.min(prev.responseRate.value + 7, prev.responseRate.target),
-          target: prev.responseRate.target 
+          target: prev.responseRate.target
         },
-        responseTime: { 
+        responseTime: {
           value: Math.min(prev.responseTime.value + 0.25, prev.responseTime.target),
-          target: prev.responseTime.target 
+          target: prev.responseTime.target
         }
       }));
     }, 200);
-    
+
     return () => clearInterval(interval);
   }, []);
-  
+
   // Sample data for pie chart
   const data = [
     { name: 'Products', value: 35 },
@@ -54,7 +54,7 @@ const Dashboard = () => {
     { name: 'Pricing', value: 15 },
     { name: 'Other', value: 5 }
   ];
-  
+
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
   return (
@@ -127,7 +127,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
-        
+
         {/* Quick actions and System Status */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
           {/* Quick Actions */}
@@ -153,7 +153,7 @@ const Dashboard = () => {
               </Button>
             </CardContent>
           </Card>
-          
+
           {/* System Status */}
           <Card>
             <CardHeader>
@@ -172,7 +172,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
-        
+
         {/* Chat Distribution Chart */}
         <Card>
           <CardHeader className="flex flex-row items-center">

@@ -1,5 +1,5 @@
 
-import { AdminLayout } from "@/components/admin-layout";
+import { AdminLayout } from "@/components/layouts/admin-layout";
 import { UserManagementModule } from "@/modules/user-management";
 
 const UserManagement = () => {
@@ -12,7 +12,7 @@ const UserManagement = () => {
             Manage users, roles, and permissions
           </p>
         </div>
-        
+
         <UserManagementModule />
       </div>
     </AdminLayout>

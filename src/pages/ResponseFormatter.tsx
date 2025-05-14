@@ -1,5 +1,5 @@
 
-import { AdminLayout } from "@/components/admin-layout";
+import { AdminLayout } from "@/components/layouts/admin-layout";
 import { ResponseFormatter } from "@/components/ai-configuration/response-formatter";
 
 const ResponseFormatterPage = () => {
@@ -12,7 +12,7 @@ const ResponseFormatterPage = () => {
             Configure how AI responses are formatted and presented
           </p>
         </div>
-        
+
         <ResponseFormatter />
       </div>
     </AdminLayout>

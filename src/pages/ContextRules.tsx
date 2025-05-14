@@ -1,5 +1,5 @@
 
-import { AdminLayout } from "@/components/admin-layout";
+import { AdminLayout } from "@/components/layouts/admin-layout";
 import { ContextRulesModule } from "@/modules/context-rules";
 
 const ContextRules = () => {
@@ -12,7 +12,7 @@ const ContextRules = () => {
             Configure context-based activation rules for AI models
           </p>
         </div>
-        
+
         <ContextRulesModule />
       </div>
     </AdminLayout>

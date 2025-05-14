@@ -1,5 +1,5 @@
 
-import { AdminLayout } from "@/components/admin-layout";
+import { AdminLayout } from "@/components/layouts/admin-layout";
 import { FollowUpEngineModule } from "@/modules/follow-up-engine";
 
 const FollowUp = () => {
@@ -12,7 +12,7 @@ const FollowUp = () => {
             Configure automated follow-up interactions with users
           </p>
         </div>
-        
+
         <FollowUpEngineModule />
       </div>
     </AdminLayout>

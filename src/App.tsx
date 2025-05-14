@@ -20,7 +20,7 @@ import FollowUp from "./pages/FollowUp";
 import Analytics from "./pages/Analytics";
 import DirectChat from "./pages/DirectChat";
 import ProviderManagement from "./pages/ProviderManagement";
-import Index from "./pages/Index";
+import Index from "./pages/home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import { AuthProvider } from "./hooks/use-auth";

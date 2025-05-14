@@ -1,5 +1,5 @@
 
-import { AdminLayout } from "@/components/admin-layout";
+import { AdminLayout } from "@/components/layouts/admin-layout";
 import { BarChart2, Users, MessageSquare, Clock } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -13,7 +13,7 @@ const Analytics = () => {
             Get insights into your AI chat system's usage and performance
           </p>
         </div>
-        
+
         <div className="grid gap-6 mb-8 md:grid-cols-2 xl:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -25,7 +25,7 @@ const Analytics = () => {
               <p className="text-xs text-muted-foreground">+12% from last month</p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Chat Sessions</CardTitle>
@@ -36,7 +36,7 @@ const Analytics = () => {
               <p className="text-xs text-muted-foreground">+8% from last month</p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Average Session Duration</CardTitle>
@@ -47,7 +47,7 @@ const Analytics = () => {
               <p className="text-xs text-muted-foreground">-2% from last month</p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">AI Response Rate</CardTitle>
@@ -59,7 +59,7 @@ const Analytics = () => {
             </CardContent>
           </Card>
         </div>
-        
+
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardHeader>
@@ -70,7 +70,7 @@ const Analytics = () => {
               <p className="text-muted-foreground">Chart visualization will be available soon.</p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Message Volume</CardTitle>
@@ -80,7 +80,7 @@ const Analytics = () => {
               <p className="text-muted-foreground">Chart visualization will be available soon.</p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Top User Queries</CardTitle>
@@ -111,7 +111,7 @@ const Analytics = () => {
               </ul>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>AI Model Usage</CardTitle>

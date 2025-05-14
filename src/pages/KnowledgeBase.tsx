@@ -1,5 +1,5 @@
 
-import { AdminLayout } from "@/components/admin-layout";
+import { AdminLayout } from "@/components/layouts/admin-layout";
 import { KnowledgeBaseModule } from "@/modules/knowledge-base";
 
 const KnowledgeBase = () => {
@@ -12,7 +12,7 @@ const KnowledgeBase = () => {
             Manage knowledge sources for your AI chatbot
           </p>
         </div>
-        
+
         <KnowledgeBaseModule />
       </div>
     </AdminLayout>

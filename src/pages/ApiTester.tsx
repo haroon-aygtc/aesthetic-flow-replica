@@ -1,5 +1,5 @@
 
-import { AdminLayout } from "@/components/admin-layout";
+import { AdminLayout } from "@/components/layouts/admin-layout";
 import { ApiTesterModule } from "@/modules/api-tester";
 
 const ApiTester = () => {
@@ -12,7 +12,7 @@ const ApiTester = () => {
             Test API endpoints and model responses
           </p>
         </div>
-        
+
         <ApiTesterModule />
       </div>
     </AdminLayout>

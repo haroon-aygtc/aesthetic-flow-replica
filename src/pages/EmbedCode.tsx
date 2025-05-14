@@ -1,5 +1,5 @@
 
-import { AdminLayout } from "@/components/admin-layout";
+import { AdminLayout } from "@/components/layouts/admin-layout";
 import { EmbedCodeModule } from "@/modules/embed-code";
 
 const EmbedCode = () => {
@@ -12,7 +12,7 @@ const EmbedCode = () => {
             Get code snippets to embed your AI assistant on your website
           </p>
         </div>
-        
+
         <EmbedCodeModule />
       </div>
     </AdminLayout>

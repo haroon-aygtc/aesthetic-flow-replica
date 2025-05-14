@@ -1,5 +1,5 @@
 
-import { AdminLayout } from "@/components/admin-layout";
+import { AdminLayout } from "@/components/layouts/admin-layout";
 import { BrandingEngineModule } from "@/modules/branding-engine";
 
 const Branding = () => {
@@ -12,7 +12,7 @@ const Branding = () => {
             Configure your AI assistant's personality and branding
           </p>
         </div>
-        
+
         <BrandingEngineModule />
       </div>
     </AdminLayout>
