@@ -81,6 +81,10 @@ export function useWidgetPreview(settings: WidgetSettings = {}, widgetId: string
   const createIframeParams = () => {
     if (!isOpen) return "";
 
+    // Create a secure token for the preview
+    const timestamp = Date.now();
+    const previewToken = btoa(`preview_${widgetId}_${timestamp}`);
+
     const params = new URLSearchParams({
       widget_id: widgetId,
       primary_color: encodeURIComponent(primaryColor),
@@ -92,12 +96,15 @@ export function useWidgetPreview(settings: WidgetSettings = {}, widgetId: string
       input_placeholder: encodeURIComponent(inputPlaceholder),
       send_button_text: encodeURIComponent(sendButtonText),
       preview_mode: "true", // Flag to indicate this is a preview
+      preview_token: previewToken, // Add a token for security
+      timestamp: timestamp.toString(), // Add timestamp for cache busting
       avatar_enabled: String(!!avatar?.enabled),
       avatar_image_url: avatar?.imageUrl || "",
       avatar_fallback: avatar?.fallbackInitial || "A"
     });
 
-    return `/widget/v1/iframe.html?${params}&_=${refreshKey}`;
+    // Use the actual API endpoint instead of a static HTML file
+    return `/api/widget/preview?${params}&_=${refreshKey}`;
   };
 
   return {

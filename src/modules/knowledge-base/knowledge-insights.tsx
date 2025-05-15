@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -41,12 +41,25 @@ export function KnowledgeInsights(_props: KnowledgeInsightsProps) {
     try {
       setIsLoading(true);
       const response = await knowledgeBaseService.getInsights(timeframe);
+
+      // Validate the response data structure
+      if (!response.data || !response.data.data) {
+        throw new Error('Invalid insights data format received from API');
+      }
+
       setInsightsData(response.data);
     } catch (error) {
       console.error("Error fetching insights data:", error);
+
+      // Clear any previous data to avoid showing stale information
+      setInsightsData(null);
+
+      // Show detailed error message to the user
       toast({
         title: "Error fetching insights",
-        description: "Could not load knowledge base insights",
+        description: error instanceof Error
+          ? `Could not load knowledge base insights: ${error.message}`
+          : "Could not load knowledge base insights. Please try again later.",
         variant: "destructive"
       });
     } finally {
@@ -54,9 +67,12 @@ export function KnowledgeInsights(_props: KnowledgeInsightsProps) {
     }
   };
 
+  // Use useCallback to memoize the fetchInsights function
+  const memoizedFetchInsights = useCallback(fetchInsights, [timeframe, toast]);
+
   useEffect(() => {
-    fetchInsights();
-  }, [timeframe, toast]);
+    memoizedFetchInsights();
+  }, [memoizedFetchInsights]);
 
   // If no insights data is available, show a message
   if (!insightsData && !isLoading) {

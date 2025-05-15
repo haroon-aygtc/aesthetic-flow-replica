@@ -21,7 +21,7 @@ class TemplateSeeder extends Seeder
             'version' => 1.0,
             'is_default' => true,
             'metadata' => json_encode(['user_name' => 'John Doe']),
-            'variables' => ['user_name', 'company_name'],
+            'variables' => json_encode(['user_name', 'company_name']),
             'slug' => 'general-assistant'
         ]);
 
@@ -33,7 +33,7 @@ class TemplateSeeder extends Seeder
             'version' => 1.0,
             'is_default' => false,
             'metadata' => json_encode(['company_name' => 'Example Corp']),
-            'variables' => ['user_name', 'product_name', 'company_name'],
+            'variables' => json_encode(['user_name', 'product_name', 'company_name']),
             'slug' => 'customer-support'
         ]);
 
@@ -45,7 +45,7 @@ class TemplateSeeder extends Seeder
             'version' => 1.0,
             'is_default' => false,
             'metadata' => json_encode(['product_name' => 'Example Product']),
-            'variables' => ['product_name', 'version', 'platform'],
+            'variables' => json_encode(['product_name', 'version', 'platform']),
             'slug' => 'technical-documentation'
         ]);
 

@@ -43,6 +43,9 @@ Route::post('/chat/message', [ChatController::class, 'sendMessage']);
 Route::get('/chat/history', [ChatController::class, 'getHistory']);
 Route::post('/widget/analytics/view', [WidgetAnalyticsController::class, 'trackEvent']);
 
+// Widget preview route
+Route::get('/widget/preview', [App\Http\Controllers\WidgetPreviewController::class, 'preview']);
+
 // Guest user routes for widget
 Route::post('/guest/register', [GuestUserController::class, 'register']);
 Route::post('/guest/validate', [GuestUserController::class, 'validateSession']);

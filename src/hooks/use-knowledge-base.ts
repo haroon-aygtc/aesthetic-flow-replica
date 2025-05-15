@@ -1,6 +1,25 @@
+import { useToast } from "@/components/ui/use-toast"
 import { useState, useEffect } from "react"
-import { useToast } from "@/hooks/use-toast"
-import { useGraphQL } from "@/hooks/use-graphql"
+
+// FIXME: Create proper implementation for useGraphQL 
+const useGraphQL = () => {
+    return {
+        client: {
+            knowledgeBasesQuery: async (params: any) => ({ data: { knowledgeBases: [] } }),
+            knowledgeBaseSourcesQuery: async (params: any) => ({ data: { knowledgeBaseSources: [] } }),
+            knowledgeBaseEntriesQuery: async (params: any) => ({ data: { knowledgeBaseEntries: [] } }),
+            createKnowledgeBaseMutation: async (params: any) => ({ data: { createKnowledgeBase: null } }),
+            updateKnowledgeBaseMutation: async (params: any) => ({ data: { updateKnowledgeBase: null } }),
+            deleteKnowledgeBaseMutation: async (params: any) => ({ data: { deleteKnowledgeBase: null } }),
+            createKnowledgeBaseSourceMutation: async (params: any) => ({ data: { createKnowledgeBaseSource: null } }),
+            updateKnowledgeBaseSourceMutation: async (params: any) => ({ data: { updateKnowledgeBaseSource: null } }),
+            deleteKnowledgeBaseSourceMutation: async (params: any) => ({ data: { deleteKnowledgeBaseSource: null } }),
+            createKnowledgeBaseEntryMutation: async (params: any) => ({ data: { createKnowledgeBaseEntry: null } }),
+            updateKnowledgeBaseEntryMutation: async (params: any) => ({ data: { updateKnowledgeBaseEntry: null } }),
+            deleteKnowledgeBaseEntryMutation: async (params: any) => ({ data: { deleteKnowledgeBaseEntry: null } }),
+        }
+    }
+}
 
 interface KnowledgeBase {
     id: number

@@ -38,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api([
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\StandardizeApiResponse::class,
         ]);
 
         // Register named middleware aliases
@@ -59,11 +60,56 @@ return Application::configure(basePath: dirname(__DIR__))
         // Configure exception handling to return JSON for API routes
         $exceptions->renderable(function (\Throwable $e, $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
-                return response()->json([
+                $statusCode = 500;
+
+                // Determine appropriate status code based on exception type
+                if ($e instanceof \Illuminate\Auth\AuthenticationException) {
+                    $statusCode = 401;
+                } elseif ($e instanceof \Illuminate\Auth\Access\AuthorizationException) {
+                    $statusCode = 403;
+                } elseif ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
+                    $statusCode = 404;
+                } elseif ($e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
+                    $statusCode = 404;
+                } elseif ($e instanceof \Illuminate\Validation\ValidationException) {
+                    $statusCode = 422;
+                } elseif ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
+                    $statusCode = $e->getStatusCode();
+                }
+
+                // Log server errors
+                if ($statusCode >= 500) {
+                    \Illuminate\Support\Facades\Log::error('API Error: ' . $e->getMessage(), [
+                        'exception' => get_class($e),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine(),
+                        'trace' => $e->getTraceAsString(),
+                        'url' => $request->fullUrl(),
+                        'method' => $request->method(),
+                    ]);
+                }
+
+                $response = [
                     'success' => false,
                     'message' => $e->getMessage(),
                     'error' => $e->getMessage(),
-                ], 500);
+                ];
+
+                // Add validation errors if available
+                if ($e instanceof \Illuminate\Validation\ValidationException) {
+                    $response['errors'] = $e->errors();
+                }
+
+                // Add debug information in development environment
+                if (config('app.debug')) {
+                    $response['debug'] = [
+                        'exception' => get_class($e),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine(),
+                    ];
+                }
+
+                return response()->json($response, $statusCode);
             }
         });
     })->create();

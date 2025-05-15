@@ -191,10 +191,10 @@ export function AdvancedSettings({
 
         const newRule: ActivationRule = {
             id: crypto.randomUUID(),
-            name: `Rule ${(template.metadata.activationRules.length + 1)}`,
             condition: "user_query equals ''",
             priority: template.metadata.activationRules.length + 1,
-            isActive: true
+            isActive: true,
+            type: "url_pattern"
         };
 
         onTemplateChange({
@@ -338,7 +338,7 @@ export function AdvancedSettings({
                                 )}
                             </div>
                         )}
-                    </div>
+                    </TabsContent>
 
                     {metadata.aiModel.length === 0 && (
                         <div className="border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 text-amber-800 dark:text-amber-300 rounded-md p-3 text-sm flex items-start mt-4">
@@ -349,7 +349,7 @@ export function AdvancedSettings({
                             </div>
                         </div>
                     )}
-                </TabsContent>
+             
 
                 <TabsContent value="tags" className="space-y-4">
                     <div className="mb-4">
@@ -437,9 +437,9 @@ export function AdvancedSettings({
                                                 <div className="flex items-center">
                                                     <Input
                                                         className="max-w-[250px] font-medium"
-                                                        value={rule.name}
+                                                        value={rule.type}
                                                         onChange={(e) =>
-                                                            handleUpdateActivationRule(rule.id, { name: e.target.value })
+                                                            handleUpdateActivationRule(rule.id, { type: e.target.value as "url_pattern" | "user_intent" | "keyword" | "time_based" | "user_attribute" | "custom" })
                                                         }
                                                         disabled={disabled}
                                                     />

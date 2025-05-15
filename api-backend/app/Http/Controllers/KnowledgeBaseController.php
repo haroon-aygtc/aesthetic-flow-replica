@@ -304,44 +304,115 @@ class KnowledgeBaseController extends Controller
      */
     public function search(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'query' => 'required|string|min:3',
-            'limit' => 'integer|min:1|max:20',
-            'threshold' => 'numeric|min:0|max:1',
-            'sources' => 'array',
-            'sources.*' => 'string|in:embeddings,qa_pairs,keywords',
-            'category' => 'string|max:255',
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'query' => 'required|string|min:3',
+                'limit' => 'integer|min:1|max:20',
+                'threshold' => 'numeric|min:0|max:1',
+                'sources' => 'array',
+                'sources.*' => 'string|in:embeddings,qa_pairs,keywords',
+                'category' => 'string|max:255',
+                'cache' => 'boolean',
+            ]);
 
-        if ($validator->fails()) {
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $query = $request->input('query');
+
+            // Log the search query for analytics
+            Log::info('Knowledge base search', [
+                'query' => $query,
+                'user_id' => auth()->id() ?? 'guest',
+                'ip' => $request->ip(),
+            ]);
+
+            // Set default search options
+            $options = [
+                'limit' => $request->input('limit', 5),
+                'threshold' => $request->input('threshold', 0.7),
+                'sources' => $request->input('sources', ['embeddings', 'qa_pairs', 'keywords']),
+                'cache' => $request->input('cache', true),
+            ];
+
+            // Add category if provided
+            if ($request->has('category')) {
+                $options['category'] = $request->input('category');
+            }
+
+            // Search for relevant content
+            $results = $this->knowledgeSearchService->search($query, $options);
+
+            // Record search metrics
+            $this->recordSearchMetrics($query, $results);
+
+            return response()->json([
+                'success' => true,
+                'data' => $results
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Knowledge base search error', [
+                'query' => $request->input('query', ''),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+                'message' => 'An error occurred while searching the knowledge base',
+                'error' => $e->getMessage()
+            ], 500);
         }
+    }
 
-        $query = $request->input('query');
+    /**
+     * Record search metrics for analytics
+     */
+    private function recordSearchMetrics(string $query, array $results): void
+    {
+        try {
+            // Record search count
+            $metric = KnowledgeInsight::firstOrNew([
+                'date' => now()->format('Y-m-d'),
+                'metric' => 'search_count'
+            ]);
 
-        // Set default search options
-        $options = [
-            'limit' => $request->input('limit', 5),
-            'threshold' => $request->input('threshold', 0.7),
-            'sources' => $request->input('sources', ['embeddings', 'qa_pairs', 'keywords']),
-        ];
+            $metric->value = ($metric->value ?? 0) + 1;
+            $metric->save();
 
-        // Add category if provided
-        if ($request->has('category')) {
-            $options['category'] = $request->input('category');
+            // Record result count
+            $resultCount = count($results['results'] ?? []);
+            $hasResults = $resultCount > 0;
+
+            $metric = KnowledgeInsight::firstOrNew([
+                'date' => now()->format('Y-m-d'),
+                'metric' => 'search_with_results'
+            ]);
+
+            $metric->value = ($metric->value ?? 0) + ($hasResults ? 1 : 0);
+            $metric->save();
+
+            // Record average result count
+            $metric = KnowledgeInsight::firstOrNew([
+                'date' => now()->format('Y-m-d'),
+                'metric' => 'avg_result_count'
+            ]);
+
+            $currentTotal = ($metric->value ?? 0) * ($metric->count ?? 0);
+            $metric->count = ($metric->count ?? 0) + 1;
+            $metric->value = ($currentTotal + $resultCount) / $metric->count;
+            $metric->save();
+        } catch (\Exception $e) {
+            // Log but don't fail the request
+            Log::error('Failed to record search metrics', [
+                'error' => $e->getMessage()
+            ]);
         }
-
-        // Search for relevant content
-        $results = $this->knowledgeSearchService->search($query, $options);
-
-        return response()->json([
-            'success' => true,
-            'data' => $results
-        ]);
     }
 
     /**

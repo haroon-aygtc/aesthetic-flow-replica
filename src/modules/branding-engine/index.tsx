@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertTriangle } from "lucide-react"
 import { BrandingManager } from "@/components/ai-configuration/branding/branding-manager"
 import { BrandingEditor } from "@/components/ai-configuration/branding/branding-editor"
-import { BrandingPreview } from "@/components/ai-configuration/branding/branding-preview"
+import { BrandingPreview } from "@/components/ai-configuration/branding/branding-css-preview"
 import { WidgetBranding } from "@/components/ai-configuration/branding/widget-branding"
 
 interface BrandingEngineProps {
@@ -129,10 +129,14 @@ export function BrandingEngine({ widgetId }: BrandingEngineProps) {
               <WidgetBranding
                 widgetId={widgetId}
                 settings={settings}
+                selectedSetting={selectedSetting}
                 widgetBranding={widgetBranding}
                 widgetCss={widgetCss}
-                associateWithWidget={associateWithWidget}
-                dissociateFromWidget={dissociateFromWidget}
+                isLoading={isLoading}
+                error={error}
+                onAssociate={associateWithWidget}
+                onDissociate={dissociateFromWidget}
+                onGenerateCss={generateCss}
               />
             </TabsContent>
           </Tabs>
@@ -141,3 +145,13 @@ export function BrandingEngine({ widgetId }: BrandingEngineProps) {
     </div>
   )
 }
+
+export function BrandingEngineModule() {
+  return (
+    <div className="space-y-6">
+      <BrandingEngine />
+    </div>
+  )
+}
+
+export default BrandingEngineModule

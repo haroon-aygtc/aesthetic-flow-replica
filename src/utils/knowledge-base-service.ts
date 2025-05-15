@@ -197,10 +197,18 @@ export const knowledgeBaseService = {
   // Insights operations
   getInsights: async (timeframe: string = '30days') => {
     try {
-      return await api.get(`knowledge-base/insights?timeframe=${timeframe}`);
+      const response = await api.get(`knowledge-base/insights?timeframe=${timeframe}`);
+
+      // Validate response data
+      if (!response.data) {
+        throw new Error('Invalid response format: missing data');
+      }
+
+      return response;
     } catch (error) {
       console.error("Error fetching insights:", error);
-      throw error;
+      // Provide more specific error message
+      throw new Error(`Failed to fetch knowledge base insights: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   },
 
@@ -212,13 +220,25 @@ export const knowledgeBaseService = {
     category?: string;
   }) => {
     try {
-      return await api.post('knowledge-base/search', {
+      if (!query || query.trim() === '') {
+        throw new Error('Search query cannot be empty');
+      }
+
+      const response = await api.post('knowledge-base/search', {
         query,
         ...options
       });
+
+      // Validate response data
+      if (!response.data) {
+        throw new Error('Invalid response format: missing data');
+      }
+
+      return response;
     } catch (error) {
       console.error("Error searching knowledge base:", error);
-      throw error;
+      // Provide more specific error message with query info
+      throw new Error(`Failed to search knowledge base for "${query}": ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 };
