@@ -4,32 +4,32 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\BrandingSetting;
+use App\Models\ContextRule;
 use App\Models\Widget;
-use App\Services\BrandingService;
+use App\Services\ContextService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\JsonResponse;
 
-class BrandingController extends Controller
+class ContextController extends Controller
 {
-    protected $brandingService;
+    protected $contextService;
 
-    public function __construct(BrandingService $brandingService)
+    public function __construct(ContextService $contextService)
     {
-        $this->brandingService = $brandingService;
+        $this->contextService = $contextService;
     }
 
     /**
-     * Get all branding settings for a user.
+     * Get all context rules for a user.
      */
     public function index(Request $request): JsonResponse
     {
         try {
-            $settings = $this->brandingService->getSettings($request->user()->id);
+            $rules = $this->contextService->getRules($request->user()->id);
             return response()->json([
                 'success' => true,
-                'data' => $settings
+                'data' => $rules
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -40,15 +40,15 @@ class BrandingController extends Controller
     }
 
     /**
-     * Get a specific branding setting.
+     * Get a specific context rule.
      */
     public function show(Request $request, $id): JsonResponse
     {
         try {
-            $setting = $this->brandingService->getSetting($id, $request->user()->id);
+            $rule = $this->contextService->getRule($id, $request->user()->id);
             return response()->json([
                 'success' => true,
-                'data' => $setting
+                'data' => $rule
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -59,18 +59,17 @@ class BrandingController extends Controller
     }
 
     /**
-     * Create a new branding setting.
+     * Create a new context rule.
      */
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'logo_url' => 'nullable|string|max:2048',
-            'colors' => 'nullable|array',
-            'typography' => 'nullable|array',
-            'elements' => 'nullable|array',
+            'description' => 'nullable|string',
+            'conditions' => 'required|array',
+            'settings' => 'nullable|array',
+            'priority' => 'nullable|integer|min:0',
             'is_active' => 'nullable|boolean',
-            'is_default' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -82,15 +81,15 @@ class BrandingController extends Controller
         }
 
         try {
-            $setting = $this->brandingService->createSetting(
+            $rule = $this->contextService->createRule(
                 $request->user()->id,
                 $request->all()
             );
 
             return response()->json([
                 'success' => true,
-                'message' => 'Branding setting created successfully',
-                'data' => $setting
+                'message' => 'Context rule created successfully',
+                'data' => $rule
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
@@ -101,18 +100,17 @@ class BrandingController extends Controller
     }
 
     /**
-     * Update a branding setting.
+     * Update a context rule.
      */
     public function update(Request $request, $id): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|required|string|max:255',
-            'logo_url' => 'nullable|string|max:2048',
-            'colors' => 'nullable|array',
-            'typography' => 'nullable|array',
-            'elements' => 'nullable|array',
+            'description' => 'nullable|string',
+            'conditions' => 'sometimes|required|array',
+            'settings' => 'nullable|array',
+            'priority' => 'nullable|integer|min:0',
             'is_active' => 'nullable|boolean',
-            'is_default' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -124,7 +122,7 @@ class BrandingController extends Controller
         }
 
         try {
-            $setting = $this->brandingService->updateSetting(
+            $rule = $this->contextService->updateRule(
                 $id,
                 $request->user()->id,
                 $request->all()
@@ -132,8 +130,8 @@ class BrandingController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Branding setting updated successfully',
-                'data' => $setting
+                'message' => 'Context rule updated successfully',
+                'data' => $rule
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -144,15 +142,15 @@ class BrandingController extends Controller
     }
 
     /**
-     * Delete a branding setting.
+     * Delete a context rule.
      */
     public function destroy(Request $request, $id): JsonResponse
     {
         try {
-            $result = $this->brandingService->deleteSetting($id, $request->user()->id);
+            $result = $this->contextService->deleteRule($id, $request->user()->id);
             return response()->json([
                 'success' => true,
-                'message' => 'Branding setting deleted successfully'
+                'message' => 'Context rule deleted successfully'
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -163,23 +161,141 @@ class BrandingController extends Controller
     }
 
     /**
-     * Get the default branding setting.
+     * Associate a context rule with a widget.
      */
-    public function getDefault(Request $request): JsonResponse
+    public function associateWithWidget(Request $request, $id, $widgetId): JsonResponse
     {
-        try {
-            $setting = $this->brandingService->getDefaultSetting($request->user()->id);
+        $validator = Validator::make($request->all(), [
+            'settings' => 'nullable|array',
+        ]);
 
-            if (!$setting) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No default branding setting found'
-                ], 404);
-            }
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $widget = $this->contextService->associateRuleWithWidget(
+                $id,
+                $widgetId,
+                $request->user()->id,
+                $request->input('settings', [])
+            );
 
             return response()->json([
                 'success' => true,
-                'data' => $setting
+                'message' => 'Context rule associated with widget successfully',
+                'data' => $widget
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
+     * Dissociate a context rule from a widget.
+     */
+    public function dissociateFromWidget(Request $request, $id, $widgetId): JsonResponse
+    {
+        try {
+            $widget = $this->contextService->dissociateRuleFromWidget(
+                $id,
+                $widgetId,
+                $request->user()->id
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Context rule dissociated from widget successfully',
+                'data' => $widget
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
+     * Get context rules associated with a widget.
+     */
+    public function getWidgetRules(Request $request, $widgetId): JsonResponse
+    {
+        try {
+            $widget = Widget::findOrFail($widgetId);
+
+            // Check if widget belongs to user
+            if ($widget->user_id !== $request->user()->id) {
+                throw new \Exception("Widget not found");
+            }
+
+            $rules = $widget->contextRules()->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $rules
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
+     * Test a context rule with sample data.
+     */
+    public function testRule(Request $request, $id): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'context' => 'required|array',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $rule = $this->contextService->getRule($id, $request->user()->id);
+            $result = $rule->evaluateCondition($request->input('context', []));
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'matches' => $result,
+                    'rule' => $rule
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
+     * Get session context data.
+     */
+    public function getSessionContext(Request $request, $sessionId): JsonResponse
+    {
+        try {
+            $contextData = $this->contextService->getContextSession($sessionId);
+            return response()->json([
+                'success' => true,
+                'data' => $contextData
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -190,12 +306,12 @@ class BrandingController extends Controller
     }
 
     /**
-     * Associate a branding setting with a widget.
+     * Store session context data.
      */
-    public function associateWithWidget(Request $request, $id, $widgetId): JsonResponse
+    public function storeSessionContext(Request $request, $sessionId): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'overrides' => 'nullable|array',
+            'data' => 'required|array',
         ]);
 
         if ($validator->fails()) {
@@ -207,121 +323,40 @@ class BrandingController extends Controller
         }
 
         try {
-            $widget = $this->brandingService->associateSettingWithWidget(
-                $id,
-                $widgetId,
-                $request->user()->id,
-                $request->input('overrides', [])
+            $session = $this->contextService->storeContextSession(
+                $sessionId,
+                $request->input('data', [])
             );
 
             return response()->json([
                 'success' => true,
-                'message' => 'Branding setting associated with widget successfully',
-                'data' => $widget
+                'message' => 'Context data stored successfully',
+                'data' => $session
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
-            ], 404);
+            ], 500);
         }
     }
 
     /**
-     * Dissociate a branding setting from a widget.
+     * Clear session context data.
      */
-    public function dissociateFromWidget(Request $request, $id, $widgetId): JsonResponse
+    public function clearSessionContext(Request $request, $sessionId): JsonResponse
     {
         try {
-            $widget = $this->brandingService->dissociateSettingFromWidget(
-                $id,
-                $widgetId,
-                $request->user()->id
-            );
-
+            $result = $this->contextService->clearContextSession($sessionId);
             return response()->json([
                 'success' => true,
-                'message' => 'Branding setting dissociated from widget successfully',
-                'data' => $widget
+                'message' => $result ? 'Context data cleared successfully' : 'No context data found to clear'
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
-            ], 404);
-        }
-    }
-
-    /**
-     * Get branding settings for a widget.
-     */
-    public function getWidgetBranding(Request $request, $widgetId): JsonResponse
-    {
-        try {
-            $settings = $this->brandingService->getWidgetBrandingSettings(
-                $widgetId,
-                $request->user()->id
-            );
-
-            return response()->json([
-                'success' => true,
-                'data' => $settings
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 404);
-        }
-    }
-
-    /**
-     * Generate CSS variables for a branding setting.
-     */
-    public function generateCss(Request $request, $id): JsonResponse
-    {
-        try {
-            $setting = $this->brandingService->getSetting($id, $request->user()->id);
-            $css = $this->brandingService->generateCssVariables($setting->getMergedSettings());
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'css' => $css
-                ]
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 404);
-        }
-    }
-
-    /**
-     * Generate CSS variables for a widget's branding.
-     */
-    public function generateWidgetCss(Request $request, $widgetId): JsonResponse
-    {
-        try {
-            $settings = $this->brandingService->getWidgetBrandingSettings(
-                $widgetId,
-                $request->user()->id
-            );
-
-            $css = $this->brandingService->generateCssVariables($settings);
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'css' => $css
-                ]
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 404);
+            ], 500);
         }
     }
 }

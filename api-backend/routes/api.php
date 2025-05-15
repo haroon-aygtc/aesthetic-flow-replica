@@ -19,6 +19,7 @@ use App\Http\Controllers\TemplateController;
 use App\Http\Controllers\API\ProviderAPIController;
 use App\Http\Controllers\KnowledgeBaseController;
 use App\Http\Controllers\WebsiteSourceController;
+use App\Http\Controllers\ContextController;
 
 /*
 |--------------------------------------------------------------------------
@@ -86,6 +87,52 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('templates', TemplateController::class);
     Route::get('/ai-models/{modelId}/templates', [TemplateController::class, 'getModelTemplates']);
     Route::post('/ai-models/{modelId}/templates', [TemplateController::class, 'assignTemplateToModel']);
+
+    // Updated Template routes for new module
+    Route::prefix('templates')->group(function () {
+        Route::post('/{id}/versions', [TemplateController::class, 'createVersion']);
+        Route::get('/{id}/versions', [TemplateController::class, 'getVersions']);
+        Route::get('/{id}/versions/{versionId}', [TemplateController::class, 'getVersion']);
+        Route::post('/{id}/versions/{versionId}/activate', [TemplateController::class, 'activateVersion']);
+        Route::delete('/{id}/versions/{versionId}', [TemplateController::class, 'deleteVersion']);
+
+        Route::post('/{id}/widgets/{widgetId}', [TemplateController::class, 'associateWithWidget']);
+        Route::delete('/{id}/widgets/{widgetId}', [TemplateController::class, 'dissociateFromWidget']);
+        Route::post('/{id}/preview', [TemplateController::class, 'previewTemplate']);
+        Route::post('/detect-placeholders', [TemplateController::class, 'detectPlaceholders']);
+    });
+
+    Route::get('/widgets/{widgetId}/templates', [TemplateController::class, 'getWidgetTemplates']);
+
+    // Context Module routes
+    Route::apiResource('context-rules', ContextController::class);
+
+    Route::prefix('context-rules')->group(function () {
+        Route::post('/{id}/widgets/{widgetId}', [ContextController::class, 'associateWithWidget']);
+        Route::delete('/{id}/widgets/{widgetId}', [ContextController::class, 'dissociateFromWidget']);
+        Route::post('/{id}/test', [ContextController::class, 'testRule']);
+    });
+
+    Route::get('/widgets/{widgetId}/context-rules', [ContextController::class, 'getWidgetRules']);
+
+    Route::prefix('context-sessions')->group(function () {
+        Route::get('/{sessionId}', [ContextController::class, 'getSessionContext']);
+        Route::post('/{sessionId}', [ContextController::class, 'storeSessionContext']);
+        Route::delete('/{sessionId}', [ContextController::class, 'clearSessionContext']);
+    });
+
+    // Branding Module routes
+    Route::apiResource('branding-settings', BrandingController::class);
+
+    Route::prefix('branding-settings')->group(function () {
+        Route::get('/default', [BrandingController::class, 'getDefault']);
+        Route::post('/{id}/widgets/{widgetId}', [BrandingController::class, 'associateWithWidget']);
+        Route::delete('/{id}/widgets/{widgetId}', [BrandingController::class, 'dissociateFromWidget']);
+        Route::get('/{id}/css', [BrandingController::class, 'generateCss']);
+    });
+
+    Route::get('/widgets/{widgetId}/branding', [BrandingController::class, 'getWidgetBranding']);
+    Route::get('/widgets/{widgetId}/branding/css', [BrandingController::class, 'generateWidgetCss']);
 
     // Model activation rules routes
     Route::get('/ai-models/{modelId}/rules', [ModelActivationRuleController::class, 'index']);
@@ -192,5 +239,31 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/insights', [KnowledgeBaseController::class, 'getInsights']);
         Route::post('/search', [KnowledgeBaseController::class, 'search']);
+
+        // New Knowledge Base routes
+        Route::get('/bases', [KnowledgeBaseController::class, 'index']);
+        Route::post('/bases', [KnowledgeBaseController::class, 'store']);
+        Route::get('/bases/{id}', [KnowledgeBaseController::class, 'show']);
+        Route::put('/bases/{id}', [KnowledgeBaseController::class, 'update']);
+        Route::delete('/bases/{id}', [KnowledgeBaseController::class, 'destroy']);
+
+        // Knowledge Base Source routes
+        Route::get('/bases/{id}/sources', [KnowledgeBaseController::class, 'getSources']);
+        Route::post('/bases/{id}/sources', [KnowledgeBaseController::class, 'addSource']);
+        Route::put('/bases/{id}/sources/{sourceId}', [KnowledgeBaseController::class, 'updateSource']);
+        Route::delete('/bases/{id}/sources/{sourceId}', [KnowledgeBaseController::class, 'deleteSource']);
+
+        // Knowledge Base Entry routes
+        Route::post('/bases/{id}/sources/{sourceId}/entries', [KnowledgeBaseController::class, 'addEntry']);
+        Route::put('/bases/{id}/sources/{sourceId}/entries/{entryId}', [KnowledgeBaseController::class, 'updateEntry']);
+        Route::delete('/bases/{id}/sources/{sourceId}/entries/{entryId}', [KnowledgeBaseController::class, 'deleteEntry']);
+
+        // Document processing routes
+        Route::post('/bases/upload-document', [KnowledgeBaseController::class, 'uploadDocumentFile']);
+        Route::post('/sources/{sourceId}/process', [KnowledgeBaseController::class, 'processDocumentSource']);
+        Route::get('/sources/{sourceId}/download', [KnowledgeBaseController::class, 'downloadDocumentSource']);
+
+        // Knowledge search
+        Route::post('/knowledge-search', [KnowledgeBaseController::class, 'searchKnowledge']);
     });
 });

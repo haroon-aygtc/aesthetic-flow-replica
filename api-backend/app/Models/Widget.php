@@ -127,4 +127,44 @@ class Widget extends Model
     {
         return $this->settings['use_knowledge_base'] ?? false;
     }
+
+    /**
+     * Get the knowledge bases associated with the widget.
+     */
+    public function knowledgeBases()
+    {
+        return $this->belongsToMany(KnowledgeBase::class, 'widget_knowledge_base')
+                    ->withPivot('settings')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get the templates associated with the widget.
+     */
+    public function templates()
+    {
+        return $this->belongsToMany(Template::class, 'widget_template')
+                    ->withPivot('settings')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get the context rules associated with the widget.
+     */
+    public function contextRules()
+    {
+        return $this->belongsToMany(ContextRule::class, 'widget_context_rule')
+                    ->withPivot('settings')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get the branding settings associated with the widget.
+     */
+    public function brandingSettings()
+    {
+        return $this->belongsToMany(BrandingSetting::class, 'widget_branding_setting')
+                    ->withPivot('overrides')
+                    ->withTimestamps();
+    }
 }

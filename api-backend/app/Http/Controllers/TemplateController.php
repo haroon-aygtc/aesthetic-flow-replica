@@ -1,265 +1,462 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Models\Template;
-use App\Models\AIModel;
+use App\Models\TemplateVersion;
+use App\Models\Widget;
+use App\Services\TemplateService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\JsonResponse;
 
 class TemplateController extends Controller
 {
+    protected $templateService;
+
+    public function __construct(TemplateService $templateService)
+    {
+        $this->templateService = $templateService;
+    }
+
     /**
-     * Display a listing of the templates.
-     *
-     * @return \Illuminate\Http\Response
+     * Get all templates for a user.
      */
-    public function index()
+    public function index(Request $request): JsonResponse
     {
         try {
-            $templates = Template::orderBy('name')->get();
-            return response()->json(['data' => $templates, 'success' => true]);
-        } catch (\Exception $e) {
-            Log::error('Failed to fetch templates: ' . $e->getMessage());
+            $templates = $this->templateService->getTemplates($request->user()->id);
             return response()->json([
-                'message' => 'Failed to fetch templates',
-                'error' => $e->getMessage(),
-                'success' => false
+                'success' => true,
+                'data' => $templates
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Store a newly created template in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * Get a specific template.
      */
-    public function store(Request $request)
+    public function show(Request $request, $id): JsonResponse
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'name' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'category' => 'required|string|max:100',
-                'content' => 'required|string',
-                'version' => 'nullable|numeric',
-                'is_default' => 'nullable|boolean',
-                'variables' => 'nullable|array',
-                'status' => 'nullable|string|in:active,inactive,draft',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors(),
-                    'success' => false
-                ], 422);
-            }
-
-            // If this is set as default, unset any existing default
-            if ($request->input('is_default', false)) {
-                Template::where('is_default', true)->update(['is_default' => false]);
-            }
-
-            // Add user ID to created_by and updated_by
-            $data = $request->all();
-            $data['created_by'] = Auth::id();
-            $data['updated_by'] = Auth::id();
-
-            $template = Template::create($data);
+            $template = $this->templateService->getTemplate($id, $request->user()->id);
             return response()->json([
-                'data' => $template,
+                'success' => true,
+                'data' => $template
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
+     * Create a new template.
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'content' => 'required|string',
+            'description' => 'nullable|string',
+            'placeholders' => 'nullable|array',
+            'placeholders.*.name' => 'required|string',
+            'placeholders.*.description' => 'nullable|string',
+            'placeholders.*.default_value' => 'nullable|string',
+            'placeholders.*.required' => 'nullable|boolean',
+            'settings' => 'nullable|array',
+            'priority' => 'nullable|integer|min:0',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $template = $this->templateService->createTemplate(
+                $request->user()->id,
+                $request->all()
+            );
+
+            return response()->json([
+                'success' => true,
                 'message' => 'Template created successfully',
-                'success' => true
+                'data' => $template
             ], 201);
         } catch (\Exception $e) {
-            Log::error('Failed to create template: ' . $e->getMessage());
             return response()->json([
-                'message' => 'Failed to create template',
-                'error' => $e->getMessage(),
-                'success' => false
+                'success' => false,
+                'message' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Display the specified template.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * Update a template.
      */
-    public function show($id)
+    public function update(Request $request, $id): JsonResponse
     {
-        try {
-            $template = Template::findOrFail($id);
-            return response()->json(['data' => $template, 'success' => true]);
-        } catch (\Exception $e) {
-            Log::error('Failed to fetch template: ' . $e->getMessage());
+        $validator = Validator::make($request->all(), [
+            'name' => 'sometimes|required|string|max:255',
+            'content' => 'sometimes|required|string',
+            'description' => 'nullable|string',
+            'placeholders' => 'nullable|array',
+            'placeholders.*.name' => 'required|string',
+            'placeholders.*.description' => 'nullable|string',
+            'placeholders.*.default_value' => 'nullable|string',
+            'placeholders.*.required' => 'nullable|boolean',
+            'settings' => 'nullable|array',
+            'priority' => 'nullable|integer|min:0',
+            'is_active' => 'nullable|boolean',
+            'create_version' => 'nullable|boolean',
+            'version_name' => 'nullable|string|max:255',
+            'change_notes' => 'nullable|string',
+            'set_version_active' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
             return response()->json([
-                'message' => 'Failed to fetch template',
-                'error' => $e->getMessage(),
-                'success' => false
-            ], 500);
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
         }
-    }
 
-    /**
-     * Update the specified template in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
         try {
-            $template = Template::findOrFail($id);
+            $createVersion = $request->input('create_version', true);
+            $template = $this->templateService->updateTemplate(
+                $id,
+                $request->user()->id,
+                $request->all(),
+                $createVersion
+            );
 
-            $validator = Validator::make($request->all(), [
-                'name' => 'sometimes|required|string|max:255',
-                'description' => 'nullable|string',
-                'category' => 'sometimes|required|string|max:100',
-                'content' => 'sometimes|required|string',
-                'version' => 'nullable|numeric',
-                'is_default' => 'nullable|boolean',
-                'variables' => 'nullable|array',
-                'status' => 'nullable|string|in:active,inactive,draft',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors(),
-                    'success' => false
-                ], 422);
-            }
-
-            // If this is set as default, unset any existing default
-            if ($request->input('is_default', false) && !$template->is_default) {
-                Template::where('is_default', true)->update(['is_default' => false]);
-            }
-
-            // Add updated_by field
-            $data = $request->all();
-            $data['updated_by'] = Auth::id();
-
-            $template->update($data);
             return response()->json([
-                'data' => $template,
+                'success' => true,
                 'message' => 'Template updated successfully',
-                'success' => true
+                'data' => $template
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to update template: ' . $e->getMessage());
             return response()->json([
-                'message' => 'Failed to update template',
-                'error' => $e->getMessage(),
-                'success' => false
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
+     * Delete a template.
+     */
+    public function destroy(Request $request, $id): JsonResponse
+    {
+        try {
+            $result = $this->templateService->deleteTemplate($id, $request->user()->id);
+            return response()->json([
+                'success' => true,
+                'message' => 'Template deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
+     * Create a new version of a template.
+     */
+    public function createVersion(Request $request, $id): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'content' => 'sometimes|required|string',
+            'placeholders' => 'nullable|array',
+            'settings' => 'nullable|array',
+            'version_name' => 'nullable|string|max:255',
+            'change_notes' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $version = $this->templateService->createTemplateVersion(
+                $id,
+                $request->user()->id,
+                $request->all()
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Template version created successfully',
+                'data' => $version
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Remove the specified template from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * Get all versions of a template.
      */
-    public function destroy($id)
+    public function getVersions(Request $request, $id): JsonResponse
     {
         try {
-            $template = Template::findOrFail($id);
+            $template = $this->templateService->getTemplate($id, $request->user()->id);
+            $versions = $template->versions()->orderBy('created_at', 'desc')->get();
 
-            // Check if any models are using this template
-            $modelsUsingTemplate = AIModel::where('template_id', $id)->count();
-            if ($modelsUsingTemplate > 0) {
-                return response()->json([
-                    'message' => 'Cannot delete template that is in use by AI models',
-                    'success' => false
-                ], 422);
+            return response()->json([
+                'success' => true,
+                'data' => $versions
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
+     * Get a specific version of a template.
+     */
+    public function getVersion(Request $request, $id, $versionId): JsonResponse
+    {
+        try {
+            $version = $this->templateService->getTemplateVersion($versionId, $request->user()->id);
+            return response()->json([
+                'success' => true,
+                'data' => $version
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
+     * Activate a specific version of a template.
+     */
+    public function activateVersion(Request $request, $id, $versionId): JsonResponse
+    {
+        try {
+            $version = $this->templateService->activateTemplateVersion($versionId, $request->user()->id);
+            return response()->json([
+                'success' => true,
+                'message' => 'Template version activated successfully',
+                'data' => $version
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
+     * Delete a specific version of a template.
+     */
+    public function deleteVersion(Request $request, $id, $versionId): JsonResponse
+    {
+        try {
+            $result = $this->templateService->deleteTemplateVersion($versionId, $request->user()->id);
+            return response()->json([
+                'success' => true,
+                'message' => 'Template version deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * Associate a template with a widget.
+     */
+    public function associateWithWidget(Request $request, $id, $widgetId): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'settings' => 'nullable|array',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $widget = $this->templateService->associateTemplateWithWidget(
+                $id,
+                $widgetId,
+                $request->user()->id,
+                $request->input('settings', [])
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Template associated with widget successfully',
+                'data' => $widget
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
+     * Dissociate a template from a widget.
+     */
+    public function dissociateFromWidget(Request $request, $id, $widgetId): JsonResponse
+    {
+        try {
+            $widget = $this->templateService->dissociateTemplateFromWidget(
+                $id,
+                $widgetId,
+                $request->user()->id
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Template dissociated from widget successfully',
+                'data' => $widget
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
+     * Get templates associated with a widget.
+     */
+    public function getWidgetTemplates(Request $request, $widgetId): JsonResponse
+    {
+        try {
+            $widget = Widget::findOrFail($widgetId);
+
+            // Check if widget belongs to user
+            if ($widget->user_id !== $request->user()->id) {
+                throw new \Exception("Widget not found");
             }
 
-            $template->delete();
+            $templates = $widget->templates()->with('versions')->get();
+
             return response()->json([
-                'message' => 'Template deleted successfully',
-                'success' => true
+                'success' => true,
+                'data' => $templates
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to delete template: ' . $e->getMessage());
             return response()->json([
-                'message' => 'Failed to delete template',
-                'error' => $e->getMessage(),
-                'success' => false
-            ], 500);
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 404);
         }
     }
 
     /**
-     * Get templates for a specific model.
-     *
-     * @param  int  $modelId
-     * @return \Illuminate\Http\Response
+     * Preview a template with data.
      */
-    public function getModelTemplates($modelId)
+    public function previewTemplate(Request $request, $id): JsonResponse
     {
-        try {
-            // Verify the model exists
-            $model = AIModel::findOrFail($modelId);
+        $validator = Validator::make($request->all(), [
+            'data' => 'required|array',
+        ]);
 
-            // Get all templates
-            $templates = Template::orderBy('name')->get();
-
-            return response()->json(['data' => $templates, 'success' => true]);
-        } catch (\Exception $e) {
-            Log::error('Failed to fetch model templates: ' . $e->getMessage());
+        if ($validator->fails()) {
             return response()->json([
-                'message' => 'Failed to fetch model templates',
-                'error' => $e->getMessage(),
-                'success' => false
-            ], 500);
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $rendered = $this->templateService->renderTemplate(
+                $id,
+                $request->input('data', [])
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'rendered' => $rendered
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 404);
         }
     }
 
     /**
-     * Assign a template to a model.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $modelId
-     * @return \Illuminate\Http\Response
+     * Detect placeholders in template content.
      */
-    public function assignTemplateToModel(Request $request, $modelId)
+    public function detectPlaceholders(Request $request): JsonResponse
     {
+        $validator = Validator::make($request->all(), [
+            'content' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
         try {
-            $validator = Validator::make($request->all(), [
-                'template_id' => 'nullable|exists:templates,id',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors(),
-                    'success' => false
-                ], 422);
-            }
-
-            $model = AIModel::findOrFail($modelId);
-            $model->template_id = $request->input('template_id');
-            $model->save();
+            $template = new Template();
+            $template->content = $request->input('content');
+            $placeholders = $template->detectPlaceholders();
 
             return response()->json([
-                'data' => $model,
-                'message' => 'Template assigned successfully',
-                'success' => true
+                'success' => true,
+                'data' => [
+                    'placeholders' => $placeholders
+                ]
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to assign template to model: ' . $e->getMessage());
             return response()->json([
-                'message' => 'Failed to assign template to model',
-                'error' => $e->getMessage(),
-                'success' => false
+                'success' => false,
+                'message' => $e->getMessage()
             ], 500);
         }
     }

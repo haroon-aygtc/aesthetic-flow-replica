@@ -1,31 +1,49 @@
+"use client"
 
-import { BrandingEngine } from "@/components/ai-configuration/branding-engine";
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Spinner } from "@/components/ui/spinner";
-import { AlertTriangle } from "lucide-react";
+import { useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useBranding } from "@/hooks/use-branding"
+import { Spinner } from "@/components/ui/spinner"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertTriangle } from "lucide-react"
+import { BrandingManager } from "@/components/ai-configuration/branding/branding-manager"
+import { BrandingEditor } from "@/components/ai-configuration/branding/branding-editor"
+import { BrandingPreview } from "@/components/ai-configuration/branding/branding-preview"
+import { WidgetBranding } from "@/components/ai-configuration/branding/widget-branding"
 
-export function BrandingEngineModule() {
-  // In a real implementation, we would load branding data from API here
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  
-  // Simulate loading if needed for testing
-  // useEffect(() => {
-  //   setIsLoading(true);
-  //   setTimeout(() => setIsLoading(false), 1000);
-  // }, []);
+interface BrandingEngineProps {
+  widgetId?: number
+}
 
-  if (isLoading) {
+export function BrandingEngine({ widgetId }: BrandingEngineProps) {
+  const [activeTab, setActiveTab] = useState("settings")
+
+  const {
+    isLoading,
+    error,
+    settings,
+    selectedSetting,
+    setSelectedSetting,
+    widgetBranding,
+    widgetCss,
+    createSetting,
+    updateSetting,
+    deleteSetting,
+    associateWithWidget,
+    dissociateFromWidget,
+    generateCss,
+  } = useBranding({ widgetId })
+
+  if (isLoading && settings.length === 0) {
     return (
       <div className="flex justify-center items-center p-12">
         <Spinner size="lg" className="mr-2" />
         <p>Loading branding configuration...</p>
       </div>
-    );
+    )
   }
-  
+
   if (error) {
     return (
       <Alert variant="destructive" className="mb-6">
@@ -35,22 +53,91 @@ export function BrandingEngineModule() {
           <p className="mt-2">{error.message}</p>
         </AlertDescription>
       </Alert>
-    );
+    )
   }
-  
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Branding Engine</CardTitle>
           <CardDescription>
-            Configure how your AI assistant represents your brand
+            Configure the visual appearance of your AI-powered widgets
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <BrandingEngine />
+          <Tabs defaultValue="settings" value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="settings">Branding Settings</TabsTrigger>
+              <TabsTrigger
+                value="editor"
+                disabled={!selectedSetting}
+              >
+                Brand Editor
+              </TabsTrigger>
+              <TabsTrigger
+                value="preview"
+                disabled={!selectedSetting}
+              >
+                Preview
+              </TabsTrigger>
+              <TabsTrigger value="widget-branding">Widget Branding</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="settings" className="pt-4">
+              <BrandingManager
+                settings={settings}
+                selectedSetting={selectedSetting}
+                onSelect={setSelectedSetting}
+                onCreate={createSetting}
+                onUpdate={updateSetting}
+                onDelete={deleteSetting}
+              />
+            </TabsContent>
+
+            <TabsContent value="editor" className="pt-4">
+              {selectedSetting ? (
+                <BrandingEditor
+                  setting={selectedSetting}
+                  onUpdate={updateSetting}
+                />
+              ) : (
+                <Alert>
+                  <AlertDescription>
+                    Please select a branding setting first to edit its properties.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </TabsContent>
+
+            <TabsContent value="preview" className="pt-4">
+              {selectedSetting ? (
+                <BrandingPreview
+                  setting={selectedSetting}
+                  generateCss={generateCss}
+                />
+              ) : (
+                <Alert>
+                  <AlertDescription>
+                    Please select a branding setting first to preview it.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </TabsContent>
+
+            <TabsContent value="widget-branding" className="pt-4">
+              <WidgetBranding
+                widgetId={widgetId}
+                settings={settings}
+                widgetBranding={widgetBranding}
+                widgetCss={widgetCss}
+                associateWithWidget={associateWithWidget}
+                dissociateFromWidget={dissociateFromWidget}
+              />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

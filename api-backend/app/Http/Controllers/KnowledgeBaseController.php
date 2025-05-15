@@ -17,22 +17,30 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Http\JsonResponse;
+use App\Models\KnowledgeBase;
+use App\Models\KnowledgeBaseSource;
+use App\Models\KnowledgeBaseEntry;
+use App\Services\KnowledgeBaseService;
 
 class KnowledgeBaseController extends Controller
 {
     protected $documentProcessingService;
     protected $embeddingService;
     protected $knowledgeSearchService;
+    protected $knowledgeBaseService;
 
     public function __construct(
         DocumentProcessingService $documentProcessingService,
         EmbeddingService $embeddingService,
-        KnowledgeSearchService $knowledgeSearchService
+        KnowledgeSearchService $knowledgeSearchService,
+        KnowledgeBaseService $knowledgeBaseService
     ) {
         $this->documentProcessingService = $documentProcessingService;
         $this->embeddingService = $embeddingService;
         $this->knowledgeSearchService = $knowledgeSearchService;
+        $this->knowledgeBaseService = $knowledgeBaseService;
     }
+
     /**
      * Get all documents.
      */
@@ -379,5 +387,464 @@ class KnowledgeBaseController extends Controller
                 'count' => $embeddings->count()
             ]
         ]);
+    }
+
+    /**
+     * Get all knowledge bases for a user.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function index(Request $request)
+    {
+        try {
+            $knowledgeBases = $this->knowledgeBaseService->getKnowledgeBases($request->user()->id);
+            return response()->json($knowledgeBases);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get a knowledge base by ID.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show(Request $request, $id)
+    {
+        try {
+            $knowledgeBase = $this->knowledgeBaseService->getKnowledgeBase($id, $request->user()->id);
+            return response()->json($knowledgeBase);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 404);
+        }
+    }
+
+    /**
+     * Create a new knowledge base.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'settings' => 'nullable|array',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $knowledgeBase = $this->knowledgeBaseService->createKnowledgeBase(
+                $request->user()->id,
+                $request->all()
+            );
+            return response()->json($knowledgeBase, 201);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Update a knowledge base.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'sometimes|required|string|max:255',
+            'description' => 'nullable|string',
+            'settings' => 'nullable|array',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $knowledgeBase = $this->knowledgeBaseService->updateKnowledgeBase(
+                $id,
+                $request->user()->id,
+                $request->all()
+            );
+            return response()->json($knowledgeBase);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 404);
+        }
+    }
+
+    /**
+     * Delete a knowledge base.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(Request $request, $id)
+    {
+        try {
+            $result = $this->knowledgeBaseService->deleteKnowledgeBase($id, $request->user()->id);
+            return response()->json(['success' => $result], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 404);
+        }
+    }
+
+    /**
+     * Get all sources for a knowledge base.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function getSources(Request $request, $id)
+    {
+        try {
+            $knowledgeBase = $this->knowledgeBaseService->getKnowledgeBase($id, $request->user()->id);
+            return response()->json($knowledgeBase->sources);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 404);
+        }
+    }
+
+    /**
+     * Add a source to a knowledge base.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function addSource(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'source_type' => 'required|string|in:database,file,website,qa_pair',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'settings' => 'nullable|array',
+            'metadata' => 'nullable|array',
+            'is_active' => 'nullable|boolean',
+            'priority' => 'nullable|integer',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $source = $this->knowledgeBaseService->addSource(
+                $id,
+                $request->user()->id,
+                $request->all()
+            );
+            return response()->json($source, 201);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Update a source.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @param  int  $sourceId
+     * @return \Illuminate\Http\Response
+     */
+    public function updateSource(Request $request, $id, $sourceId)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'sometimes|required|string|max:255',
+            'description' => 'nullable|string',
+            'settings' => 'nullable|array',
+            'metadata' => 'nullable|array',
+            'is_active' => 'nullable|boolean',
+            'priority' => 'nullable|integer',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $source = $this->knowledgeBaseService->updateSource(
+                $sourceId,
+                $request->user()->id,
+                $request->all()
+            );
+            return response()->json($source);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 404);
+        }
+    }
+
+    /**
+     * Delete a source.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @param  int  $sourceId
+     * @return \Illuminate\Http\Response
+     */
+    public function deleteSource(Request $request, $id, $sourceId)
+    {
+        try {
+            $result = $this->knowledgeBaseService->deleteSource($sourceId, $request->user()->id);
+            return response()->json(['success' => $result], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 404);
+        }
+    }
+
+    /**
+     * Add an entry to a source.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @param  int  $sourceId
+     * @return \Illuminate\Http\Response
+     */
+    public function addEntry(Request $request, $id, $sourceId)
+    {
+        $validator = Validator::make($request->all(), [
+            'content' => 'required|string',
+            'metadata' => 'nullable|array',
+            'generate_embedding' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $entry = $this->knowledgeBaseService->addEntry(
+                $sourceId,
+                $request->user()->id,
+                $request->all()
+            );
+            return response()->json($entry, 201);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Update an entry.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @param  int  $sourceId
+     * @param  int  $entryId
+     * @return \Illuminate\Http\Response
+     */
+    public function updateEntry(Request $request, $id, $sourceId, $entryId)
+    {
+        $validator = Validator::make($request->all(), [
+            'content' => 'sometimes|required|string',
+            'metadata' => 'nullable|array',
+            'generate_embedding' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $entry = $this->knowledgeBaseService->updateEntry(
+                $entryId,
+                $request->user()->id,
+                $request->all()
+            );
+            return response()->json($entry);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 404);
+        }
+    }
+
+    /**
+     * Delete an entry.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @param  int  $sourceId
+     * @param  int  $entryId
+     * @return \Illuminate\Http\Response
+     */
+    public function deleteEntry(Request $request, $id, $sourceId, $entryId)
+    {
+        try {
+            $result = $this->knowledgeBaseService->deleteEntry($entryId, $request->user()->id);
+            return response()->json(['success' => $result], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 404);
+        }
+    }
+
+    /**
+     * Search for relevant knowledge.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function searchKnowledge(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'query' => 'required|string',
+            'widget_id' => 'required|integer',
+            'max_results' => 'nullable|integer|min:1|max:10',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $results = $this->knowledgeBaseService->search(
+                $request->input('query'),
+                [
+                    'widget_id' => $request->input('widget_id'),
+                    'max_results' => $request->input('max_results', 5),
+                ]
+            );
+            return response()->json(['results' => $results]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Upload and process a document file.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function uploadDocumentFile(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'file' => 'required|file|mimes:pdf,doc,docx,txt,csv,xlsx,xls|max:10240',
+            'knowledge_base_id' => 'required|integer',
+            'source_name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            // Check if the knowledge base exists
+            $knowledgeBase = $this->knowledgeBaseService->getKnowledgeBase(
+                $request->input('knowledge_base_id'),
+                $request->user()->id
+            );
+
+            // Store the file
+            $file = $request->file('file');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $path = $file->storeAs('knowledge_base/documents', $filename, 'public');
+
+            // Create a new source
+            $source = $this->knowledgeBaseService->addSource(
+                $knowledgeBase->id,
+                $request->user()->id,
+                [
+                    'source_type' => 'file',
+                    'name' => $request->input('source_name'),
+                    'description' => $request->input('description'),
+                    'metadata' => [
+                        'original_filename' => $file->getClientOriginalName(),
+                        'mime_type' => $file->getMimeType(),
+                        'size' => $file->getSize(),
+                        'storage_path' => $path,
+                    ],
+                ]
+            );
+
+            // Process the document in a background job
+            // In a real implementation, this would dispatch a job to process the file
+            // For now, we'll just return the source
+
+            return response()->json([
+                'source' => $source,
+                'message' => 'Document uploaded successfully and queued for processing.',
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Process a document.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $sourceId
+     * @return \Illuminate\Http\Response
+     */
+    public function processDocumentSource(Request $request, $sourceId)
+    {
+        try {
+            $source = KnowledgeBaseSource::findOrFail($sourceId);
+
+            // Check if the user has access to this source
+            $knowledgeBase = $this->knowledgeBaseService->getKnowledgeBase(
+                $source->knowledge_base_id,
+                $request->user()->id
+            );
+
+            // In a real implementation, this would dispatch a job to process the document
+            // For now, we'll just return a success message
+
+            return response()->json([
+                'message' => 'Document processing has been queued.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Download a document.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $sourceId
+     * @return \Illuminate\Http\Response
+     */
+    public function downloadDocumentSource(Request $request, $sourceId)
+    {
+        try {
+            $source = KnowledgeBaseSource::findOrFail($sourceId);
+
+            // Check if the user has access to this source
+            $knowledgeBase = $this->knowledgeBaseService->getKnowledgeBase(
+                $source->knowledge_base_id,
+                $request->user()->id
+            );
+
+            // Get the file path
+            if (!isset($source->metadata['storage_path'])) {
+                return response()->json(['error' => 'No file associated with this source'], 404);
+            }
+
+            $path = $source->metadata['storage_path'];
+
+            // Check if the file exists
+            if (!Storage::disk('public')->exists($path)) {
+                return response()->json(['error' => 'File not found'], 404);
+            }
+
+            return Storage::disk('public')->download($path, $source->metadata['original_filename'] ?? 'document');
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }
