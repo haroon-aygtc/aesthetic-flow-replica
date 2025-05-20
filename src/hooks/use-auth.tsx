@@ -1,6 +1,11 @@
-
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authService } from '@/utils/api-service';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { authService } from "@/utils/api-service";
 
 // Define user interface
 interface User {
@@ -21,8 +26,8 @@ interface AuthContextType {
 // Create the context with a default value
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  login: async () => { },
-  logout: async () => { },
+  login: async () => {},
+  logout: async () => {},
   isLoading: false,
 });
 
@@ -34,18 +39,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Check for existing authentication on mount
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          const userData = await authService.getCurrentUser();
-          setUser(userData);
-        } catch (error) {
-          console.error('Failed to get user data:', error);
-          // Clear invalid token
-          localStorage.removeItem('token');
-        }
+      try {
+        const userData = await authService.getCurrentUser();
+        setUser(userData);
+      } catch (error) {
+        console.error("Failed to get user data:", error);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     checkAuth();
@@ -55,17 +57,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const response = await authService.login(email, password);
-
-      // Store token
-      if (response.token) {
-        localStorage.setItem('token', response.token);
-      }
-
-      // Set user data
-      setUser(response);
+      const userData = await authService.login(email, password);
+      setUser(userData);
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -77,12 +72,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     try {
       await authService.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      // Always clear local user data regardless of API success
-      localStorage.removeItem('token');
       setUser(null);
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Even if the API call fails, we should still clear the user data
+      setUser(null);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -102,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

@@ -1,7 +1,7 @@
-import { ReactNode, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/use-auth';
-import { Loader2 } from 'lucide-react';
+import { ReactNode, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
+import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -14,7 +14,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   useEffect(() => {
     // If authentication check is complete and user is not logged in, redirect to login
     if (!isLoading && !user) {
-      navigate('/login', { replace: true });
+      navigate("/login", { replace: true });
     }
   }, [user, isLoading, navigate]);
 
