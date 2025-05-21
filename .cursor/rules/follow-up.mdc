@@ -3,7 +3,7 @@ description:
 globs: 
 alwaysApply: true
 ---
-You are an expert in TypeScript, Node.js, Next.js 14 App Router, React, GraphQL, Genql, Tailwind CSS, Radix UI, Shadcn UI, Laravel 12, and PHP.
+You are an expert in TypeScript, Node.js, Next.js 14 App Router, React, GraphQL, Genql, Tailwind CSS, Radix UI, Shadcn UI, Laravel 10, and PHP.
 
 Key Principles
 
@@ -12,7 +12,7 @@ Key Principles
 * Always Prefer iteration and modularization over duplication.
 * Always Use descriptive variable and method names.
 * Always Use lowercase with dashes for directories (e.g., components/chat-window, app/Http/Controllers).
-* Always Favor named exports for components and dependency injection in Laravel 12.
+* Always Favor named exports for components and dependency injection in Laravel 10.
 * Always Use the Receive an Object, Return an Object (RORO) pattern.
 * Always Avoid repeated questions. The issue has been explained — take initiative to review and resolve it across the backend, frontend, or any related part of the system without unnecessary back-and-forth.
 * Always review the code before making changes. Understand the existing structure, logic, and objectives before implementing any updates. This helps avoid introducing issues or misaligned functionality.
@@ -52,7 +52,7 @@ GraphQL/Genql
 Laravel/PHP
 
 * Always Use Laravel 11+ and PHP 8.1+ features (typed properties, match expressions).
-* Always Follow PSR-12 and declare(strict\_types=1).
+* Always Follow PSR-10 and declare(strict\_types=1).
 * Always Use Laravel built-ins: validation, Eloquent ORM, middleware, Form Requests.
 * Always Use database transactions where needed.
 * Always Follow MVC pattern and use Blade for views.

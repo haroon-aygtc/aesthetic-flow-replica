@@ -13,8 +13,8 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        \App\Console\Commands\TestGeminiConnection::class,
-        \App\Console\Commands\RefreshWebsiteSources::class,
+        // \App\Console\Commands\TestGeminiConnection::class,
+        // \App\Console\Commands\RefreshWebsiteSources::class,
     ];
 
     /**
