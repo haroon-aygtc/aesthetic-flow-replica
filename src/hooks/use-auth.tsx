@@ -71,11 +71,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     setIsLoading(true);
     try {
-      await authService.logout();
+      // In development mode, just clear local storage
+      if (import.meta.env.DEV) {
+        localStorage.removeItem("mock_user");
+        localStorage.removeItem("auth_token");
+      } else {
+        await authService.logout();
+      }
       setUser(null);
     } catch (error) {
       console.error("Logout error:", error);
       // Even if the API call fails, we should still clear the user data
+      localStorage.removeItem("mock_user");
+      localStorage.removeItem("auth_token");
       setUser(null);
     } finally {
       setIsLoading(false);

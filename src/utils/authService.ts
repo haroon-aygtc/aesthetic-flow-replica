@@ -76,8 +76,20 @@ export const logout = async (): Promise<void> => {
 
 // Fetch current user info
 export const getUser = async (): Promise<User> => {
-  const response = await httpClient.get(endpoints.auth.user);
-  return response.data;
+  try {
+    const response = await httpClient.get(endpoints.auth.user);
+    return response.data;
+  } catch (error) {
+    // In development mode, check if we have a mock user in localStorage
+    if (import.meta.env.DEV) {
+      console.warn("Development mode: Attempting to use mock user");
+      const mockUserJson = localStorage.getItem("mock_user");
+      if (mockUserJson) {
+        return JSON.parse(mockUserJson);
+      }
+    }
+    throw error;
+  }
 };
 
 // Export the auth service as a single object for easier imports
