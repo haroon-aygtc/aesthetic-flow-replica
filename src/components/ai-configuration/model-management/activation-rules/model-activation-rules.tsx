@@ -1,7 +1,12 @@
-
-import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Filter } from "lucide-react";
+import { Plus, Filter, AlertCircle, RefreshCw } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { AIModelData } from "@/utils/ai-model-service";
 import { ModelActivationRuleForm } from "../model-activation-rule-form";
@@ -15,7 +20,10 @@ interface ModelActivationRulesProps {
   onRuleUpdate: () => void;
 }
 
-export function ModelActivationRules({ selectedModel, onRuleUpdate }: ModelActivationRulesProps) {
+export function ModelActivationRules({
+  selectedModel,
+  onRuleUpdate,
+}: ModelActivationRulesProps) {
   const {
     rules,
     isLoading,
@@ -27,7 +35,9 @@ export function ModelActivationRules({ selectedModel, onRuleUpdate }: ModelActiv
     setDeleteRuleId,
     handleToggleActive,
     handleDelete,
-    handleSaveRule
+    handleSaveRule,
+    error,
+    refreshRules,
   } = useActivationRules(selectedModel, onRuleUpdate);
 
   return (
@@ -39,7 +49,8 @@ export function ModelActivationRules({ selectedModel, onRuleUpdate }: ModelActiv
               Activation Rules
             </CardTitle>
             <CardDescription>
-              Define when this model should be automatically selected based on user input and context
+              Define when this model should be automatically selected based on
+              user input and context
             </CardDescription>
           </div>
           <Button onClick={() => setIsCreating(true)} disabled={isLoading}>
@@ -51,6 +62,19 @@ export function ModelActivationRules({ selectedModel, onRuleUpdate }: ModelActiv
         {isLoading ? (
           <div className="py-8 flex justify-center">
             <Spinner size="lg" />
+          </div>
+        ) : error ? (
+          <div className="py-8 flex flex-col items-center justify-center text-center">
+            <AlertCircle className="h-10 w-10 text-destructive mb-2" />
+            <p className="text-destructive font-medium">Error loading rules</p>
+            <p className="text-sm text-muted-foreground mt-1">{error}</p>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => refreshRules()}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" /> Retry
+            </Button>
           </div>
         ) : rules.length === 0 ? (
           <EmptyRulesPlaceholder onCreateRule={() => setIsCreating(true)} />

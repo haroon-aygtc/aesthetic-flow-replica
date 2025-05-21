@@ -1,15 +1,20 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ModelActivationRule } from "@/types/model-activation-rules";
 import { AIModelData } from "@/utils/ai-model-service";
 
-export function useActivationRules(selectedModel: AIModelData, onRuleUpdate: () => void) {
+export function useActivationRules(
+  selectedModel: AIModelData,
+  onRuleUpdate: () => void,
+) {
   const [rules, setRules] = useState<ModelActivationRule[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [editingRule, setEditingRule] = useState<ModelActivationRule | null>(null);
+  const [editingRule, setEditingRule] = useState<ModelActivationRule | null>(
+    null,
+  );
   const [deleteRuleId, setDeleteRuleId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -20,6 +25,7 @@ export function useActivationRules(selectedModel: AIModelData, onRuleUpdate: () 
 
   const loadRules = async (modelId: number) => {
     setIsLoading(true);
+    setError(null);
     try {
       const response = await fetch(`/ai-models/${modelId}/rules`);
       if (!response.ok) {
@@ -28,7 +34,11 @@ export function useActivationRules(selectedModel: AIModelData, onRuleUpdate: () 
       const responseData = await response.json();
 
       // Check if the response has a data property that is an array
-      if (responseData && responseData.data && Array.isArray(responseData.data)) {
+      if (
+        responseData &&
+        responseData.data &&
+        Array.isArray(responseData.data)
+      ) {
         setRules(responseData.data);
       }
       // Check if the response itself is an array
@@ -39,13 +49,15 @@ export function useActivationRules(selectedModel: AIModelData, onRuleUpdate: () 
       else {
         console.error("Unexpected response format:", responseData);
         setRules([]);
+        setError("Unexpected response format from server");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading rules:", error);
+      setError(error.message || "Failed to load model activation rules");
       toast({
         title: "Error",
         description: "Failed to load model activation rules",
-        variant: "destructive"
+        variant: "destructive",
       });
       // Ensure rules is always an array
       setRules([]);
@@ -56,35 +68,40 @@ export function useActivationRules(selectedModel: AIModelData, onRuleUpdate: () 
 
   const handleToggleActive = async (rule: ModelActivationRule) => {
     try {
-      const response = await fetch(`/ai-models/${selectedModel?.id}/rules/${rule.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
+      const response = await fetch(
+        `/ai-models/${selectedModel?.id}/rules/${rule.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...rule,
+            active: !rule.active,
+          }),
         },
-        body: JSON.stringify({
-          ...rule,
-          active: !rule.active
-        })
-      });
+      );
 
       if (!response.ok) {
         throw new Error("Failed to update rule status");
       }
 
-      setRules(prevRules => prevRules.map(r =>
-        r.id === rule.id ? { ...r, active: !r.active } : r
-      ));
+      setRules((prevRules) =>
+        prevRules.map((r) =>
+          r.id === rule.id ? { ...r, active: !r.active } : r,
+        ),
+      );
 
       toast({
         title: rule.active ? "Rule Deactivated" : "Rule Activated",
-        description: `"${rule.name}" has been ${rule.active ? "deactivated" : "activated"}.`
+        description: `"${rule.name}" has been ${rule.active ? "deactivated" : "activated"}.`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error toggling rule activation:", error);
       toast({
         title: "Error",
-        description: "Failed to update rule status",
-        variant: "destructive"
+        description: error.message || "Failed to update rule status",
+        variant: "destructive",
       });
     }
   };
@@ -93,40 +110,43 @@ export function useActivationRules(selectedModel: AIModelData, onRuleUpdate: () 
     if (!deleteRuleId || !selectedModel?.id) return;
 
     try {
-      const response = await fetch(`/ai-models/${selectedModel.id}/rules/${deleteRuleId}`, {
-        method: "DELETE"
-      });
+      const response = await fetch(
+        `/ai-models/${selectedModel.id}/rules/${deleteRuleId}`,
+        {
+          method: "DELETE",
+        },
+      );
 
       if (!response.ok) {
         throw new Error("Failed to delete rule");
       }
 
-      setRules(prevRules => prevRules.filter(r => r.id !== deleteRuleId));
+      setRules((prevRules) => prevRules.filter((r) => r.id !== deleteRuleId));
       setDeleteRuleId(null);
 
       toast({
         title: "Rule Deleted",
-        description: "The activation rule has been deleted successfully."
+        description: "The activation rule has been deleted successfully.",
       });
 
       // Notify parent component of the update
       onRuleUpdate();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting rule:", error);
       toast({
         title: "Error",
-        description: "Failed to delete rule",
-        variant: "destructive"
+        description: error.message || "Failed to delete rule",
+        variant: "destructive",
       });
     }
   };
 
   const handleSaveRule = (rule: ModelActivationRule, isNew: boolean) => {
     if (isNew) {
-      setRules(prevRules => [...prevRules, rule]);
+      setRules((prevRules) => [...prevRules, rule]);
     } else {
-      setRules(prevRules =>
-        prevRules.map(r => r.id === rule.id ? rule : r)
+      setRules((prevRules) =>
+        prevRules.map((r) => (r.id === rule.id ? rule : r)),
       );
     }
 
@@ -148,6 +168,8 @@ export function useActivationRules(selectedModel: AIModelData, onRuleUpdate: () 
     setDeleteRuleId,
     handleToggleActive,
     handleDelete,
-    handleSaveRule
+    handleSaveRule,
+    error,
+    refreshRules: () => loadRules(selectedModel?.id),
   };
 }
