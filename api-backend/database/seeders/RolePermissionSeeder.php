@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\Permission;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -16,12 +17,24 @@ class RolePermissionSeeder extends Seeder
     public function run(): void
     {
         // Clear existing data to avoid duplicates
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
-        Permission::truncate();
-        Role::truncate();
-        DB::table('permission_role')->truncate();
-        DB::table('role_user')->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        // SQLite compatible way to truncate tables
+        $connection = DB::connection()->getName();
+
+        if ($connection === 'sqlite') {
+            // SQLite doesn't support TRUNCATE, use DELETE instead
+            DB::table('permission_role')->delete();
+            DB::table('role_user')->delete();
+            Permission::query()->delete();
+            Role::query()->delete();
+        } else {
+            // For MySQL
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            Permission::truncate();
+            Role::truncate();
+            DB::table('permission_role')->truncate();
+            DB::table('role_user')->truncate();
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        }
 
         // Create roles
         $superAdminRole = Role::create([

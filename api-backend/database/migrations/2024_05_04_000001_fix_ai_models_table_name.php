@@ -3,12 +3,12 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
     public function up(): void
     {
-
         // Create the table if it doesn't exist
         if (!Schema::hasTable('ai_models')) {
             Schema::create('ai_models', function (Blueprint $table) {
@@ -31,13 +31,16 @@ return new class extends Migration
             });
         }
 
-        // Update widgets table
+        // Update widgets table - SQLite compatible version
         if (Schema::hasTable('widgets') && Schema::hasColumn('widgets', 'ai_model_id')) {
-            Schema::table('widgets', function (Blueprint $table) {
-                $table->dropForeign(['ai_model_id']);
-                $table->renameColumn('ai_model_id', 'ai_model_id');
-            });
+            // SQLite doesn't support dropping foreign keys, so we'll skip it
+            if (DB::getDriverName() !== 'sqlite') {
+                Schema::table('widgets', function (Blueprint $table) {
+                    $table->dropForeign(['ai_model_id']);
+                });
+            }
 
+            // For SQLite, we just add the foreign key constraint
             Schema::table('widgets', function (Blueprint $table) {
                 $table->foreign('ai_model_id')
                     ->references('id')
@@ -46,10 +49,16 @@ return new class extends Migration
             });
         }
 
-        // Update model_activation_rules
+        // Update model_activation_rules - SQLite compatible version
         if (Schema::hasTable('model_activation_rules') && Schema::hasColumn('model_activation_rules', 'model_id')) {
+            // SKip dropping foreign keys for SQLite
+            if (DB::getDriverName() !== 'sqlite') {
+                Schema::table('model_activation_rules', function (Blueprint $table) {
+                    $table->dropForeign(['model_id']);
+                });
+            }
+
             Schema::table('model_activation_rules', function (Blueprint $table) {
-                $table->dropForeign(['model_id']);
                 $table->foreign('model_id')
                     ->references('id')
                     ->on('ai_models')
@@ -57,10 +66,16 @@ return new class extends Migration
             });
         }
 
-        // Update model_usage_logs
+        // Update model_usage_logs - SQLite compatible version
         if (Schema::hasTable('model_usage_logs') && Schema::hasColumn('model_usage_logs', 'model_id')) {
+            // Skip dropping foreign keys for SQLite
+            if (DB::getDriverName() !== 'sqlite') {
+                Schema::table('model_usage_logs', function (Blueprint $table) {
+                    $table->dropForeign(['model_id']);
+                });
+            }
+
             Schema::table('model_usage_logs', function (Blueprint $table) {
-                $table->dropForeign(['model_id']);
                 $table->foreign('model_id')
                     ->references('id')
                     ->on('ai_models')
@@ -71,16 +86,15 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Rename back
-        if (Schema::hasTable('ai_models')) {
-            Schema::rename('ai_models', 'ai_models');
+        // Skip for SQLite since it can't handle dropping foreign keys
+        if (DB::getDriverName() === 'sqlite') {
+            return;
         }
 
         // Revert widgets table
         if (Schema::hasTable('widgets') && Schema::hasColumn('widgets', 'ai_model_id')) {
             Schema::table('widgets', function (Blueprint $table) {
                 $table->dropForeign(['ai_model_id']);
-                $table->renameColumn('ai_model_id', 'ai_model_id');
             });
 
             Schema::table('widgets', function (Blueprint $table) {
