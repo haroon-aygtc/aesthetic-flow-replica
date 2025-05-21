@@ -13,7 +13,7 @@ import { ModelDefaultToggle } from "./model-default-toggle";
 import { ModelActiveToggle } from "./model-active-toggle";
 import { useModelForm } from "@/hooks/use-model-form";
 import { ArrowLeft, Server, Settings, Zap, AlertCircle } from "lucide-react";
-import { useRouter } from "next/router";
+import { useNavigate } from "react-router-dom";
 
 interface ModelFormProps {
   initialModel?: AIModelData | null;
@@ -21,7 +21,7 @@ interface ModelFormProps {
 }
 
 export function ModelForm({ initialModel, mode = "create" }: ModelFormProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -44,7 +44,7 @@ export function ModelForm({ initialModel, mode = "create" }: ModelFormProps) {
 
       // Add a small delay before redirecting to ensure the update is processed
       setTimeout(() => {
-        router.push("/ai-configuration/models");
+        navigate("/ai-configuration/models");
       }, 500);
     },
   });
@@ -60,7 +60,7 @@ export function ModelForm({ initialModel, mode = "create" }: ModelFormProps) {
         <Button
           variant="ghost"
           className="mr-2 h-8 w-8 p-0"
-          onClick={() => router.push("/ai-configuration/models")}
+          onClick={() => navigate("/ai-configuration/models")}
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
@@ -143,7 +143,7 @@ export function ModelForm({ initialModel, mode = "create" }: ModelFormProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push("/ai-configuration/models")}
+              onClick={() => navigate("/ai-configuration/models")}
               className="mr-2"
               disabled={isLoading}
             >

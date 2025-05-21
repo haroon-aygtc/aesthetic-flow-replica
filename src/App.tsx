@@ -12,7 +12,7 @@ import ContextRules from "./pages/ContextRules";
 import UserManagement from "./pages/UserManagement";
 import ApiTester from "./pages/ApiTester";
 import WidgetConfig from "./pages/WidgetConfig";
-import AIModelsModule from "./modules/ai-models";
+import { AIModelsModule } from "./modules/ai-models";
 import EmbedCode from "./pages/EmbedCode";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import ResponseFormatter from "./pages/ResponseFormatter";
