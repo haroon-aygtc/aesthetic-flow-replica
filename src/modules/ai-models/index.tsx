@@ -1,6 +1,5 @@
+import { AdminLayout } from "@/components/layouts/admin-layout";
 import { AIModelManagerContainer } from "./components/ai-model-manager-container";
-import AdminLayout from "@/components/layouts/admin-layout";
-
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
@@ -34,5 +33,3 @@ export function AIModelsModule() {
     </AdminLayout>
   );
 }
-
-export default AIModelsModule;

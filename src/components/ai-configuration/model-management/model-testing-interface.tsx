@@ -197,9 +197,9 @@ export function ModelTestingInterface({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-4 md:grid-cols-3 gap-4">
       {/* Chat Interface */}
-      <Card className="md:col-span-3">
+      <Card className="lg:col-span-3 md:col-span-2">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Test Chat with {selectedModel.name}</span>

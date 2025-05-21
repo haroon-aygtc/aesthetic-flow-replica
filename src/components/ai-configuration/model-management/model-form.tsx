@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -11,7 +12,7 @@ import { ModelSettingsFields } from "./model-settings-fields";
 import { ModelDefaultToggle } from "./model-default-toggle";
 import { ModelActiveToggle } from "./model-active-toggle";
 import { useModelForm } from "@/hooks/use-model-form";
-import { ArrowLeft, Server, Settings, Zap } from "lucide-react";
+import { ArrowLeft, Server, Settings, Zap, AlertCircle } from "lucide-react";
 import { useRouter } from "next/router";
 
 interface ModelFormProps {
@@ -22,6 +23,7 @@ interface ModelFormProps {
 export function ModelForm({ initialModel, mode = "create" }: ModelFormProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const [formError, setFormError] = useState<string | null>(null);
 
   const {
     form,
@@ -30,6 +32,7 @@ export function ModelForm({ initialModel, mode = "create" }: ModelFormProps) {
     fetchedModels,
     handleFetchModels,
     handleFormSubmit,
+    formError: modelFormError,
   } = useModelForm({
     initialModel,
     onSubmitSuccess: () => {
@@ -45,6 +48,11 @@ export function ModelForm({ initialModel, mode = "create" }: ModelFormProps) {
       }, 500);
     },
   });
+
+  // Combine errors from different sources
+  useEffect(() => {
+    setFormError(modelFormError);
+  }, [modelFormError]);
 
   return (
     <div className="container max-w-4xl py-6">

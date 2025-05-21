@@ -6,7 +6,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Filter } from "lucide-react";
+import { Plus, Filter, AlertCircle, RefreshCw } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { AIModelData } from "@/utils/ai-model-service";
 import { ModelActivationRuleForm } from "../model-activation-rule-form";
@@ -36,6 +36,8 @@ export function ModelActivationRules({
     handleToggleActive,
     handleDelete,
     handleSaveRule,
+    error,
+    refreshRules,
   } = useActivationRules(selectedModel, onRuleUpdate);
 
   return (
@@ -69,7 +71,7 @@ export function ModelActivationRules({
             <Button
               variant="outline"
               className="mt-4"
-              onClick={() => window.location.reload()}
+              onClick={() => refreshRules()}
             >
               <RefreshCw className="h-4 w-4 mr-2" /> Retry
             </Button>
