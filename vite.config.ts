@@ -13,11 +13,13 @@ export default defineConfig(({ mode }) => ({
         target: "http://localhost:8001",
         changeOrigin: true,
         secure: false,
+        withCredentials: true,
       },
       "/sanctum": {
         target: "http://localhost:8001",
         changeOrigin: true,
         secure: false,
+        withCredentials: true,
       },
     },
     allowedHosts: process.env.TEMPO === "true" ? true : undefined,

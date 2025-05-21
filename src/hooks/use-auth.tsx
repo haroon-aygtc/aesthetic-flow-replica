@@ -59,6 +59,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const userData = await authService.login(email, password);
       setUser(userData);
+
+      // In development mode, store the mock user in localStorage
+      if (import.meta.env.DEV && userData) {
+        localStorage.setItem("mock_user", JSON.stringify(userData));
+        localStorage.setItem("auth_token", `mock_token_${Date.now()}`);
+      }
     } catch (error) {
       console.error("Login error:", error);
       throw error;

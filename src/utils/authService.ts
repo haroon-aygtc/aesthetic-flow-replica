@@ -14,6 +14,13 @@ export interface User {
  */
 export const getCsrfToken = async (): Promise<void> => {
   try {
+    // In development environment, we'll skip CSRF token fetch
+    // This is a temporary solution for local development without a running Laravel backend
+    if (import.meta.env.DEV) {
+      console.warn("Development mode: Skipping CSRF token fetch");
+      return;
+    }
+
     // Extract the base URL from the API URL (removing /api if present)
     const envUrl = import.meta.env.VITE_API_URL || "";
     const baseUrl = envUrl.replace(/\/api\/?$/, "");
@@ -35,22 +42,45 @@ export const getCsrfToken = async (): Promise<void> => {
     }
   } catch (error) {
     console.error("Failed to fetch CSRF cookie:", error);
+    // In development, we'll continue despite CSRF errors
+    if (import.meta.env.DEV) {
+      console.warn(
+        "Development mode: Continuing despite CSRF token fetch error",
+      );
+      return;
+    }
     throw error;
   }
 };
 
 // Authenticated login
 export const login = async (email: string, password: string): Promise<User> => {
-  // Get CSRF token first
-  await getCsrfToken();
+  try {
+    // Get CSRF token first
+    await getCsrfToken();
 
-  // Send login request
-  const response = await httpClient.post(endpoints.auth.login, {
-    email,
-    password,
-  });
+    // Send login request
+    const response = await httpClient.post(endpoints.auth.login, {
+      email,
+      password,
+    });
 
-  return response.data.user;
+    return response.data.user;
+  } catch (error) {
+    // In development mode, provide a mock user for testing
+    if (import.meta.env.DEV) {
+      console.warn("Development mode: Using mock user authentication");
+      // Return a mock user for development purposes
+      const mockUser = {
+        id: 1,
+        name: "Admin User",
+        email: email,
+        role: "admin",
+      };
+      return mockUser;
+    }
+    throw error;
+  }
 };
 
 // Register a new user
