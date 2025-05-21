@@ -1,4 +1,5 @@
-import api from "./api";
+import httpClient from "@/api/http-client";
+import { endpoints } from "@/api/endpoints";
 import { Permission } from "./permissionService";
 
 export interface Role {
@@ -28,7 +29,7 @@ export const roleService = {
    * @returns Promise with all roles
    */
   getAllRoles: async () => {
-    return api.get("roles");
+    return httpClient.get(endpoints.roles.base);
   },
 
   /**
@@ -37,7 +38,7 @@ export const roleService = {
    * @returns Promise with role details including assigned permissions
    */
   getRole: async (id: number) => {
-    return api.get(`roles/${id}`);
+    return httpClient.get(endpoints.roles.byId(id));
   },
 
   /**
@@ -46,7 +47,7 @@ export const roleService = {
    * @returns Promise with created role
    */
   createRole: async (roleData: RoleCreateData) => {
-    return api.post("roles", roleData);
+    return httpClient.post(endpoints.roles.base, roleData);
   },
 
   /**
@@ -56,7 +57,7 @@ export const roleService = {
    * @returns Promise with updated role
    */
   updateRole: async (id: number, roleData: RoleUpdateData) => {
-    return api.put(`roles/${id}`, roleData);
+    return httpClient.put(endpoints.roles.byId(id), roleData);
   },
 
   /**
@@ -65,7 +66,7 @@ export const roleService = {
    * @returns Promise with deletion result
    */
   deleteRole: async (id: number) => {
-    return api.delete(`roles/${id}`);
+    return httpClient.delete(endpoints.roles.byId(id));
   },
 
   /**
@@ -75,17 +76,19 @@ export const roleService = {
    * @returns Promise with assignment result
    */
   assignPermissions: async (roleId: number, permissions: number[]) => {
-    return api.post(`roles/${roleId}/permissions`, { permissions });
+    return httpClient.post(endpoints.roles.permissions(roleId), {
+      permissions,
+    });
   },
-  
+
   /**
    * Get roles with specific permission
    * @param permissionId Permission ID to filter by
    * @returns Promise with roles that have the specified permission
    */
   getRolesByPermission: async (permissionId: number) => {
-    return api.get(`roles/permission/${permissionId}`);
-  }
+    return httpClient.get(endpoints.roles.byPermission(permissionId));
+  },
 };
 
 export default roleService;

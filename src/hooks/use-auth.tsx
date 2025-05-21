@@ -5,7 +5,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { authService } from "@/utils/api-service";
+import { authService } from "@/utils/authService";
 
 // Define user interface
 interface User {

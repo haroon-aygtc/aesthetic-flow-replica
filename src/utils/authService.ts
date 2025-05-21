@@ -1,4 +1,5 @@
-import api from "./api";
+import httpClient from "@/api/http-client";
+import { endpoints } from "@/api/endpoints";
 
 export interface User {
   id: number;
@@ -18,7 +19,7 @@ export const getCsrfToken = async (): Promise<void> => {
     const baseUrl = envUrl.replace(/\/api\/?$/, "");
 
     // Use fetch with credentials to ensure cookies are sent and stored
-    const response = await fetch(`${baseUrl}/sanctum/csrf-cookie`, {
+    const response = await fetch(`${baseUrl}${endpoints.auth.csrfToken}`, {
       method: "GET",
       credentials: "include",
       headers: {
@@ -44,7 +45,10 @@ export const login = async (email: string, password: string): Promise<User> => {
   await getCsrfToken();
 
   // Send login request
-  const response = await api.post("/login", { email, password });
+  const response = await httpClient.post(endpoints.auth.login, {
+    email,
+    password,
+  });
 
   return response.data.user;
 };
@@ -60,18 +64,29 @@ export const register = async (userData: {
   await getCsrfToken();
 
   // Send registration request
-  const response = await api.post("/register", userData);
+  const response = await httpClient.post(endpoints.auth.register, userData);
 
   return response.data.user;
 };
 
 // Authenticated logout
 export const logout = async (): Promise<void> => {
-  await api.post("/logout");
+  await httpClient.post(endpoints.auth.logout);
 };
 
 // Fetch current user info
 export const getUser = async (): Promise<User> => {
-  const response = await api.get("/user");
+  const response = await httpClient.get(endpoints.auth.user);
   return response.data;
 };
+
+// Export the auth service as a single object for easier imports
+export const authService = {
+  getCsrfToken,
+  login,
+  register,
+  logout,
+  getCurrentUser: getUser,
+};
+
+export default authService;

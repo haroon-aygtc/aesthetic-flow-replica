@@ -1,4 +1,5 @@
-import api from "./api";
+import httpClient from "@/api/http-client";
+import { endpoints } from "@/api/endpoints";
 
 export interface Permission {
   id: number;
@@ -32,7 +33,7 @@ export const permissionService = {
    * @returns Promise with all permissions
    */
   getAllPermissions: async () => {
-    return api.get("permissions");
+    return httpClient.get(endpoints.permissions.base);
   },
 
   /**
@@ -41,7 +42,7 @@ export const permissionService = {
    * @returns Promise with permission details
    */
   getPermission: async (id: number) => {
-    return api.get(`permissions/${id}`);
+    return httpClient.get(endpoints.permissions.byId(id));
   },
 
   /**
@@ -50,7 +51,7 @@ export const permissionService = {
    * @returns Promise with created permission
    */
   createPermission: async (permissionData: PermissionCreateData) => {
-    return api.post("permissions", permissionData);
+    return httpClient.post(endpoints.permissions.base, permissionData);
   },
 
   /**
@@ -59,8 +60,11 @@ export const permissionService = {
    * @param permissionData Permission data to update
    * @returns Promise with updated permission
    */
-  updatePermission: async (id: number, permissionData: PermissionUpdateData) => {
-    return api.put(`permissions/${id}`, permissionData);
+  updatePermission: async (
+    id: number,
+    permissionData: PermissionUpdateData,
+  ) => {
+    return httpClient.put(endpoints.permissions.byId(id), permissionData);
   },
 
   /**
@@ -69,7 +73,7 @@ export const permissionService = {
    * @returns Promise with deletion result
    */
   deletePermission: async (id: number) => {
-    return api.delete(`permissions/${id}`);
+    return httpClient.delete(endpoints.permissions.byId(id));
   },
 
   /**
@@ -78,8 +82,8 @@ export const permissionService = {
    * @returns Promise with permissions filtered by category
    */
   getPermissionsByCategory: async (category: string) => {
-    return api.get(`permissions/category/${category}`);
-  }
+    return httpClient.get(endpoints.permissions.byCategory(category));
+  },
 };
 
 export default permissionService;

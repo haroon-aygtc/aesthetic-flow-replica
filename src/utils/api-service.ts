@@ -3,6 +3,8 @@
 
 // Import the API instance
 import api from "./api";
+import httpClient from "@/api/http-client";
+import { endpoints } from "@/api/endpoints";
 
 // Import services from their dedicated files
 import * as authServiceModule from "./authService";
@@ -111,3 +113,18 @@ export const guestUserService = {
     return api.post("guest/details", { session_id: sessionId });
   },
 };
+
+// Re-export guest user admin service
+export { guestUserAdminService } from "./guest-user-service";
+
+// Re-export widget service
+export { widgetService } from "./widgetService";
+
+// Re-export knowledge base service
+export { knowledgeBaseService } from "./api";
+
+// Re-export HTTP client for direct access
+export { httpClient };
+
+// Re-export endpoints
+export { endpoints };

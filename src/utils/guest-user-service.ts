@@ -1,23 +1,37 @@
-import api from './api';
+import httpClient from "@/api/http-client";
+import { endpoints } from "@/api/endpoints";
 
-// Guest user admin services
-// This file is a compatibility layer for code that imports from guest-user-service.ts
-// It re-exports everything from the new modular file to maintain backward compatibility
-
+/**
+ * Guest user admin services
+ */
 export const guestUserAdminService = {
+  /**
+   * Get all guest users
+   */
   getAllGuestUsers: async () => {
-    return api.get('guest-users');
+    return httpClient.get(endpoints.guestUsers.base);
   },
 
+  /**
+   * Delete a guest user by ID
+   */
   deleteGuestUser: async (id: number) => {
-    return api.delete(`guest-users/${id}`);
+    return httpClient.delete(endpoints.guestUsers.byId(id));
   },
 
+  /**
+   * Get details for a specific guest user
+   */
   getGuestUserDetails: async (id: number) => {
-    return api.get(`guest-users/${id}`);
+    return httpClient.get(endpoints.guestUsers.byId(id));
   },
 
+  /**
+   * Get chat history for a guest user session
+   */
   getGuestUserChatHistory: async (sessionId: string) => {
-    return api.get(`chat/history?session_id=${sessionId}`);
-  }
+    return httpClient.get(endpoints.guestUsers.chatHistory(sessionId));
+  },
 };
+
+export default guestUserAdminService;
