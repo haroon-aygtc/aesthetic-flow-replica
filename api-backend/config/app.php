@@ -181,6 +181,7 @@ return [
         App\Providers\RouteServiceProvider::class,
         App\Providers\AIServiceProvider::class,
         App\Providers\KnowledgeServiceProvider::class,
+        App\Providers\MigrationServiceProvider::class,
     ],
 
     /*

@@ -13,7 +13,14 @@ class CustomMigrationRepository extends DatabaseMigrationRepository
      */
     public function repositoryExists()
     {
-        // Fix for the array to string conversion issue
-        return $this->getConnection()->getSchemaBuilder()->hasTable($this->table);
+        try {
+            // Convert array to string if necessary
+            $table = is_array($this->table) ? 'migrations' : $this->table;
+
+            return $this->getConnection()->getSchemaBuilder()->hasTable($table);
+        } catch (\Exception $e) {
+            // If there's an error, attempt to create the migrations table
+            return false;
+        }
     }
 }
