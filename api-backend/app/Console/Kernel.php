@@ -15,6 +15,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         \App\Console\Commands\TestGeminiConnection::class,
         \App\Console\Commands\RefreshWebsiteSources::class,
+        \App\Console\Commands\MarkMigrationsAsRun::class,
     ];
 
     /**
