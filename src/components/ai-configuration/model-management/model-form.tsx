@@ -1,4 +1,3 @@
-
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -30,7 +29,7 @@ export function ModelForm({ initialModel, mode = "create" }: ModelFormProps) {
     isFetchingModels,
     fetchedModels,
     handleFetchModels,
-    handleFormSubmit
+    handleFormSubmit,
   } = useModelForm({
     initialModel,
     onSubmitSuccess: () => {
@@ -44,7 +43,7 @@ export function ModelForm({ initialModel, mode = "create" }: ModelFormProps) {
       setTimeout(() => {
         router.push("/ai-configuration/models");
       }, 500);
-    }
+    },
   });
 
   return (
@@ -77,7 +76,10 @@ export function ModelForm({ initialModel, mode = "create" }: ModelFormProps) {
                 <Server className="h-4 w-4" />
                 <span>Basic Info</span>
               </TabsTrigger>
-              <TabsTrigger value="connection" className="flex items-center gap-2">
+              <TabsTrigger
+                value="connection"
+                className="flex items-center gap-2"
+              >
                 <Zap className="h-4 w-4" />
                 <span>Connection</span>
               </TabsTrigger>
@@ -114,6 +116,20 @@ export function ModelForm({ initialModel, mode = "create" }: ModelFormProps) {
               </TabsContent>
             </Card>
           </Tabs>
+
+          {formError && (
+            <div className="bg-destructive/10 border border-destructive rounded-md p-3 mb-4">
+              <div className="flex items-start">
+                <AlertCircle className="h-5 w-5 text-destructive mr-2 mt-0.5" />
+                <div>
+                  <p className="font-medium text-destructive">
+                    Error saving model
+                  </p>
+                  <p className="text-sm text-destructive/90">{formError}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-end pt-6">
             <Button

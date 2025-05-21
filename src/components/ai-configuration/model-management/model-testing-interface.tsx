@@ -4,12 +4,32 @@ import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
 import { AIModelData, aiModelService } from "@/utils/ai-model-service";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { MessageSquare, Send, Zap, Clock, Hash, AlertCircle, RefreshCw, Info } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import {
+  MessageSquare,
+  Send,
+  Zap,
+  Clock,
+  Hash,
+  AlertCircle,
+  RefreshCw,
+  Info,
+} from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ModelTestingInterfaceProps {
   selectedModel: AIModelData | null;
@@ -30,11 +50,14 @@ interface ResponseMetadata {
   error?: string;
 }
 
-export function ModelTestingInterface({ selectedModel }: ModelTestingInterfaceProps) {
+export function ModelTestingInterface({
+  selectedModel,
+}: ModelTestingInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [responseMetadata, setResponseMetadata] = useState<ResponseMetadata | null>(null);
+  const [responseMetadata, setResponseMetadata] =
+    useState<ResponseMetadata | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -56,51 +79,85 @@ export function ModelTestingInterface({ selectedModel }: ModelTestingInterfacePr
     const userMessage: ChatMessage = {
       role: "user",
       content: inputMessage,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInputMessage("");
     setIsLoading(true);
     setError(null);
 
+    // Track start time for local response time calculation
+    const startTime = performance.now();
+
     try {
       // Use the model's settings directly from the selectedModel object
-      const result = await aiModelService.testChat(selectedModel.id, inputMessage, {
-        temperature: selectedModel.settings?.temperature || 0.7,
-        max_tokens: selectedModel.settings?.max_tokens || 2048
-      });
+      const result = await aiModelService.testChat(
+        selectedModel.id,
+        inputMessage,
+        {
+          temperature: selectedModel.settings?.temperature || 0.7,
+          max_tokens: selectedModel.settings?.max_tokens || 2048,
+        },
+      );
 
       // Add AI response to chat
       const aiMessage: ChatMessage = {
         role: "assistant",
         content: result.response,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, aiMessage]);
+      setMessages((prev) => [...prev, aiMessage]);
       setResponseMetadata(result.metadata);
 
       if (!result.success) {
         setError(result.metadata.error || "Unknown error occurred");
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || "Failed to get response from AI model";
+      // Enhanced error handling with specific error types
+      let errorMessage = "Failed to get response from AI model";
+      let errorType = "unknown";
+
+      if (error.response) {
+        // Server responded with an error
+        const status = error.response.status;
+        errorMessage = error.response.data?.message || errorMessage;
+
+        if (status === 401 || status === 403) {
+          errorType = "authentication";
+          errorMessage = "Authentication error: Please check your API key";
+        } else if (status === 429) {
+          errorType = "rate_limit";
+          errorMessage = "Rate limit exceeded. Please try again later.";
+        } else if (status >= 500) {
+          errorType = "server";
+          errorMessage = "Server error. Please try again later.";
+        }
+      } else if (error.request) {
+        // Request made but no response received
+        errorType = "network";
+        errorMessage = "Network error. Please check your connection.";
+      } else {
+        // Error in setting up the request
+        errorMessage = error.message || errorMessage;
+      }
+
       setError(errorMessage);
 
-      // Add error message as AI response
+      // Add error message as AI response with error type
       const errorResponse: ChatMessage = {
         role: "assistant",
         content: `Error: ${errorMessage}`,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, errorResponse]);
+      setMessages((prev) => [...prev, errorResponse]);
 
       toast({
-        title: "Test Failed",
-        description: "Failed to get response from AI model.",
-        variant: "destructive"
+        title: `Test Failed (${errorType})`,
+        description: errorMessage,
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -108,7 +165,7 @@ export function ModelTestingInterface({ selectedModel }: ModelTestingInterfacePr
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -121,7 +178,7 @@ export function ModelTestingInterface({ selectedModel }: ModelTestingInterfacePr
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
   if (!selectedModel) {
@@ -130,7 +187,9 @@ export function ModelTestingInterface({ selectedModel }: ModelTestingInterfacePr
         <CardContent className="p-6 flex justify-center items-center min-h-[400px]">
           <div className="text-center">
             <h3 className="font-medium mb-2">Select a model</h3>
-            <p className="text-muted-foreground">Choose an AI model from the list to test it</p>
+            <p className="text-muted-foreground">
+              Choose an AI model from the list to test it
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -156,7 +215,8 @@ export function ModelTestingInterface({ selectedModel }: ModelTestingInterfacePr
             </Button>
           </CardTitle>
           <CardDescription>
-            Test your AI model with real-time chat to verify it's working correctly
+            Test your AI model with real-time chat to verify it's working
+            correctly
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -171,26 +231,31 @@ export function ModelTestingInterface({ selectedModel }: ModelTestingInterfacePr
                   {messages.map((msg, index) => (
                     <div
                       key={index}
-                      className={`flex gap-3 ${msg.role === 'assistant' ? 'items-start' : 'items-start'}`}
+                      className={`flex gap-3 ${msg.role === "assistant" ? "items-start" : "items-start"}`}
                     >
                       <div
-                        className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.role === 'assistant'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-secondary text-secondary-foreground'
-                          }`}
+                        className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          msg.role === "assistant"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-secondary-foreground"
+                        }`}
                       >
                         <MessageSquare className="h-4 w-4" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center">
                           <p className="text-sm font-medium">
-                            {msg.role === 'assistant' ? selectedModel.name : 'You'}
+                            {msg.role === "assistant"
+                              ? selectedModel.name
+                              : "You"}
                           </p>
                           <span className="text-xs text-muted-foreground ml-2">
                             {formatTime(msg.timestamp)}
                           </span>
                         </div>
-                        <div className="mt-1 text-sm whitespace-pre-wrap">{msg.content}</div>
+                        <div className="mt-1 text-sm whitespace-pre-wrap">
+                          {msg.content}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -200,10 +265,14 @@ export function ModelTestingInterface({ selectedModel }: ModelTestingInterfacePr
                         <MessageSquare className="h-4 w-4" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium">{selectedModel.name}</p>
+                        <p className="text-sm font-medium">
+                          {selectedModel.name}
+                        </p>
                         <div className="flex items-center gap-2 py-2">
                           <Spinner size="sm" />
-                          <p className="text-sm text-muted-foreground">Generating response...</p>
+                          <p className="text-sm text-muted-foreground">
+                            Generating response...
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -229,7 +298,11 @@ export function ModelTestingInterface({ selectedModel }: ModelTestingInterfacePr
                 disabled={isLoading || !inputMessage.trim() || !selectedModel}
                 className="self-end"
               >
-                {isLoading ? <Spinner size="sm" /> : <Send className="h-4 w-4" />}
+                {isLoading ? (
+                  <Spinner size="sm" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -259,7 +332,8 @@ export function ModelTestingInterface({ selectedModel }: ModelTestingInterfacePr
                         </TooltipTrigger>
                         <TooltipContent>
                           <p className="w-[200px] text-xs">
-                            This is the currently selected AI model. You can change settings in the Basic Settings tab.
+                            This is the currently selected AI model. You can
+                            change settings in the Basic Settings tab.
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -284,7 +358,9 @@ export function ModelTestingInterface({ selectedModel }: ModelTestingInterfacePr
 
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Status:</span>
-                  <Badge variant={selectedModel.active ? "secondary" : "destructive"}>
+                  <Badge
+                    variant={selectedModel.active ? "secondary" : "destructive"}
+                  >
                     {selectedModel.active ? "Active" : "Inactive"}
                   </Badge>
                 </div>
@@ -300,13 +376,17 @@ export function ModelTestingInterface({ selectedModel }: ModelTestingInterfacePr
               {/* Display current settings as read-only */}
               <div className="grid grid-cols-2 gap-4 mt-2">
                 <div className="flex flex-col space-y-1">
-                  <span className="text-xs text-muted-foreground">Temperature</span>
+                  <span className="text-xs text-muted-foreground">
+                    Temperature
+                  </span>
                   <Badge variant="outline" className="w-fit">
                     {selectedModel.settings?.temperature || 0.7}
                   </Badge>
                 </div>
                 <div className="flex flex-col space-y-1">
-                  <span className="text-xs text-muted-foreground">Max Tokens</span>
+                  <span className="text-xs text-muted-foreground">
+                    Max Tokens
+                  </span>
                   <Badge variant="outline" className="w-fit">
                     {selectedModel.settings?.max_tokens || 2048}
                   </Badge>
@@ -330,34 +410,47 @@ export function ModelTestingInterface({ selectedModel }: ModelTestingInterfacePr
                   <div className="flex items-center gap-2 mb-1">
                     <Zap className="h-4 w-4 text-primary" />
                     <span className="font-medium">Model:</span>
-                    <span className="ml-auto font-mono text-xs">{responseMetadata.model}</span>
+                    <span className="ml-auto font-mono text-xs">
+                      {responseMetadata.model}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Zap className="h-4 w-4 text-primary" />
                     <span className="font-medium">Provider:</span>
-                    <span className="ml-auto font-mono text-xs">{responseMetadata.provider}</span>
+                    <span className="ml-auto font-mono text-xs">
+                      {responseMetadata.provider}
+                    </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Response time:</span>
-                  <span className="ml-auto font-mono">{responseMetadata.response_time}s</span>
+                  <span className="ml-auto font-mono">
+                    {responseMetadata.response_time}s
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Hash className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Input tokens:</span>
-                  <span className="ml-auto font-mono">{responseMetadata.tokens_input}</span>
+                  <span className="ml-auto font-mono">
+                    {responseMetadata.tokens_input}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Hash className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Output tokens:</span>
-                  <span className="ml-auto font-mono">{responseMetadata.tokens_output}</span>
+                  <span className="ml-auto font-mono">
+                    {responseMetadata.tokens_output}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Hash className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Total tokens:</span>
-                  <span className="ml-auto font-mono">{responseMetadata.tokens_input + responseMetadata.tokens_output}</span>
+                  <span className="ml-auto font-mono">
+                    {responseMetadata.tokens_input +
+                      responseMetadata.tokens_output}
+                  </span>
                 </div>
               </div>
             </CardContent>
